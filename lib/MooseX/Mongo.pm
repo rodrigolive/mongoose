@@ -2,6 +2,7 @@ use v5.10;
 package MooseX::Mongo;
 use MongoDB;
 use MooseX::Singleton;
+use MooseX::Mongo::Meta::Attribute::DoNotSerialize;
 
 has 'conn' => ( is=>'rw', isa=>'MongoDB::Connection', default=>sub{ MongoDB::Connection->new } );
 has '_db' => ( is=>'rw', isa=>'MongoDB::Database' );
@@ -33,12 +34,13 @@ use List::Util qw/first/;
 		return unless defined $doc;
 		delete $doc->{_last_state};
 		if( $self->_id  ) {
-			#say 'save from id';
+			say $self->collection_name . ' - save from id';
+			my $ret = $coll->update( { _id=>$self->_id }, $doc );
 			$self->_set_state();
-			return $coll->update( { _id=>$self->_id }, $doc );
+			return $ret;
 		} else {
 			if( $self->_pk ) {
-				#say 'upsert from pk';
+				say ref($doc) . ' - upsert from pk';
 				my $pk = $self->primary_key_from_hash($doc);
 				my $ret = $coll->update( $pk, $doc, { upsert=>1 } );
 				my $_id = $coll->find_one( $pk, { _id=>1 } );
@@ -46,9 +48,9 @@ use List::Util qw/first/;
 				$self->_set_state();
 				return $ret;
 			} else {
-				#say 'save without pk';
-				$self->_set_state();
+				say ref($doc) . ' - save without pk' . exists($doc->{_last_state} );
 				my $id = $coll->save( $doc );
+				$self->_set_state();
 				$self->_id( $id );
 				return $id; 
 			}
@@ -63,7 +65,13 @@ use List::Util qw/first/;
 		my ($self)=@_;
 		use Digest::SHA qw(sha256_hex);
 		my $ls = delete $self->{_last_state};
-		my $s = sha256_hex $self->dump;
+		my $s = do {
+			local $Data::Dumper::Indent   = 0;
+			local $Data::Dumper::Sortkeys = 1;
+			local $Data::Dumper::Terse    = 1;
+			local $Data::Dumper::Useqq    = 0;
+			sha256_hex $self->dump;
+		};
 		$self->_last_state( $ls ) if $ls;
 		return $s;
 	}
@@ -75,11 +83,15 @@ use List::Util qw/first/;
 		my ($self, @from )=@_;
 		return $self
 			if first { refaddr($self) == refaddr($_) } @from; #check for circularity
-		my $packed = { %$self }; # clone the data 
+		my $packed = { %$self }; # cheesely clone the data 
 		for my $key ( keys %$packed ) {
 			my $obj = $packed->{$key};
+			if( my $attrib = $self->meta->get_attribute($key) ) {
+				delete $packed->{$key} , next
+					if $attrib->does('MooseX::Mongo::Meta::Attribute::DoNotSerialize');
+			}
 			if( my $class =blessed $obj ) {
-				#say "checking.... $class....";
+				say "checking.... $class....";
 				next unless $class->can('meta'); # only mooses from here on 
 				if( $class->does('EmbeddedDocument') ) {
 					$packed->{$key} = $obj->collapse( @from, $self ) or next;
@@ -87,29 +99,27 @@ use List::Util qw/first/;
 				elsif( $class->does('Document') ) {
 					$obj->save( @from, $self ) if $obj->modified;
 					my $id = $obj->_id;
-					$packed->{$key} = { '$ref' => lc($class), '$id'=>$id };
+					$packed->{$key} = { '$ref' => $class->collection_name, '$id'=>$id };
 				}
 			} elsif( ref $obj eq 'ARRAY' ) {
 				my @docs;
 				my $aryclass;
 				for( @$obj ) {
-					$aryclass ||= blessed $_;
-					if( $aryclass ) {
-						if( $aryclass->does('EmbeddedDocument') ) {
-							push @docs, $_->collapse(@from, $self);
-						} else {
-							$_->save( @from, $self ) if $_->modified;
-							my $id = $_->_id;
-							push @docs, { '$ref' => lc($aryclass), '$id'=>$id };
-						}
+					$aryclass ||= blessed( $_ );
+					if( $aryclass && $aryclass->does('EmbeddedDocument') ) {
+						push @docs, $_->collapse(@from, $self);
+					} elsif( $aryclass && $aryclass->does('Document') ) {
+						$_->save( @from, $self ) if $_->modified;
+						my $id = $_->_id;
+						push @docs, { '$ref' => $aryclass->collection_name, '$id'=>$id };
 					} else {
 						push @docs, $_;
 					}
 				}
 				$packed->{$key} = \@docs;
-			}
-			#say $self->meta->get_attribute('employees')->type_constraint;
+			} 
 		}
+		delete $packed->{_last_state};
 		return $packed;
 	}
 	sub collapse_raw {
@@ -163,7 +173,7 @@ use List::Util qw/first/;
 		my ($self) = @_;
 		my $db = $self->db;
 		my $coll_name = $self->collection_name;
-		my $coll = $db->get_collection( lc $coll_name );
+		my $coll = $db->get_collection( $coll_name );
 	}
 	sub primary_key_from_hash {
 		my ($self,$hash)=@_;
@@ -184,23 +194,22 @@ use List::Util qw/first/;
 	}
 	sub collection_name {
 		my ($self) = @_;
-		ref $self || $self;
+		lc( ref $self || $self );
 	}
 
 package EmbeddedDocument;
 use Moose::Role; 
-#use MooseX::Storage;
 with 'Document';
-#with Storage;
 
 package Moose::Meta::Attribute::Custom::Trait::PrimaryKey;
 use Moose::Role;
 
 package DocumentID;
 use Moose;
-use MooseX::Storage;
+#use MooseX::Storage;
 extends 'MongoDB::OID';
-with Storage;
+#with Storage;
+
 
 package Cursor;
 use Moose;
@@ -210,9 +219,8 @@ extends 'MongoDB::Cursor';
 has '_collection_name' => ( is=>'rw', isa=>'Str', required=>1 );
 
 around 'next' => sub {
-	my ($orig,$self)=@_;
-	#die $self->coll_name;
-	my $doc = $self->$orig;
+	my ($orig,$self, @args)=@_;
+	my $doc = $self->$orig(@args);
 	return unless defined $doc;
 	my $coll_name = $self->_collection_name; 
 	return $coll_name->expand( $doc );
