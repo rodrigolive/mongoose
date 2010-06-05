@@ -104,3 +104,14 @@ cleanup();
 	$company->save;
 	say $company->dump
 }
+{
+	my $rs = Company->find;
+	while ( my $c = $rs->next ) {
+		say $c->dump;
+		#say $c->address->dump;
+		#$c->address->save;
+		#$c->save;
+	}
+
+
+}

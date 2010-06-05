@@ -132,28 +132,56 @@ use List::Util qw/first/;
 		my ($self,$doc,@from)=@_;
 		my @later;
 		my $coll_name = $self->collection_name;
-		for my $attr ( $coll_name->meta->get_all_attributes ) {
+		my $class = ref $self || $self;
+		for my $attr ( $class->meta->get_all_attributes ) {
 			my $name = $attr->name;
 			next unless exists $doc->{$name};
 			my $type = $attr->type_constraint or next;
 			my $class = $type->name or next;
+			if( $type->is_a_type_of('ArrayRef') ) {
+				my $array_class = $type->{type_parameter};
+				say "ary class $array_class";
+				my @objs;
+				for my $item ( @{ $doc->{$name} || [] } ) {
+					if( my $_id = delete $item->{'$id'} ) {
+						if( my $circ_doc = first { $_->{_id} eq $_id } @from ) {
+							push @objs, bless( $circ_doc , $array_class );
+						} else {	
+							push @objs, "$array_class"->find_one({ _id=>$_id }, undef, @from, $doc );
+						}
+					}
+				}
+				$doc->{$name} = \@objs;
+			}
+			#say "type=$type" . $type->is_a_type_of('ArrayRef');
+			#say "type=$type, class=$class" . $type->{type_parameter};
 			$class->can('meta') or next;
 			if( $class->does('EmbeddedDocument') ) {
-				$doc->{$name} = $class->new( $doc->{$name} ) 
-			}
-			elsif( $class->does('Document') ) {
+				$doc->{$name} = $class->new( $doc->{$name} ) ;
+				$doc->{$name}->_set_state;
+			} elsif( $class->does('Document') ) {
 				if( my $_id = delete $doc->{$name}->{'$id'} ) {
 					if( my $circ_doc = first { $_->{_id} eq $_id } @from ) {
 						$doc->{$name} = bless( $circ_doc , $class );
 					} else {	
-						$doc->{$name} = $class->find_one({ _id=>$_id }, undef, @from, $doc )
+						$doc->{$name} = $class->find_one({ _id=>$_id }, undef, @from, $doc );
 					}
+					$doc->{$name}->_set_state;
 				}
-			}
+			} 
 		}
+		#for my $key ( grep { ref($doc{$_}) eq 'ARRAY' } keys %$doc ) {
+			#for my $item ( @{ $doc{$key} || [] } ) {
+				#if( ref($item) eq 'HASH' && exists( $item->{'$id'} ) ) {
+					#$doc{$key} = 
+				#}
+			#}
+		#}
 		#my $obj = $coll_name->new( $doc );
 		return undef unless defined $doc;
-		return bless $doc => $coll_name;
+		my $obj = bless $doc => $class;
+		$obj->_set_state;
+		return $obj;
 	}
 	sub expand_raw {
 		my ($self,$doc)=@_;
@@ -184,6 +212,7 @@ use List::Util qw/first/;
 		my ($self,$p) = @_;
 		my $cursor = bless $self->collection->find($p), 'Cursor';
 		$cursor->_collection_name( $self->collection_name );
+		$cursor->_class( ref $self || $self );
 		return $cursor;
 	}
 	sub find_one {
@@ -216,6 +245,7 @@ use Moose;
 use MongoDB;
 extends 'MongoDB::Cursor';
 
+has '_class' => ( is=>'rw', isa=>'Str', required=>1 );
 has '_collection_name' => ( is=>'rw', isa=>'Str', required=>1 );
 
 around 'next' => sub {
@@ -223,7 +253,9 @@ around 'next' => sub {
 	my $doc = $self->$orig(@args);
 	return unless defined $doc;
 	my $coll_name = $self->_collection_name; 
-	return $coll_name->expand( $doc );
+	my $class = $self->_class;
+	#eval "require " . $self->_class;
+	return $class->expand( $doc );
 };
 
 1;
