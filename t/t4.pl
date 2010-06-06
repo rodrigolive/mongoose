@@ -88,6 +88,7 @@
 package main;
 use v5.10;
 use MooseX::Mongo;
+use Benchmark;
 my $db = MooseX::Mongo->db( 'mediadb' );
 sub cleanup {
 	$db->run_command({ drop => 'address' });
@@ -101,7 +102,7 @@ cleanup();
 	my $company = new Company( name=> 'Acme', address=>$address );
 	my $employee = new Employee( first_name=>'John', last_name=>'Doe', title=>'CEO');
 	$company->employees([ $employee ]);
-	$company->save;
+	timethis( 1000, sub { $company->save; });
 	say $company->dump
 }
 {
