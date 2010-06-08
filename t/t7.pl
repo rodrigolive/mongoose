@@ -1,8 +1,9 @@
 package Person;
 use Moose;
-with 'Document';
+with 'MooseX::Mongo::Document' => { pk=>['name'] };
 
 has 'name' => ( is=>'rw', isa=>'Str', required=>1 );
+has 'age' => ( is=>'rw', isa=>'Int', );
 has 'spouse' => ( is=>'rw', isa=>'Person' );
 
 package main;

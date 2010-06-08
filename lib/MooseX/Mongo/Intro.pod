@@ -1,0 +1,149 @@
+=pod
+
+=head1 NAME
+
+MooseX::Mongo - getting started
+
+=head1 MOTIVATION
+
+This module is an attempt to bring together the full power 
+of Moose into one of the hottest new databases out there MongoDB.
+
+Before using this module you should take a little time to 
+read on MongoDB. 
+
+=head1 GETTING STARTED
+
+To make your Moose classes "Mongoable", all they need is to consume either
+one of two roles: MooseX::Mongo::Document or MooseX::Mongo::EmbeddedDocument.
+
+Then connect to the database. This is done globally here for simplicity sake, 
+but a more object oriented notation is also supported.
+
+	use MooseX::Mongo;
+	MooseX::Mongo->db( db=>'mydb'); # looks for a localhost connection
+
+	# or, for more control:
+
+	MooseX::Mongo->conn(
+		conn
+		host=>'data.server',
+		port=>4000,
+		db=>'mydb');           
+
+The difference between these roles lies in the way objects
+will be later stored and loaded from the DB. 
+Read the MongoDB docs if you don't understand the difference. 
+
+Either one of these roles will import into your class the following methods:
+
+=head3 save
+
+Saves the current object to the database, inserting the document if needed.
+
+	$person->save;
+
+=head3 find
+
+Wraps MongoDB's find method to return a cursor that expands data into objects.
+
+=head3 query
+
+	my $cursor = Person->query({ age => { '$lt' => 30 } });
+
+=head3 find_one
+
+=head3 collection
+
+Returns the MongoDB::Collection object supporting this class. The collection
+is designed 
+
+=head2 Document
+
+Akin to a row in the relational model. Relationships are stored using
+MongoDB's foreign key system. 
+
+=head2 EmbbededDocument
+
+Tells MooseX::Mongo to store this as an embedded document, part of 
+a parent document. 
+
+=head1 Why not use KiokuDB?
+
+KiokuDB is an awesome distribution that maps objects to data
+and caters to a wide variety of backends. Currently there's even a
+MongoDB backend that may suit your needs. 
+
+Why use this module instead?
+
+* You want your objects to have their own collection. KiokuDB stores all objects in 
+a single collection. MongoDB performs best the more collections you have.
+
+* You want to be able to store relations as either embedded documents or
+foreign documents. KiokuDB embeds everything. Here you get to choose.
+
+* You want to abstract your data from your class representation. KiokuDB stores
+an extra field called __CLASS__ that ties data to its representation. 
+It's not a bad decision, it's just a design choice. 
+
+* You don't need to keep a scope. KiokuDB will keep objects in scope for
+you, avoiding breakage in relationships. Here nothing is kept in scope.
+
+* You don't plan to use transactions. KiokuDB is transaction ready. 
+But MongoDB is not. So, what's the point here?
+
+* You feel adventurous. 
+
+If you don't need any of this, go grab KiokuDB. It's much more configurable,
+stable and you get the option to switch backends in the future. 
+
+=head1 REQUIREMENTS
+
+Moose classes for your schema.
+MongoDB installed somewhere in your network.
+The MongoDB Perl driver.
+
+=head1 FEATURES
+
+Some of the features:
+
+* It's fast. Not as fast as working with MongoDB documents directly though.
+But it's way faster than any other ORM and relation-based mapping modules
+out there. 
+
+* It handles most object relationships, circular references included.
+
+* No persistency. It doesn't manage states for your object. If you save
+your object twice, it writes twice to the database. In most cases,
+this is actually faster than trying to manage states. 
+
+* Primary keys. This is quite a extraneuos concept for objects, and 
+it's not mandatory. But it allows you to automatically control 
+when new objects translate to new MongoDB documents, or just update
+them. 
+
+* Schema-less data. MongoDB does not hold a schema. You can create
+new attributes for your object and delete old ones at your leasure.
+
+* No data-object binding means that you may reuse collections,
+and peruse inheritance to a great extent. 
+
+=head1 CAVEATS
+
+* This is very much *BETA* software. In fact it's almost alpha, except that the
+API is so simple it will probably not change, so let's call it "beta". 
+
+* This module intrusively imports singleton based methods into your class. It's 
+the price to pay for a simpler user interface and less keystrokes. 
+
+* Object expansion from the database is done using plain bless most of the time.
+Which means your attribute triggers, etc. will not be fired during expansion.
+There are exceptions to this rule though. 
+
+* After saving or loading objects from the database, your object will have
+an extra attribute, _id. This is a unique identifier. The _id value can be overwritten 
+if you wish.
+
+
+=cut
+
