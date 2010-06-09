@@ -151,7 +151,7 @@ sub save {
 	if( $self->_id  ) {
 		#say $self->collection_name} . ' - save from id';
 		my $id = $self->_id;
-		my $ret = $coll->update( { _id=>$id }, $doc );
+		my $ret = $coll->update( { _id=>$id }, $doc, { upsert=>1 } );
 		return $id;
 	} else {
 		if( ref $self->_mxm_config->{_pk} ) {

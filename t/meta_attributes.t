@@ -1,14 +1,12 @@
 use strict;
 use warnings;
-use Test::More tests => 8;
+use Test::More tests => 6;
 
 package Test::Person;
 use Moose;
 with 'MooseX::Mongo::Document' => {
     -collection_name => 'people',
     -as              => 'Person',
-    -alias=>{ 'find_one' => '_find_one' },
-	-excludes=>['find_one'] 
 };
 has 'name' => ( is=>'rw', isa=>'Str', required=>1 );
 
@@ -36,7 +34,7 @@ $db->run_command({ drop=>'simpsons' });
 	is( $people->find_one({ name => 'Homer' })->{name}, 'Homer', 'role param collection_name'); 
 }
 {
-	my $homer = Person->_find_one({ name=>'Homer'});
+	my $homer = Person->find_one({ name=>'Homer'});
 	is( $homer->name, 'Homer', 'as alias working');
 }
 {
@@ -45,13 +43,6 @@ $db->run_command({ drop=>'simpsons' });
 		->get_collection('simpsons')->find_one({ name=>'Marge' });
 	is( ref($marge), 'HASH', 'as alias keeps collection change across');
 }
-{
-	my $marge = Person->_find_one({ name=>'Marge' });
-	is( ref($marge), 'Person', 'method alias ok');
-}
-{
-	my $marge = Test::Person->_find_one({ name=>'Marge' });
-	is( ref($marge), 'Test::Person', 'package as alias consistent');
-}
 
 $db->run_command({  'dropDatabase' => 1  }); 
+

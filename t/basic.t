@@ -48,5 +48,4 @@ package main;
 	is( $cnt, 2 , 'cursor works' );
 }
 
-$db->run_command({ drop=>'person' }); 
 $db->run_command({  'dropDatabase' => 1  }); 
