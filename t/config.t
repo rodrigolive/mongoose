@@ -4,7 +4,7 @@ use Test::More tests => 8;
 
 package Test::Person;
 use Moose;
-with 'MooseX::Mongo::Document' => {
+with 'Mongoose::Document' => {
     -collection_name => 'people',
     -as              => 'Person',
     -alias=>{ 'find_one' => '_find_one' },
@@ -13,15 +13,15 @@ with 'MooseX::Mongo::Document' => {
 has 'name' => ( is=>'rw', isa=>'Str', required=>1 );
 
 package main;
-use MooseX::Mongo;
-my $db = MooseX::Mongo->db( '_mxm_testing' );
+use Mongoose;
+my $db = Mongoose->db( '_mxm_testing' );
 
 my $homer = Test::Person->new( name => "Homer" );
 
 $db->run_command({ drop=>'people' }); 
 $db->run_command({ drop=>'simpsons' }); 
 
-#MooseX::Mongo->naming( sub{ uc(shift) } );
+#Mongoose->naming( sub{ uc(shift) } );
 {
 	$homer->save;
 	my $people = $db->get_collection('people');

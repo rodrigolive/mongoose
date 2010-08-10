@@ -4,14 +4,14 @@ use Test::More tests => 4;
 
 package Person;
 use Moose;
-with 'MooseX::Mongo::Document';
+with 'Mongoose::Document';
 
 package Address;
 use Moose;
-with 'MooseX::Mongo::EmbeddedDocument';
+with 'Mongoose::EmbeddedDocument';
 
 package main;
-is( Person->does('MooseX::Mongo::Document'), 1, 'does doc' );
-is( Person->does('MooseX::Mongo::EmbeddedDocument'), 0, 'does not emb doc' );
-is( Address->does('MooseX::Mongo::Document'), 1, 'does doc too' );
-is( Address->does('MooseX::Mongo::EmbeddedDocument'), 1, 'does embdoc' );
+is( Person->does('Mongoose::Document'), 1, 'does doc' );
+is( Person->does('Mongoose::EmbeddedDocument'), 0, 'does not emb doc' );
+is( Address->does('Mongoose::Document'), 1, 'does doc too' );
+is( Address->does('Mongoose::EmbeddedDocument'), 1, 'does embdoc' );

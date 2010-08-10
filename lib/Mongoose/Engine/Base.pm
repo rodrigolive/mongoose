@@ -1,15 +1,15 @@
-package MooseX::Mongo::Engine::Base;
+package Mongoose::Engine::Base;
 use Moose::Role;
 use Params::Coerce;
 use Scalar::Util qw/refaddr reftype/;
 use Carp;
 use List::Util qw/first/;
-use MooseX::Mongo::Cursor; #initializes moose
+use Mongoose::Cursor; #initializes moose
 use v5.10;
 
-with 'MooseX::Mongo::Role::Collapser';
-with 'MooseX::Mongo::Role::Expander';
-with 'MooseX::Mongo::Role::Engine';
+with 'Mongoose::Role::Collapser';
+with 'Mongoose::Role::Expander';
+with 'Mongoose::Role::Engine';
 	
 #has '_id' => ( is=>'rw', isa=>'MongoDB::OID', metaclass=>'DoNotSerialize' );
 #has '_last_state' => ( is=>'rw', isa=>'Str', default=>'', metaclass=>'DoNotSerialize' );
@@ -23,15 +23,15 @@ sub collapse {
 		my $obj = $packed->{$key};
 		if( my $attrib = $self->meta->get_attribute($key) ) {
 			delete $packed->{$key} , next
-				if $attrib->does('MooseX::Mongo::Meta::Attribute::DoNotSerialize');
+				if $attrib->does('Mongoose::Meta::Attribute::DoNotSerialize');
 		}
 		if( my $class =blessed $obj ) {
 			#say "checking.... $class....";
 			if( $class->can('meta') ) { # only mooses from here on 
-				if( $class->does('MooseX::Mongo::EmbeddedDocument') ) {
+				if( $class->does('Mongoose::EmbeddedDocument') ) {
 					$packed->{$key} = $obj->collapse( @from, $self ) or next;
 				}
-				elsif( $class->does('MooseX::Mongo::Document') ) {
+				elsif( $class->does('Mongoose::Document') ) {
 					$obj->save( @from, $self );
 					my $id = $obj->_id;
 					$packed->{$key} = { '$ref' => $class->_mxm_config->{collection_name}, '$id'=>$id };
@@ -54,9 +54,9 @@ sub collapse {
 			my $aryclass;
 			for( @$obj ) {
 				$aryclass ||= blessed( $_ );
-				if( $aryclass && $aryclass->does('MooseX::Mongo::EmbeddedDocument') ) {
+				if( $aryclass && $aryclass->does('Mongoose::EmbeddedDocument') ) {
 					push @docs, $_->collapse(@from, $self);
-				} elsif( $aryclass && $aryclass->does('MooseX::Mongo::Document') ) {
+				} elsif( $aryclass && $aryclass->does('Mongoose::Document') ) {
 					$_->save( @from, $self );
 					my $id = $_->_id;
 					push @docs, { '$ref' => $aryclass->_mxm_config->{collection_name}, '$id'=>$id };
@@ -101,9 +101,9 @@ sub expand {
 		#say "type=$type" . $type->is_a_type_of('ArrayRef');
 		#say "type=$type, class=$class" . $type->{type_parameter};
 		if( $class->can('meta') ) { # moose subobject
-			if( $class->does('MooseX::Mongo::EmbeddedDocument') ) {
+			if( $class->does('Mongoose::EmbeddedDocument') ) {
 				$doc->{$name} = $class->new( $doc->{$name} ) ;
-			} elsif( $class->does('MooseX::Mongo::Document') ) {
+			} elsif( $class->does('Mongoose::Document') ) {
 				if( my $_id = delete $doc->{$name}->{'$id'} ) {
 					if( my $circ_doc = first { $_->{_id} eq $_id } @from ) {
 						$doc->{$name} = bless( $circ_doc , $class );
@@ -141,6 +141,11 @@ sub expand {
 		$obj->$meth($_->{value});
 	}
 	return $obj;
+}
+
+sub unbless {
+	require Data::Structure::Util;
+	Data::Structure::Util::unbless( shift );
 }
 
 sub save {
@@ -196,8 +201,8 @@ sub delete {
 #}
 
 sub db {
-	return MooseX::Mongo->db
-		or croak 'MongoDB not set. Set MooseX::Mongo->db("name") first';
+	return Mongoose->db
+		or croak 'MongoDB not set. Set Mongoose->db("name") first';
 }
 
 sub collection {
@@ -241,7 +246,7 @@ sub _primary_key_from_hash {
 
 sub find {
 	my ($self,$query,$attrs) = @_;
-	my $cursor = bless $self->collection->find($query,$attrs), 'MooseX::Mongo::Cursor';
+	my $cursor = bless $self->collection->find($query,$attrs), 'Mongoose::Cursor';
 	$cursor->_collection_name( $self->_mxm_config->{collection_name} );
 	$cursor->_class( ref $self || $self );
 	return $cursor;
@@ -249,7 +254,7 @@ sub find {
 
 sub query {
 	my ($self,$query,$attrs) = @_;
-	my $cursor = bless $self->collection->query($query,$attrs), 'MooseX::Mongo::Cursor';
+	my $cursor = bless $self->collection->query($query,$attrs), 'Mongoose::Cursor';
 	$cursor->_collection_name( $self->_mxm_config->{collection_name} );
 	$cursor->_class( ref $self || $self );
 	return $cursor;

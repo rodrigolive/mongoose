@@ -3,14 +3,14 @@ use warnings;
 use Test::More tests => 6;
 
 package main;
-use MooseX::Mongo;
-my $db = MooseX::Mongo->db( '_mxm_testing' );
+use Mongoose;
+my $db = Mongoose->db( '_mxm_testing' );
 $db->run_command({ drop => 'binarytree' });
 
 {
 	package Test::BinaryTree;
 	use Moose;
-	with 'MooseX::Mongo::Document';
+	with 'Mongoose::Document';
 
 	  has 'node' => ( is => 'rw', isa => 'HashRef' );
 

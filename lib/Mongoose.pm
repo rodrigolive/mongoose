@@ -1,8 +1,8 @@
 use v5.10;
-package MooseX::Mongo;
+package Mongoose;
 use MongoDB;
 use MooseX::Singleton;
-use MooseX::Mongo::Meta::Attribute::DoNotSerialize;
+use Mongoose::Meta::AttributeTraits;
 
 has '_db' => ( is => 'rw', isa => 'MongoDB::Database' );
 has 'connection' => (
@@ -31,22 +31,16 @@ sub db {
 }
 
 
-#package Moose::Meta::Attribute::Custom::DoNotSerialize;
-#use Moose::Role;
-
-package Moose::Meta::Attribute::Custom::Trait::PrimaryKey;
-use Moose::Role;
-
 1;
 
 =head1 SYNOPSIS
 
 	package Person;
-	with 'MooseX::Mongo::Document';
+	with 'Mongoose::Document';
 	has 'name' => ( is=>'rw', isa=>'Str' );
 
 	package main;
-	use MooseX::Mongo;
+	use Mongoose;
 
 	my $person = Person->new( name=>'Jack' );
 	$person->save;

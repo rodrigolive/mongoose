@@ -1,4 +1,4 @@
-package MooseX::Mongo::Digest;
+package Mongoose::Digest;
 use Moose;
 	sub modified {
 		my ($self)=@_;

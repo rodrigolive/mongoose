@@ -4,7 +4,7 @@ use Test::More tests => 6;
 
 package BankAccount;
 use Moose;
-with 'MooseX::Mongo::Document';
+with 'Mongoose::Document';
 
   has 'balance' => ( isa => 'Int', is => 'rw', default => 0 );
 
@@ -23,7 +23,7 @@ with 'MooseX::Mongo::Document';
 
 package CheckingAccount;
 use Moose;
-with 'MooseX::Mongo::Document';
+with 'Mongoose::Document';
 
   extends 'BankAccount';
 
@@ -39,8 +39,8 @@ with 'MooseX::Mongo::Document';
   };
 
 package main;
-use MooseX::Mongo;
-my $db = MooseX::Mongo->db( '_mxm_testing' );
+use Mongoose;
+my $db = Mongoose->db( '_mxm_testing' );
 $db->run_command({ drop => 'bankaccount' });
 $db->run_command({ drop => 'checkingaccount' });
 

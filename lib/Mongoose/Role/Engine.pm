@@ -1,4 +1,4 @@
-package MooseX::Mongo::Role::Engine;
+package Mongoose::Role::Engine;
 use Moose::Role;
 
 requires 'save';

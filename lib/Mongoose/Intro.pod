@@ -2,7 +2,7 @@
 
 =head1 NAME
 
-MooseX::Mongo - getting started
+Mongoose - getting started
 
 =head1 MOTIVATION
 
@@ -15,17 +15,17 @@ read on MongoDB.
 =head1 GETTING STARTED
 
 To make your Moose classes "Mongoable", all they need is to consume either
-one of two roles: MooseX::Mongo::Document or MooseX::Mongo::EmbeddedDocument.
+one of two roles: Mongoose::Document or Mongoose::EmbeddedDocument.
 
 Then connect to the database. This is done globally here for simplicity sake, 
 but a more object oriented notation is also supported.
 
-	use MooseX::Mongo;
-	MooseX::Mongo->db( db=>'mydb'); # looks for a localhost connection
+	use Mongoose;
+	Mongoose->db( db=>'mydb'); # looks for a localhost connection
 
 	# or, for more control:
 
-	MooseX::Mongo->conn(
+	Mongoose->conn(
 		conn
 		host=>'data.server',
 		port=>4000,
@@ -65,7 +65,7 @@ MongoDB's foreign key system.
 
 =head2 EmbbededDocument
 
-Tells MooseX::Mongo to store this as an embedded document, part of 
+Tells Mongoose to store this as an embedded document, part of 
 a parent document. 
 
 =head1 Why not use KiokuDB?

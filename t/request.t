@@ -2,14 +2,14 @@ use strict;
 use warnings;
 use Test::More tests => 5;
 
-use MooseX::Mongo;
-my $db = MooseX::Mongo->db( '_mxm_testing' );
+use Mongoose;
+my $db = Mongoose->db( '_mxm_testing' );
 $db->run_command({ drop=>'request' }); 
 
 	package Request;
 	use Moose;
 	use Moose::Util::TypeConstraints;
-	with 'MooseX::Mongo::Document';
+	with 'Mongoose::Document';
 
 	use HTTP::Headers  ();
 	use Params::Coerce ();

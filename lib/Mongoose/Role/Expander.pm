@@ -1,4 +1,4 @@
-package MooseX::Mongo::Role::Expander;
+package Mongoose::Role::Expander;
 use Moose::Role;
 
 requires 'expand';

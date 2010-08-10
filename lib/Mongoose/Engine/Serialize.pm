@@ -1,9 +1,9 @@
-package MooseX::Mongo::Engine::Serialize;
+package Mongoose::Engine::Serialize;
 use Moose::Role;
 use MooseX::Storage;
 with Storage;
 
-with 'MooseX::Mongo::Engine::Base';
+with 'Mongoose::Engine::Base';
 
 sub collapse {
 	return shift->pack;
