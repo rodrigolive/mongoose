@@ -1,48 +1,51 @@
 use strict;
 use warnings;
-use Test::More tests => 6;
+use Test::More;
 
-package BankAccount;
-use Moose;
-with 'Mongoose::Document';
+# -------- define classes
+{
+	package BankAccount;
+	use Moose;
+	with 'Mongoose::Document';
 
-  has 'balance' => ( isa => 'Int', is => 'rw', default => 0 );
+	  has 'balance' => ( isa => 'Int', is => 'rw', default => 0 );
 
-  sub deposit {
-      my ( $self, $amount ) = @_;
-      $self->balance( $self->balance + $amount );
-  }
+	  sub deposit {
+		  my ( $self, $amount ) = @_;
+		  $self->balance( $self->balance + $amount );
+	  }
 
-  sub withdraw {
-      my ( $self, $amount ) = @_;
-      my $current_balance = $self->balance();
-      ( $current_balance >= $amount )
-          || confess "Account overdrawn";
-      $self->balance( $current_balance - $amount );
-  }
+	  sub withdraw {
+		  my ( $self, $amount ) = @_;
+		  my $current_balance = $self->balance();
+		  ( $current_balance >= $amount )
+			  || confess "Account overdrawn";
+		  $self->balance( $current_balance - $amount );
+	  }
+}
+{
+	package CheckingAccount;
+	use Moose;
+	with 'Mongoose::Document';
 
-package CheckingAccount;
-use Moose;
-with 'Mongoose::Document';
+	  extends 'BankAccount';
 
-  extends 'BankAccount';
+	  has 'overdraft_account' => ( isa => 'BankAccount', is => 'rw' );
 
-  has 'overdraft_account' => ( isa => 'BankAccount', is => 'rw' );
-
-  before 'withdraw' => sub {
-      my ( $self, $amount ) = @_;
-      my $overdraft_amount = $amount - $self->balance();
-      if ( $self->overdraft_account && $overdraft_amount > 0 ) {
-          $self->overdraft_account->withdraw($overdraft_amount);
-          $self->deposit($overdraft_amount);
-      }
-  };
-
+	  before 'withdraw' => sub {
+		  my ( $self, $amount ) = @_;
+		  my $overdraft_amount = $amount - $self->balance();
+		  if ( $self->overdraft_account && $overdraft_amount > 0 ) {
+			  $self->overdraft_account->withdraw($overdraft_amount);
+			  $self->deposit($overdraft_amount);
+		  }
+	  };
+}
+# ---------- run tests
 package main;
 use Mongoose;
 my $db = Mongoose->db( '_mxm_testing' );
-$db->run_command({ drop => 'bankaccount' });
-$db->run_command({ drop => 'checkingaccount' });
+$db->run_command({  'dropDatabase' => 1  }); 
 
 {
 	my $savings_account = BankAccount->new( balance => 250 );
@@ -55,11 +58,14 @@ $db->run_command({ drop => 'checkingaccount' });
 	$checking_account->save;
 }
 {
-	my $b = BankAccount->find_one({ balance=>"250" });
+	my $ba = BankAccount->collection->find_one({ balance=>250 });
+	ok( ref $ba, 'found coll ba' );
+	my $b = BankAccount->find_one({ balance=>250 });
+	ok( ref $b, 'found ba' );
 	ok( $b->isa('BankAccount'), 'blessed ba' );
 }
 {
-	my $b = CheckingAccount->find_one({ balance=>"100" });
+	my $b = CheckingAccount->find_one({ balance=>100 });
 	ok( $b->isa('CheckingAccount'), 'blessed ca' );
 	ok( $b->overdraft_account->isa('BankAccount'), 'rel blessed' );
 	is( $b->overdraft_account->balance, 250, 'rel balance ok' );
@@ -73,3 +79,5 @@ $db->run_command({ drop => 'checkingaccount' });
 }
 
 $db->run_command({  'dropDatabase' => 1  }); 
+
+done_testing;

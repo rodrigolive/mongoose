@@ -1,6 +1,6 @@
 use strict;
 use warnings;
-use Test::More tests => 6;
+use Test::More;
 
 package main;
 use Mongoose;
@@ -54,11 +54,13 @@ $db->run_command({ drop => 'binarytree' });
 	my $bt2 = new Test::BinaryTree( parent=>$bt, node=>{ name=>'Sawyer', candidate=>8 } );
 	my $bt3 = new Test::BinaryTree( parent=>$bt, node=>{ name=>'Kate', candidate=>4 } );
 	#print $bt2->dump;
-	$bt2->save;
+	$bt->save;
 }
 {
+	my $btc = Test::BinaryTree->collection->find_one({ node=>{ name=>'Jack', candidate=>15 } });
+	ok( ref $btc eq 'HASH', 'hashref real coll' );
 	my $bt = Test::BinaryTree->find_one({ node=>{ name=>'Jack', candidate=>15 } });
-	ok( $bt->isa('HashRef'), 'hashref node retrieved' ); # finds a Ref
+	ok( ref $bt->node eq 'HASH', 'hashref node inflated' ); 
 	#print $bt->dump;
 }
 {
@@ -67,3 +69,4 @@ $db->run_command({ drop => 'binarytree' });
 }
 
 #$db->run_command({  'dropDatabase' => 1  }); 
+done_testing;

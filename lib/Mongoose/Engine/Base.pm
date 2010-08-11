@@ -81,6 +81,7 @@ sub expand {
 		my $type = $attr->type_constraint or next;
 		my $class = $self->_get_blessed_type( $type );
 		$class or next;
+
 		if( $type->is_a_type_of('ArrayRef') ) {
 			my $array_class = $type->{type_parameter} . "";
 			#say "ary class $array_class";
@@ -98,8 +99,13 @@ sub expand {
 			$doc->{$name} = \@objs;
 			next;
 		}
+		elsif( $type->is_a_type_of('HashRef') ) {
+			# nothing to do on HASH
+			next;
+		}
 		#say "type=$type" . $type->is_a_type_of('ArrayRef');
 		#say "type=$type, class=$class" . $type->{type_parameter};
+
 		if( $class->can('meta') ) { # moose subobject
 			if( $class->does('Mongoose::EmbeddedDocument') ) {
 				$doc->{$name} = $class->new( $doc->{$name} ) ;
