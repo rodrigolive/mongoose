@@ -1,18 +1,20 @@
 use strict;
 use warnings;
-use Test::More tests => 8;
+use Test::More;
 
 use Mongoose;
 my $db = Mongoose->db( '_mxm_testing' );
 $db->run_command({ drop=>'person' }); 
 
-package Person;
-use Moose;
-with 'Mongoose::Document';
+{
+	package Person;
+	use Moose;
+	with 'Mongoose::Document';
 
-has 'name' => ( is=>'rw', isa=>'Str', required=>1 );
-has 'age' => ( is=>'rw', isa=>'Int', default=>40 );
-has 'spouse' => ( is=>'rw', isa=>'Person' );
+	has 'name' => ( is=>'rw', isa=>'Str', required=>1 );
+	has 'age' => ( is=>'rw', isa=>'Int', default=>40 );
+	has 'spouse' => ( is=>'rw', isa=>'Person' );
+}
 
 package main;
 {
@@ -46,6 +48,14 @@ package main;
 		$cnt++;
 	}
 	is( $cnt, 2 , 'cursor works' );
+
+	$cnt = 0;
+	Person->find->each( sub {
+		$cnt++;
+	});
+	is( $cnt, 2 , 'each cursor works' );
 }
 
 $db->run_command({  'dropDatabase' => 1  }); 
+
+done_testing;

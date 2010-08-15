@@ -1,4 +1,6 @@
 package Mongoose::Document;
+use strict;
+use Mongoose;
 use MooseX::Role::Parameterized;
 use Mongoose::Meta::AttributeTraits;
 
@@ -27,27 +29,49 @@ role {
 		# sanitize the class name
 		Mongoose->naming->( $class_name );
 	};
+
+	# load the selected engine
 	my $engine = $p->{'-engine'} || 'Mongoose::Engine::Base';
 	Class::MOP::load_class($engine);
 
-	# import the engine role
+	# import the engine role into this class
 	with $engine;
 
-	# aliasing
-	if( my $as = $p->{'-as'} ) {
-		#my $as_class = Moose::Meta::Class->create( $as, superclasses=>[ $class_name ] );
-		no strict;
-		*{$as . "::"} = \*{$class_name . "::"};
-	}
-
 	# attributes
-	has '_id' => ( is=>'rw', isa=>'MongoDB::OID', traits=>['DoNotSerialize'] );
+	has '_id' => ( is=>'rw', isa=>'Any', traits=>['DoNotSerialize'] );
 
 	my $config  = {
 		pk => $p->{'-pk'},
+		as => $p->{'-as'},
 		collection_name => $collection_name,
 	};
-	method "_mxm_config" => sub{ $config };
+	#method "_mxm_config" => sub{ $config };
+	$class_name->meta->{mongoose_config} = $config;
+
+	# aliasing
+	if( my $as = $p->{'-as'} ) {
+		no strict;
+		*{$as . "::"} = \*{$class_name . "::"};
+		$as->meta->{mongoose_config} = $config;
+	}
+
 };
+
+=head1 NAME
+
+Mongoose::Document - A Mongo document role
+
+=head1 SYNOPSIS
+
+	package Person;
+	use Moose;
+	with 'Mongoose::Document';
+	has 'name' => ( is=>'rw', isa=>'Str', required=>1 );
+
+=head1 SEE ALSO
+
+Read the Mongoose intro or cookbook. 
+
+=cut
 
 1;

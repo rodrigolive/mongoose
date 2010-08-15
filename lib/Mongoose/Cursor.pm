@@ -16,4 +16,42 @@ around 'next' => sub {
 	return $class->expand( $doc );
 };
 
+sub each(&) {
+	my $self = shift;
+	my $func = shift;
+	while( my $r = $self->next ) {
+		last unless defined $func->( $r ) 
+	}
+}
+
+=head1 NAME
+
+Mongoose::Cursor
+
+=head1 DESCRIPTION
+
+Extends L<Mongoose::Cursor>. 
+
+Wraps L<MongoDB::Cursor>'s C<next> method, so that it expands 
+a document into a class.
+
+=head1 METHODS
+
+For your convenience:
+
+=head2 each
+
+Iterates over a cursor, calling your sub.
+
+	Person->find->each( sub {
+		my $obj = shift;
+
+		# do stuff
+
+		# return undef to break out
+		return undef if $done;
+	});
+
+=cut 
+
 1;

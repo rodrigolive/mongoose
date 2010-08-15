@@ -6,6 +6,7 @@ use Mongoose;
 my $db = Mongoose->db( '_mxm_testing' );
 $db->run_command({ drop=>'request' }); 
 
+{
 	package Request;
 	use Moose;
 	use Moose::Util::TypeConstraints;
@@ -47,6 +48,7 @@ $db->run_command({ drop=>'request' });
 			coerce  => 1,
 			default => sub { HTTP::Headers->new }
 			);
+}
 
 package main;
 {

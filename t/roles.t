@@ -2,13 +2,19 @@ use strict;
 use warnings;
 use Test::More tests => 4;
 
-package Person;
-use Moose;
-with 'Mongoose::Document';
+{
+	package Person;
+	use Moose;
+	with 'Mongoose::Document';
+	has 'address' => ( is=>'rw', isa=>'Address' );
+}
 
-package Address;
-use Moose;
-with 'Mongoose::EmbeddedDocument';
+{
+	package Address;
+	use Moose;
+	with 'Mongoose::EmbeddedDocument';
+	use namespace::autoclean;
+}
 
 package main;
 is( Person->does('Mongoose::Document'), 1, 'does doc' );

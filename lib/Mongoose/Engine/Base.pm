@@ -34,7 +34,7 @@ sub collapse {
 				elsif( $class->does('Mongoose::Document') ) {
 					$obj->save( @from, $self );
 					my $id = $obj->_id;
-					$packed->{$key} = { '$ref' => $class->_mxm_config->{collection_name}, '$id'=>$id };
+					$packed->{$key} = { '$ref' => $class->meta->{mongoose_config}->{collection_name}, '$id'=>$id };
 				} 
 			} else {
 				#use Data::Structure::Util 'get_blessed';
@@ -59,7 +59,7 @@ sub collapse {
 				} elsif( $aryclass && $aryclass->does('Mongoose::Document') ) {
 					$_->save( @from, $self );
 					my $id = $_->_id;
-					push @docs, { '$ref' => $aryclass->_mxm_config->{collection_name}, '$id'=>$id };
+					push @docs, { '$ref' => $aryclass->meta->{mongoose_config}->{collection_name}, '$id'=>$id };
 				} else {
 					push @docs, $_;
 				}
@@ -73,9 +73,10 @@ sub collapse {
 sub expand {
 	my ($self,$doc,@from)=@_;
 	my @later;
-	my $coll_name = $self->_mxm_config->{collection_name};
-	my $class = ref $self || $self;
-	for my $attr ( $class->meta->get_all_attributes ) {
+	my $config = $self->meta->{mongoose_config};
+	my $coll_name = $config->{collection_name};
+	my $class_main = ref $self || $self;
+	for my $attr ( $class_main->meta->get_all_attributes ) {
 		my $name = $attr->name;
 		next unless exists $doc->{$name};
 		my $type = $attr->type_constraint or next;
@@ -141,7 +142,7 @@ sub expand {
 	#}
 	#my $obj = $coll_name->new( $doc );
 	return undef unless defined $doc;
-	my $obj = bless $doc => $class;
+	my $obj = bless $doc => $class_main;
 	for( @later )  {
 		my $meth = $_->{attrib};
 		$obj->$meth($_->{value});
@@ -165,7 +166,7 @@ sub save {
 		my $ret = $coll->update( { _id=>$id }, $doc, { upsert=>1 } );
 		return $id;
 	} else {
-		if( ref $self->_mxm_config->{_pk} ) {
+		if( ref $self->meta->{mongoose_config}->{_pk} ) {
 			#say ref($doc) . ' - upsert from pk';
 			my $pk = $self->_primary_key_from_hash($doc);
 			my $ret = $coll->update( $pk, $doc, { upsert=>1 } );
@@ -216,7 +217,7 @@ sub collection {
 	my $db = $self->db;
 
 	# getter
-	my $config = $self->_mxm_config;
+	my $config = $self->meta->{mongoose_config};
 	$new_collection or return $config->{collection}
 		|| ( $config->{collection} = $db->get_collection( $config->{collection_name} ) );
 
@@ -246,14 +247,14 @@ sub collection {
 
 sub _primary_key_from_hash {
 	my ($self,$hash)=@_;
-	my @keys = @{ $self->_mxm_config->{_pk} || [] };
+	my @keys = @{ $self->meta->{mongoose_config}->{_pk} || [] };
 	return { map { $_ => $self->{$_} } @keys };
 }
 
 sub find {
 	my ($self,$query,$attrs) = @_;
 	my $cursor = bless $self->collection->find($query,$attrs), 'Mongoose::Cursor';
-	$cursor->_collection_name( $self->_mxm_config->{collection_name} );
+	$cursor->_collection_name( $self->meta->{mongoose_config}->{collection_name} );
 	$cursor->_class( ref $self || $self );
 	return $cursor;
 }
@@ -261,7 +262,7 @@ sub find {
 sub query {
 	my ($self,$query,$attrs) = @_;
 	my $cursor = bless $self->collection->query($query,$attrs), 'Mongoose::Cursor';
-	$cursor->_collection_name( $self->_mxm_config->{collection_name} );
+	$cursor->_collection_name( $self->meta->{mongoose_config}->{collection_name} );
 	$cursor->_class( ref $self || $self );
 	return $cursor;
 }

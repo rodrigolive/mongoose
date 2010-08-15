@@ -2,40 +2,192 @@
 
 =head1 NAME
 
-Mongoose - getting started
+Mongoose - an Introduction
 
 =head1 MOTIVATION
 
 This module is an attempt to bring together the full power 
-of Moose into one of the hottest new databases out there MongoDB.
+of Moose into one of the hottest new databases out there: MongoDB.
 
 Before using this module you should take a little time to 
 read on MongoDB. 
 
+=head1 Why not use KiokuDB?
+
+KiokuDB is an awesome module that maps objects to data
+and caters to a wide variety of backends. Currently there's even a
+MongoDB backend that may suit your needs. 
+
+So, why use Mongoose instead?
+
+=over 4
+
+=item *
+
+You want your objects to have their own collection. KiokuDB stores all objects in 
+a single collection. MongoDB performs best the more collections you have.
+
+=item *
+
+You want to be able to store relations as either embedded documents or
+foreign documents. KiokuDB embeds everything. Here you get to choose.
+
+=item *
+
+You want to abstract your data from your class representation. KiokuDB stores
+an extra field called __CLASS__ that ties data to its representation. 
+It's not a bad decision, it's just a design choice. 
+
+=item *
+
+You don't need to keep a scope. KiokuDB will keep objects in scope for
+you, avoiding breakage in relationships. Here nothing is kept in scope.
+
+=item *
+
+You don't plan to use transactions. KiokuDB is transaction ready. 
+But MongoDB is not. So, what's the point here?
+
+=item *
+
+You feel adventurous. 
+
+If you don't need any of this, go grab KiokuDB. It's much more configurable,
+stable and you get the option to switch backends in the future. 
+
+=back
+
+=head1 REQUIREMENTS
+
+To use this module, you need:
+
+=head2 MongoDB installed somewhere in your network.
+
+Grab a pre-built copy for your OS from
+L<here|http://www.mongodb.org/downloads>, or build it
+from L<sources|http://www.mongodb.org/display/DOCS/Source+Code>.
+
+=head2 The L<MongoDB> Perl driver
+
+	cpan MongoDB
+	cpan Mongoose
+
+=head2 Moose classes
+
+	package MyClass;
+	use Moose;
+	with 'Mongoose::Document';
+	has 'yada' => ( is=>'rw', isa=>'Str' );
+
+=head1 FEATURES
+
+Some of Mongoose features:
+
+=over 4
+
+=item *
+
+It's fast. Not as fast as working with MongoDB documents directly though.
+But it's way faster than any other ORM and relation-based mapping modules
+out there. 
+
+=item *
+
+* It handles most object relationships, circular references included.
+
+=item *
+
+No persistency. It doesn't manage states for your object. If you save
+your object twice, it writes twice to the database. In most cases,
+this is actually faster than trying to manage states. 
+
+=item *
+
+Primary keys. This is quite a extraneuos concept for objects, and 
+it's not mandatory. But it allows you to automatically control 
+when new objects translate to new MongoDB documents, or just update
+them.  
+
+This is an experimental feature. There are other ways to do this 
+anyway with the MongoDB built-in C<_id> primary-key attribute. 
+
+=item *
+
+Schema-less data. MongoDB does not hold a schema. You can create
+new attributes for your object and delete old ones at your leasure.
+
+=item *
+
+No data-object binding means that you may reuse collections,
+and peruse inheritance to great extent. 
+
+=back
+
+=head1 CAVEATS
+
+=over 4
+
+=item *
+
+This is very much *BETA* software. In fact it's almost alpha, except that the
+API is so simple it will probably not change, so let's call it "beta". 
+
+=item *
+
+This module intrusively imports singleton based methods into your class. It's 
+the price to pay for a simpler user interface and less keystrokes. 
+
+=item *
+
+Object expansion from the database is done using plain bless most of the time.
+Which means your attribute triggers, etc. will not be fired during expansion.
+There are exceptions to this rule though. 
+
+=item *
+
+After saving or loading objects from the database, your object will have
+an extra attribute, C<_id>. This is a unique identifier. The _id value can be overwritten 
+if you wish.
+
+=back
+
 =head1 GETTING STARTED
 
+There are only two steps to start using Mongoose:
+
+1) Create at least one class that consumes a L<Mongoose::Document> tole.
+2) Connect to a database.
+
+MongoDB does not require you to previously create a database, a collection
+or a document schema for your collection. This is done on the fly for you.
+
 To make your Moose classes "Mongoable", all they need is to consume either
-one of two roles: Mongoose::Document or Mongoose::EmbeddedDocument.
+one of two roles: L<Mongoose::Document> or L<Mongoose::EmbeddedDocument>.
 
-Then connect to the database. This is done globally here for simplicity sake, 
-but a more object oriented notation is also supported.
-
-	use Mongoose;
-	Mongoose->db( db=>'mydb'); # looks for a localhost connection
-
-	# or, for more control:
-
-	Mongoose->conn(
-		conn
-		host=>'data.server',
-		port=>4000,
-		db=>'mydb');           
+=head2 Turning your classes into Mongo Documents
 
 The difference between these roles lies in the way objects
 will be later stored and loaded from the DB. 
+
 Read the MongoDB docs if you don't understand the difference. 
 
-Either one of these roles will import into your class the following methods:
+=head3 Document
+
+Akin to a row in the relational model. Relationships are stored using
+MongoDB's foreign key system. 
+
+=head3 EmbbededDocument
+
+Tells Mongoose to store your class as an embedded document, part of 
+a parent document.
+
+This is usually faster than using document-to-document relations. But
+it's not meant for object reuse by foreign documents. 
+
+=head2 Methods you get when using the Document roles
+
+Both C<Document> and C<EmbeddedDocument> will import into
+your class the following methods:
 
 =head3 save
 
@@ -53,96 +205,154 @@ Wraps MongoDB's find method to return a cursor that expands data into objects.
 
 =head3 find_one
 
+Finds exactly one document. 
+
+	my $jack = Person->find_one({ first_name => 'Jack' });
+
 =head3 collection
 
-Returns the MongoDB::Collection object supporting this class. The collection
-is designed 
+Returns the L<MongoDB::Collection> object supporting this class. It's a way 
+to switch quickly back to MongoDB hash documents. 
 
-=head2 Document
+	Person->find_one({ name=>'thyself' }); # isa Person
 
-Akin to a row in the relational model. Relationships are stored using
-MongoDB's foreign key system. 
+	# whereas
 
-=head2 EmbbededDocument
+	Person->collection->find_one({ name=>'thyself' }); # ref = HASH
 
-Tells Mongoose to store this as an embedded document, part of 
-a parent document. 
+=head2 Connecting 
 
-=head1 Why not use KiokuDB?
+Then connect to a database anywhere before starting to use your classes. 
 
-KiokuDB is an awesome distribution that maps objects to data
-and caters to a wide variety of backends. Currently there's even a
-MongoDB backend that may suit your needs. 
+	use Mongoose;
+	Mongoose->db( 'mydb'); # looks for a localhost connection
 
-Why use this module instead?
+	# or, for more control:
 
-* You want your objects to have their own collection. KiokuDB stores all objects in 
-a single collection. MongoDB performs best the more collections you have.
+	Mongoose->db(
+		host=>'mongodb://data.server:4000',
+		db_name=>'mydb'
+	);           
 
-* You want to be able to store relations as either embedded documents or
-foreign documents. KiokuDB embeds everything. Here you get to choose.
+This is done globally here for simplicity sake, 
+but a more object oriented notation is also supported.
 
-* You want to abstract your data from your class representation. KiokuDB stores
-an extra field called __CLASS__ that ties data to its representation. 
-It's not a bad decision, it's just a design choice. 
+=head1 Parameterization
 
-* You don't need to keep a scope. KiokuDB will keep objects in scope for
-you, avoiding breakage in relationships. Here nothing is kept in scope.
+Mongoose roles are L<MooseX::Role::Parameterized|role parameterized>
+for greater flexibility.
 
-* You don't plan to use transactions. KiokuDB is transaction ready. 
-But MongoDB is not. So, what's the point here?
+=head2 Collection naming
 
-* You feel adventurous. 
+You can control the collection name for an individual 
+class this way:
 
-If you don't need any of this, go grab KiokuDB. It's much more configurable,
-stable and you get the option to switch backends in the future. 
+	package My::Mumbo::Jumbo::Class;
+	use Moose;
+	with 'Mongoose::Document' => {
+		-collection_name => 'mumbo_jumbo'	
+	};
 
-=head1 REQUIREMENTS
+=head2 Global collection naming stategy
 
-Moose classes for your schema.
-MongoDB installed somewhere in your network.
-The MongoDB Perl driver.
+By default, Mongoose will turn package names into collections
+this way:
 
-=head1 FEATURES
+	Package name          | Collection name
+	----------------------+---------------------
+	Person                | person
+	Humpty::Dumpty        | humpty_dumpty
+	HumptyDumpty          | humpty_dumpty
+	MyApp::Schema::Jumbo  | myapp_schema_jumbo
 
-Some of the features:
+You can change this anytime, by setting the
+C<Mongoose->naming> closure:
 
-* It's fast. Not as fast as working with MongoDB documents directly though.
-But it's way faster than any other ORM and relation-based mapping modules
-out there. 
+	# take off a prefix and return
+	#  a lower case collection name
+	Mongoose->naming( sub{
+		my $pkg = shift;
+		$pkg =~ s{^MyApp::Schema::}{}g;
+		return lc $pkg;
+	});
+	
+=head2 Aliasing
 
-* It handles most object relationships, circular references included.
+Mongoose has 2 types of built-in aliasing:
 
-* No persistency. It doesn't manage states for your object. If you save
-your object twice, it writes twice to the database. In most cases,
-this is actually faster than trying to manage states. 
+=head3 Package aliasing
 
-* Primary keys. This is quite a extraneuos concept for objects, and 
-it's not mandatory. But it allows you to automatically control 
-when new objects translate to new MongoDB documents, or just update
-them. 
+To make a long package name shorter, use:
 
-* Schema-less data. MongoDB does not hold a schema. You can create
-new attributes for your object and delete old ones at your leasure.
+	package My::Mumbo::Jumbo::Class;
+	with 'Mongoose::Document' => {
+		-as    => 'Mumbo',
+	};
 
-* No data-object binding means that you may reuse collections,
-and peruse inheritance to a great extent. 
+	# then in your code
 
-=head1 CAVEATS
+	my $obj = Mumbo->find_one({ flavor=>'gum' })
 
-* This is very much *BETA* software. In fact it's almost alpha, except that the
-API is so simple it will probably not change, so let's call it "beta". 
+	print ref $obj;
+	# prints 'My::Mumbo::Jumbo::Class'
 
-* This module intrusively imports singleton based methods into your class. It's 
-the price to pay for a simpler user interface and less keystrokes. 
+	print $obj->isa('Mumbo')
+	# prints 1
 
-* Object expansion from the database is done using plain bless most of the time.
-Which means your attribute triggers, etc. will not be fired during expansion.
-There are exceptions to this rule though. 
+=head3 Method aliasing
 
-* After saving or loading objects from the database, your object will have
-an extra attribute, _id. This is a unique identifier. The _id value can be overwritten 
-if you wish.
+In case you don't want a C<find_one> or C<save> method
+polluting your class.
+
+	package BankAccount;
+	with 'Mongoose::Document' => {
+		-alias    => { 'find_one' => '_find_one' },
+		-excludes => { 'find_one' },
+	};
+
+=head3 Primary keys
+
+The basic way MongoDB deals with primary keys is by using 
+the C<_id> attribute. By default, a L<MongoDB::OID> is assigned
+to each object you commit to the database with C<save>. 
+
+Checkout this L<Devel::REPL> example:
+	
+	$ re.pl
+	> my $hurley = Person->new(name=>'Hurley');                                                                                                                                         
+	$Person1 = Person=HASH(0x102099d08);
+	> $hurley->dump;                                                                                                                                                                    
+	$VAR1 = bless( {
+					 'name' => 'Hurley'
+				   }, 'Person' );
+	> $hurley->save;                                                                                                                                                                    
+	4c683525a74100a8df000000                                                                                                                                                            $ $hurley->dump;         
+	> $hurley->dump;                                                                                                                                                                    
+	$VAR1 = bless( {
+					 '_id' => bless( {
+									   'value' => '4c683525a74100a8df000000'
+									 }, 'MongoDB::OID' ),
+					 'name' => 'Hurley'
+				   }, 'Person' );
+
+This is pretty standard stuff. 
+
+Now, for a more control over your C<_id> attribute, just set it to whatever
+you please:
+
+	$ my $hurley = Person->new(name=>'Hurley', _id=>99 );                                                                                                                               
+$Person1 = Person=HASH(0x100e56d38);
+$ $hurley->save;                                                                                                                                                                    
+99                                                                                                                                                                                  $ $hurley
+$Person1 = Person=HASH(0x100e56d38);
+$ $hurley->dump                                                                                                                                                                     
+$VAR1 = bless( {
+                 '_id' => 99,
+                 'name' => 'Hurley'
+               }, 'Person' );
+
+
+
 
 
 =cut
