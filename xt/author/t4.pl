@@ -1,7 +1,7 @@
   package Address;
   use Moose;
   use Moose::Util::TypeConstraints;
-  with 'EmbeddedDocument';
+  with 'Mongoose::EmbeddedDocument';
 
   use Locale::US;
   use Regexp::Common 'zip';
@@ -28,7 +28,7 @@
   package Company;
   use Moose;
   use Moose::Util::TypeConstraints;
-  with 'Document';
+  with 'Mongoose::Document';
 
   has 'name' => ( is => 'rw', isa => 'Str', required => 1 );
   has 'address'   => ( is => 'rw', isa => 'Address' );
@@ -50,7 +50,7 @@
 
   package Person;
   use Moose;
-  with 'Document';
+  with 'Mongoose::Document';
 
   has 'first_name' => ( is => 'rw', isa => 'Str', required => 1 );
   has 'last_name'  => ( is => 'rw', isa => 'Str', required => 1 );
@@ -72,7 +72,7 @@
 
   package Employee;
   use Moose;
-  with 'Document';
+  with 'Mongoose::Document';
 
   extends 'Person';
 
@@ -87,9 +87,9 @@
 
 package main;
 use v5.10;
-use MooseX::Mongo;
+use Mongoose;
 use Benchmark;
-my $db = MooseX::Mongo->db( 'mediadb' );
+my $db = Mongoose->db( 'mediadb' );
 sub cleanup {
 	$db->run_command({ drop => 'address' });
 	$db->run_command({ drop => 'company' });
