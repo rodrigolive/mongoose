@@ -1,15 +1,13 @@
-use v5.10;
 package Mongoose;
 use MongoDB;
 use MooseX::Singleton;
 use Mongoose::Meta::AttributeTraits;
 
-has '_db' => ( is => 'rw', isa => 'MongoDB::Database' );
+has '_db' => ( is => 'rw', isa => 'HashRef[MongoDB::Database]' );
 
 has 'connection' => (
     is      => 'rw',
     isa     => 'MongoDB::Connection',
-    default => sub { MongoDB::Connection->new }
 );
 has 'naming' => (
     is      => 'rw',
@@ -26,20 +24,31 @@ has 'naming' => (
 
 sub db { 
 	my $self = shift;
-
+	my $key = 'default';
 	if( scalar(@_)==1 && defined $_[0] ) {
-		$self->_db( __PACKAGE__->connection->get_database( $_[0] ) )
+     	$self->connection( MongoDB::Connection->new );
+		$self->_db({ $key => $self->connection->get_database( $_[0] ) })
 	}
 	elsif( scalar(@_)>2 ) {
 		my %p = @_;
-		$self->connection( MongoDB::Connection->new( @_ ) );
-		$self->_db( __PACKAGE__->connection->get_database( $p{db_name} ) )
+		$key = delete($p{class}) || $key;
+		$self->connection( MongoDB::Connection->new( @_ ) ) 
+			unless ref $self->connection;
+		$self->_db({ $key => $self->connection->get_database( $p{db_name} ) })
 	}
-	return $self->_db;
+	return $self->_db->{default};
 }
 
+sub _db_for_class {
+	my ($self, $class) = @_;
+	return $self->_db->{$class} || $self->_db->{default};
+}
 
 1;
+
+=head1 NAME
+
+Mongoose - MongoDB document to Moose object mapper
 
 =head1 SYNOPSIS
 
@@ -61,6 +70,8 @@ sub db {
 	while( my $person = $cursor->next ) {
 		say "You're " . $person->name;	
 	}
+
+	$person->delete;
 
 =head1 DESCRIPTION
 
@@ -123,12 +134,27 @@ Defaults to whatever MongoDB defaults.
 
 Fork me on github: L<http://github.com/rodrigolive/mongoose>
 
-=head1 STATUS
+=head1 BUGS
 
-This is a WIP, *alpha* quality software.
+This is a WIP, barely *beta* quality software. 
+
+Report bugs via RT. Send me test cases.
 
 =head1 TODO
 
+* Better error control
+
+* Finish-up multiple database support
+
 * Allow query->fields to control which fields get expanded into the object. 
+
 * Cleanup internals.
+
 * More tests and use cases.
+
+* Better documentation.
+
+=head1 SEE ALSO
+
+L<KiokuDB>
+

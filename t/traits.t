@@ -1,8 +1,6 @@
 use strict;
 use warnings;
 use Test::More;
-use YAML;
-use v5.10;
 
 use Mongoose;
 my $db = Mongoose->db( '_mxm_testing' );
@@ -27,7 +25,6 @@ package main;
 {
 	my $jay = Person->collection->find_one({ name=>'Jay' });
 	die "dope" unless ref $jay;
-	say "DOC=" . Dump $jay;
 }
 
 done_testing;

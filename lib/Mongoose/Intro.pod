@@ -2,7 +2,7 @@
 
 =head1 NAME
 
-Mongoose - an Introduction
+Mongoose::Intro - an introduction
 
 =head1 MOTIVATION
 
@@ -52,10 +52,10 @@ But MongoDB is not. So, what's the point here?
 
 You feel adventurous. 
 
-If you don't need any of this, go grab KiokuDB. It's much more configurable,
-stable and you get the option to switch backends in the future. 
-
 =back
+
+If you don't need any of this, go grab KiokuDB instead.  It's much more
+configurable, stable and you can painlessly switch backends in the future. 
 
 =head1 REQUIREMENTS
 
@@ -67,10 +67,16 @@ Grab a pre-built copy for your OS from
 L<here|http://www.mongodb.org/downloads>, or build it
 from L<sources|http://www.mongodb.org/display/DOCS/Source+Code>.
 
+After intalling the software, start the Mongo daemon:
+
+	mongod -dbpath /path/to/data
+
 =head2 The L<MongoDB> Perl driver
 
 	cpan MongoDB
 	cpan Mongoose
+
+Set the 
 
 =head2 Moose classes
 
@@ -155,8 +161,9 @@ if you wish.
 
 There are only two steps to start using Mongoose:
 
-1) Create at least one class that consumes a L<Mongoose::Document> tole.
-2) Connect to a database.
+1) Create at least one class that consumes a L<Mongoose::Document> role.
+
+2) Connect to a Mongo database.
 
 MongoDB does not require you to previously create a database, a collection
 or a document schema for your collection. This is done on the fly for you.
@@ -166,8 +173,14 @@ one of two roles: L<Mongoose::Document> or L<Mongoose::EmbeddedDocument>.
 
 =head2 Turning your classes into Mongo Documents
 
+There are two roles to make your Moose class a Mongoose document:
+
+* L<Mongoose::Document> 
+
+* L<Mongoose::EmbeddedDocument> 
+
 The difference between these roles lies in the way objects
-will be later stored and loaded from the DB. 
+will be stored (collapsed) into the DB. 
 
 Read the MongoDB docs if you don't understand the difference. 
 
@@ -195,6 +208,12 @@ Saves the current object to the database, inserting the document if needed.
 
 	$person->save;
 
+=head3 delete
+
+Deletes the correspondind document from the database.
+
+	$person->delete;
+
 =head3 find
 
 Wraps MongoDB's find method to return a cursor that expands data into objects.
@@ -220,24 +239,34 @@ to switch quickly back to MongoDB hash documents.
 
 	Person->collection->find_one({ name=>'thyself' }); # ref = HASH
 
-=head2 Connecting 
+=head2 The Default Engine
 
-Then connect to a database anywhere before starting to use your classes. 
+Mongoose comes with a default engine, L<Mongoose::Engine::Base> that takes
+care of expanding and collapsing objects to and from the Mongo database.
 
-	use Mongoose;
-	Mongoose->db( 'mydb'); # looks for a localhost connection
+=head3 Collapsing
 
-	# or, for more control:
+Collapsing is the process of serializing classes. 
 
-	Mongoose->db(
-		host=>'mongodb://data.server:4000',
-		db_name=>'mydb'
-	);           
+Your Moose objects are collapsed by unblessing them until they become
+a hash. Relationships are mantained in the process.
 
-This is done globally here for simplicity sake, 
-but a more object oriented notation is also supported.
+=head3 Expanding
 
-=head1 Parameterization
+Expansion is the process of inflating Mongo documents (plain hashes)
+into Moose objects.
+
+This is done by inspecting the class attribute metadata. The base engine
+tries to do it's best identifying data types. The document is then C<bless>ed 
+into your class. This is faster than calling C<new>, but also means
+that no special attribute methods will be fired, 
+such as setters, triggers or coercion. You've been warned.  
+
+Naturally, there are many cases where
+this guesswork is not enough. These may be addressed in the future
+using attribute traits, but should be fine for most trivial classes.
+
+=head1 CONFIGURATION
 
 Mongoose roles are L<MooseX::Role::Parameterized|role parameterized>
 for greater flexibility.
@@ -265,10 +294,10 @@ this way:
 	HumptyDumpty          | humpty_dumpty
 	MyApp::Schema::Jumbo  | myapp_schema_jumbo
 
-You can change this anytime, by setting the
+You can change this standard anytime, by setting the
 C<Mongoose->naming> closure:
 
-	# take off a prefix and return
+	# remove prefix and return
 	#  a lower case collection name
 	Mongoose->naming( sub{
 		my $pkg = shift;
@@ -276,49 +305,16 @@ C<Mongoose->naming> closure:
 		return lc $pkg;
 	});
 	
-=head2 Aliasing
+=head2 Primary keys
 
-Mongoose has 2 types of built-in aliasing:
-
-=head3 Package aliasing
-
-To make a long package name shorter, use:
-
-	package My::Mumbo::Jumbo::Class;
-	with 'Mongoose::Document' => {
-		-as    => 'Mumbo',
-	};
-
-	# then in your code
-
-	my $obj = Mumbo->find_one({ flavor=>'gum' })
-
-	print ref $obj;
-	# prints 'My::Mumbo::Jumbo::Class'
-
-	print $obj->isa('Mumbo')
-	# prints 1
-
-=head3 Method aliasing
-
-In case you don't want a C<find_one> or C<save> method
-polluting your class.
-
-	package BankAccount;
-	with 'Mongoose::Document' => {
-		-alias    => { 'find_one' => '_find_one' },
-		-excludes => { 'find_one' },
-	};
-
-=head3 Primary keys
-
-The basic way MongoDB deals with primary keys is by using 
+The standard way MongoDB deals with primary keys is by using 
 the C<_id> attribute. By default, a L<MongoDB::OID> is assigned
 to each object you commit to the database with C<save>. 
 
 Checkout this L<Devel::REPL> example:
 	
 	$ re.pl
+	> use Person;
 	> my $hurley = Person->new(name=>'Hurley');                                                                                                                                         
 	$Person1 = Person=HASH(0x102099d08);
 	> $hurley->dump;                                                                                                                                                                    
@@ -335,25 +331,19 @@ Checkout this L<Devel::REPL> example:
 					 'name' => 'Hurley'
 				   }, 'Person' );
 
-This is pretty standard stuff. 
+This is pretty standard MongoDB stuff. 
 
-Now, for a more control over your C<_id> attribute, just set it to whatever
-you please:
+Now, for a more control over your primary key, use 
+the role parameter C<-pk>. 
 
-	$ my $hurley = Person->new(name=>'Hurley', _id=>99 );                                                                                                                               
-$Person1 = Person=HASH(0x100e56d38);
-$ $hurley->save;                                                                                                                                                                    
-99                                                                                                                                                                                  $ $hurley
-$Person1 = Person=HASH(0x100e56d38);
-$ $hurley->dump                                                                                                                                                                     
-$VAR1 = bless( {
-                 '_id' => 99,
-                 'name' => 'Hurley'
-               }, 'Person' );
+	package BankAccount;
+	with 'Mongoose::Document' => {
+		-pk    => [qw/ drivers_license /]
+	};
+	has 'drivers_license' => (is=>'rw', isa=>'Int' );
 
-
-
-
+That way, with every insert or update, the C<drivers_license> field
+is checked with the help of the C<upsert> feature of Mongo.
 
 =cut
 

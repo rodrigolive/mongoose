@@ -22,6 +22,7 @@ my $homer = Test::Person->new( name => "Homer" );
 
 $db->run_command({ drop=>'people' }); 
 $db->run_command({ drop=>'simpsons' }); 
+$db->run_command({ drop=>'FOOBAR' }); 
 
 {
 	$homer->save;
@@ -59,8 +60,19 @@ $db->run_command({ drop=>'simpsons' });
 	my $marge = Test::Person->_find_one({ name=>'Marge' });
 	is( ref($marge), 'Test::Person', 'package as alias consistent');
 }
+{
+	Mongoose->naming( sub{ uc(shift) } );
+	{
+		package FooPkg;
+		use Moose;
+		with 'Mongoose::Document';
+		has 'name' => ( is=>'rw', isa=>'Str', required=>1 );
+	}
 
-#Mongoose->naming( sub{ uc(shift) } );
+	my $f = FooPkg->new( name=>'Yoyo' );
+	$f->save;
+	my @all = $db->FOOPKG->find->all;
+	is( scalar(@all) , 1, 'naming strategy changed' );
+}
 
-$db->run_command({  'dropDatabase' => 1  }); 
 done_testing;

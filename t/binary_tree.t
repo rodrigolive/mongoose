@@ -5,7 +5,7 @@ use Test::More;
 package main;
 use Mongoose;
 my $db = Mongoose->db( '_mxm_testing' );
-$db->run_command({ drop => 'binarytree' });
+$db->run_command({ drop => 'test_binary_tree' });
 
 {
 	package Test::BinaryTree;
@@ -51,9 +51,11 @@ $db->run_command({ drop => 'binarytree' });
 
 {
 	my $bt = new Test::BinaryTree( node=>{ name=>'Jack', candidate=>15 } );
-	my $bt2 = new Test::BinaryTree( parent=>$bt, node=>{ name=>'Sawyer', candidate=>8 } );
-	my $bt3 = new Test::BinaryTree( parent=>$bt, node=>{ name=>'Kate', candidate=>4 } );
-	#print $bt2->dump;
+	my $bt2 = new Test::BinaryTree( node=>{ name=>'Sawyer', candidate=>8 } );
+	my $bt3 = new Test::BinaryTree( node=>{ name=>'Kate', candidate=>4 } );
+	$bt->left( $bt2 );
+	$bt->right( $bt3 );
+	#print $bt->dump;
 	$bt->save;
 }
 {
@@ -62,11 +64,18 @@ $db->run_command({ drop => 'binarytree' });
 	my $bt = Test::BinaryTree->find_one({ node=>{ name=>'Jack', candidate=>15 } });
 	ok( ref $bt->node eq 'HASH', 'hashref node inflated' ); 
 	#print $bt->dump;
+	is( $bt->{node}->{name}, $btc->{node}->{name}, 'data matches' );
+	is( $bt->right->{node}->{name}, 'Kate', 'right node ok' );
+	$bt->left->{node}->{name} = 'Hurley';
+	$bt->save;
 }
 {
-	my $bt = Test::BinaryTree->query({ node=>{ name=>'Sawyer', candidate=>8 } })->next;
+	my $bt = Test::BinaryTree->find_one({ node=>{ name=>'Jack', candidate=>15 } });
+	is( $bt->left->{node}->{name}, 'Hurley', 'left node ok' );
+}
+{
+	my $bt = Test::BinaryTree->query({ node=>{ name=>'Hurley', candidate=>8 } })->next;
 	is( $bt->parent->node->{name}, 'Jack', 'parent retrieved' );	
 }
 
-#$db->run_command({  'dropDatabase' => 1  }); 
 done_testing;

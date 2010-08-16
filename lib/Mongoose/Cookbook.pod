@@ -1,0 +1,94 @@
+=head1 NAME
+
+Mongoose::Cookbook - recipes, recipes
+
+=head1 RECIPES
+
+Here we go.
+
+=head2 Connecting to MongoDB
+
+Then connect to a database anywhere before starting to use your classes. 
+
+	use Mongoose;
+	Mongoose->db( 'mydb'); # looks for a localhost connection
+
+	# or, for more control:
+
+	Mongoose->db(
+		host=>'mongodb://data.server:4000',
+		db_name=>'mydb'
+	);           
+
+This is done globally here for simplicity sake, 
+but a more object oriented notation is also supported.
+
+=head2 Connecting to more than one database
+
+This is a work in progress. Right now this syntax is supported:
+
+	Mongoose->db( class=>'Person', db_name=>'mydbone', ... );
+	Mongoose->db( class=>'Address', db_name=>'mydbtwo', ... );
+
+But this will most certainly change.
+
+=head2 Preventing attributes from being stored
+
+In case your class has attributes you don't want to store in the database.
+
+    package Person;
+    use Moose;
+    with 'Mongoose::Document';
+    has 'name' => ( is => 'rw', isa => 'Str', required => 1 );
+    has 'age'  => ( is => 'rw', isa => 'Int', default  => 40 );
+    has 'salary' => ( is => 'rw', isa => 'Int', traits => ['DoNotSerialize'] );
+
+=head2 One-to-many Relationships
+
+This can be accomplished using the C<ArrayRef> Moose type.
+
+	package Person;
+    use Moose;
+    with 'Mongoose::Document';
+    has 'name' => ( is => 'rw', isa => 'Str', required => 1 );
+    has 'accounts'  => ( is => 'rw', isa => 'ArrayRef[Account]' );
+
+Then, define the Account class, either as a document or embedded document, 
+depending on how you want it stored.
+
+	package Address;
+	use Moose;
+	with Mongoose::EmbeddedDocument;
+	has 'amount' => ...;
+
+=head2 Package aliasing
+
+To make a long package name shorter, use:
+
+	package My::Mumbo::Jumbo::Class;
+	with 'Mongoose::Document' => {
+		-as    => 'Mumbo',
+	};
+
+	# then in your code
+
+	my $obj = Mumbo->find_one({ flavor=>'gum' })
+
+	print ref $obj;
+	# prints 'My::Mumbo::Jumbo::Class'
+
+	print $obj->isa('Mumbo')
+	# prints 1
+
+=head2 Method aliasing
+
+In case you don't want a C<find_one> or C<save> method
+polluting your class.
+
+	package BankAccount;
+	with 'Mongoose::Document' => {
+		-alias    => { 'find_one' => '_find_one' },
+		-excludes => { 'find_one' },
+	};
+
+=cut

@@ -65,4 +65,4 @@ package main;
 	is( Request->find->count, 0, 'nobody left');
 }
 
-$db->run_command({  'dropDatabase' => 1  }); 
+done_testing;

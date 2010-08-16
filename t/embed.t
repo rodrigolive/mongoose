@@ -3,7 +3,7 @@ use warnings;
 use Test::More;
 
 use Mongoose;
-my $db = Mongoose->db( host=>'mongodb://localhost:27017' );
+my $db = Mongoose->db( '_mxm_testing' );
 $db->run_command( { drop => 'person' } );
 
 {
@@ -36,7 +36,5 @@ package main;
 	my $doc = Person->collection->find_one({ name=>'Juanita' });
 	is( $doc->{address}->{street}, 'Elm St.', 'embedded ok' );
 }
-
-#$db->run_command({  'dropDatabase' => 1  }); 
 
 done_testing;

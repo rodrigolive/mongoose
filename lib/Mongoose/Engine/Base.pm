@@ -5,34 +5,30 @@ use Scalar::Util qw/refaddr reftype/;
 use Carp;
 use List::Util qw/first/;
 use Mongoose::Cursor; #initializes moose
-use v5.10;
 
 with 'Mongoose::Role::Collapser';
 with 'Mongoose::Role::Expander';
 with 'Mongoose::Role::Engine';
 	
-#has '_id' => ( is=>'rw', isa=>'MongoDB::OID', metaclass=>'DoNotSerialize' );
-#has '_last_state' => ( is=>'rw', isa=>'Str', default=>'', metaclass=>'DoNotSerialize' );
-
 sub collapse {
-	my ($self, @from )=@_;
+	my ($self, @scope )=@_;
 	return $self
-		if first { refaddr($self) == refaddr($_) } @from; #check for circularity
+		if first { refaddr($self) == refaddr($_) } @scope; #check for circularity
 	my $packed = { %$self }; # cheesely clone the data 
 	for my $key ( keys %$packed ) {
 		my $obj = $packed->{$key};
 		if( my $attrib = $self->meta->get_attribute($key) ) {
 			delete $packed->{$key} , next
-				if $attrib->does('Mongoose::Meta::Attribute::DoNotSerialize');
+				if $attrib->does('Mongoose::Meta::Attribute::Trait::DoNotSerialize');
 		}
 		if( my $class =blessed $obj ) {
 			#say "checking.... $class....";
 			if( $class->can('meta') ) { # only mooses from here on 
 				if( $class->does('Mongoose::EmbeddedDocument') ) {
-					$packed->{$key} = $obj->collapse( @from, $self ) or next;
+					$packed->{$key} = $obj->collapse( @scope, $self ) or next;
 				}
 				elsif( $class->does('Mongoose::Document') ) {
-					$obj->save( @from, $self );
+					$obj->save( @scope, $self );
 					my $id = $obj->_id;
 					$packed->{$key} = { '$ref' => $class->meta->{mongoose_config}->{collection_name}, '$id'=>$id };
 				} 
@@ -55,9 +51,9 @@ sub collapse {
 			for( @$obj ) {
 				$aryclass ||= blessed( $_ );
 				if( $aryclass && $aryclass->does('Mongoose::EmbeddedDocument') ) {
-					push @docs, $_->collapse(@from, $self);
+					push @docs, $_->collapse(@scope, $self);
 				} elsif( $aryclass && $aryclass->does('Mongoose::Document') ) {
-					$_->save( @from, $self );
+					$_->save( @scope, $self );
 					my $id = $_->_id;
 					push @docs, { '$ref' => $aryclass->meta->{mongoose_config}->{collection_name}, '$id'=>$id };
 				} else {
@@ -71,11 +67,12 @@ sub collapse {
 }
 
 sub expand {
-	my ($self,$doc,@from)=@_;
+	my ($self,$doc,$fields,$scope)=@_;
 	my @later;
 	my $config = $self->meta->{mongoose_config};
 	my $coll_name = $config->{collection_name};
 	my $class_main = ref $self || $self;
+	$scope = {} unless ref $scope eq 'HASH';
 	for my $attr ( $class_main->meta->get_all_attributes ) {
 		my $name = $attr->name;
 		next unless exists $doc->{$name};
@@ -89,10 +86,11 @@ sub expand {
 			my @objs;
 			for my $item ( @{ $doc->{$name} || [] } ) {
 				if( my $_id = delete $item->{'$id'} ) {
-					if( my $circ_doc = first { $_->{_id} eq $_id } @from ) {
+					if( my $circ_doc = $scope->{ $_id } ) {
 						push @objs, bless( $circ_doc , $array_class );
 					} else {	
-						my $ary_obj = $array_class->find_one({ _id=>$_id }, undef, @from, $doc );
+						push @$scope, $doc; 
+						my $ary_obj = $array_class->find_one({ _id=>$_id }, undef, $scope );
 						push @objs, $ary_obj if defined $ary_obj;
 					}
 				}
@@ -106,16 +104,17 @@ sub expand {
 		}
 		#say "type=$type" . $type->is_a_type_of('ArrayRef');
 		#say "type=$type, class=$class" . $type->{type_parameter};
-
 		if( $class->can('meta') ) { # moose subobject
 			if( $class->does('Mongoose::EmbeddedDocument') ) {
 				$doc->{$name} = $class->new( $doc->{$name} ) ;
 			} elsif( $class->does('Mongoose::Document') ) {
 				if( my $_id = delete $doc->{$name}->{'$id'} ) {
-					if( my $circ_doc = first { $_->{_id} eq $_id } @from ) {
+					if( my $circ_doc = $scope->{"$_id"} ) {
 						$doc->{$name} = bless( $circ_doc , $class );
+						$scope->{ "$circ_doc->{_id}" } = $doc->{$name}; 
 					} else {	
-						$doc->{$name} = $class->find_one({ _id=>$_id }, undef, @from, $doc );
+						$scope->{ "$doc->{_id}" } = $doc;
+						$doc->{$name} = $class->find_one({ _id=>$_id }, undef, $scope );
 					}
 				}
 			} 
@@ -150,15 +149,15 @@ sub expand {
 	return $obj;
 }
 
-sub unbless {
+sub _unbless {
 	require Data::Structure::Util;
 	Data::Structure::Util::unbless( shift );
 }
 
 sub save {
-	my ($self, @from )=@_;
+	my ($self, @scope )=@_;
 	my $coll = $self->collection;
-	my $doc = $self->collapse( @from );
+	my $doc = $self->collapse( @scope );
 	return unless defined $doc;
 	if( $self->_id  ) {
 		#say $self->collection_name} . ' - save from id';
@@ -166,7 +165,7 @@ sub save {
 		my $ret = $coll->update( { _id=>$id }, $doc, { upsert=>1 } );
 		return $id;
 	} else {
-		if( ref $self->meta->{mongoose_config}->{_pk} ) {
+		if( ref $self->meta->{mongoose_config}->{pk} ) {
 			#say ref($doc) . ' - upsert from pk';
 			my $pk = $self->_primary_key_from_hash($doc);
 			my $ret = $coll->update( $pk, $doc, { upsert=>1 } );
@@ -208,7 +207,8 @@ sub delete {
 #}
 
 sub db {
-	return Mongoose->db
+	my $self=shift;
+	return Mongoose->_db_for_class( ref $self || $self )
 		or croak 'MongoDB not set. Set Mongoose->db("name") first';
 }
 
@@ -247,7 +247,7 @@ sub collection {
 
 sub _primary_key_from_hash {
 	my ($self,$hash)=@_;
-	my @keys = @{ $self->meta->{mongoose_config}->{_pk} || [] };
+	my @keys = @{ $self->meta->{mongoose_config}->{pk} || [] };
 	return { map { $_ => $self->{$_} } @keys };
 }
 
@@ -268,11 +268,62 @@ sub query {
 }
 
 sub find_one {
-	my ($self,$query,$fields, @from) = @_;
+	my ($self,$query,$fields, $from) = @_;
 	my $doc = $self->collection->find_one( $query, $fields );
 	return undef unless defined $doc;
-	return $self->expand( $doc, @from );
+	return $self->expand( $doc, $fields, $from );
 }
 
+=head1 NAME
+
+Mongoose::Engine::Base
+
+=head1 DESCRIPTION
+
+The Mongoose standard engine. Does all the dirty work. Very monolithic. 
+Replace it with your engine if you want. 
+
+=head1 METHODS
+
+=head2 find_one
+
+Just like L<MongoDB::Collection/find_one>, but blesses the hash document
+into your class package.
+
+=head2 find
+
+Just like L<MongoDB::Collection/find>, but returns
+a L<Mongoose::Cursor> of blessed documents.
+
+=head2 query
+
+Just like L<MongoDB::Collection/find>, but returns
+a L<Mongoose::Cursor> of blessed documents.
+
+=head2 delete 
+
+Deletes the document in the database.
+
+=head2 collapse
+
+Turns an object into a hash document. 
+
+=head2 expand
+
+Turns a hash document back into an object.
+
+=head2 collection
+
+Returns the L<MongoDB::Collection> object for this class or object.
+
+=head2 save
+
+Commits the object to the database.
+
+=head2 db
+
+Returns the object's corresponding L<MongoDB::Database> instance.
+
+=cut 
 
 1;

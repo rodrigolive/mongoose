@@ -1,10 +1,13 @@
 package Mongoose::Digest;
 use Moose;
-	sub modified {
+use Digest::SHA;
+
+	sub _modified {
 		my ($self)=@_;
 		my $ls = $self->_last_state;
 		return 1 if !defined($ls) || $ls ne $self->_get_state;
 	}
+
 	sub _get_state {
 		my ($self)=@_;
 		use Digest::SHA qw(sha256_hex);
@@ -19,9 +22,22 @@ use Moose;
 		#$self->_last_state( $ls ) if $ls;
 		return $s;
 	}
+
 	sub _set_state {
 		my ($self)=@_;
 		#$self->_last_state( $self->_get_state );
 	}
+
+=head1 NAME
+
+Mongoose::Digest
+
+=head1 DESCRIPTION
+
+An object persistence state keeper using a SHA 256 digest.
+
+Not used for now, due to performance reasons. 
+
+=cut 
 
 1;

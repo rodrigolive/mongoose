@@ -44,5 +44,5 @@ $db->run_command({ drop=>'simpsons' });
 	is( ref($marge), 'HASH', 'as alias keeps collection change across');
 }
 
-$db->run_command({  'dropDatabase' => 1  }); 
+done_testing;
 

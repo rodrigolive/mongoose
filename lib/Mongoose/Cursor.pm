@@ -16,6 +16,18 @@ around 'next' => sub {
 	return $class->expand( $doc );
 };
 
+around 'all' => sub {
+	my ($orig,$self, @args)=@_;
+	my @docs = $self->$orig(@args);
+
+	return unless scalar @docs > 0;
+
+	my $coll_name = $self->_collection_name; 
+	my $class = $self->_class;
+
+	return map { $class->expand( $_ ) } @docs;
+};
+
 sub each(&) {
 	my $self = shift;
 	my $func = shift;

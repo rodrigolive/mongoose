@@ -38,7 +38,7 @@ role {
 	with $engine;
 
 	# attributes
-	has '_id' => ( is=>'rw', isa=>'Any', traits=>['DoNotSerialize'] );
+	has '_id' => ( is=>'rw', isa=>'MongoDB::OID', traits=>['DoNotSerialize'] );
 
 	my $config  = {
 		pk => $p->{'-pk'},

@@ -45,7 +45,7 @@ use Test::More;
 package main;
 use Mongoose;
 my $db = Mongoose->db( '_mxm_testing' );
-$db->run_command({  'dropDatabase' => 1  }); 
+$db->run_command({  'drop' => 'bank_account'  }); 
 
 {
 	my $savings_account = BankAccount->new( balance => 250 );
@@ -77,7 +77,5 @@ $db->run_command({  'dropDatabase' => 1  });
 	is( ref($ba->{'$id'}), 'MongoDB::OID', 'foreign key stored' );
 	ok( $ba->{'$ref'}, 'make sure its foreign' );
 }
-
-$db->run_command({  'dropDatabase' => 1  }); 
 
 done_testing;

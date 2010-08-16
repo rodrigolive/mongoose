@@ -14,6 +14,7 @@ $db->run_command({ drop=>'person' });
 	has 'name' => ( is=>'rw', isa=>'Str', required=>1 );
 	has 'age' => ( is=>'rw', isa=>'Int', default=>40 );
 	has 'spouse' => ( is=>'rw', isa=>'Person' );
+	has 'crc' => ( is=>'rw', isa=>'Str', traits=>['DoNotSerialize'], default=>'ABCD' );
 }
 
 package main;
@@ -54,8 +55,14 @@ package main;
 		$cnt++;
 	});
 	is( $cnt, 2 , 'each cursor works' );
-}
 
-$db->run_command({  'dropDatabase' => 1  }); 
+	my @objs = Person->find->all;
+	is( scalar(@objs), 2, 'all objs cnt ok' );
+	is( ref($objs[1]), 'Person', 'blessed yup' ); 
+}
+{
+	my $doc = Person->collection->find->next;
+	ok( !defined($doc->{crc}), 'do not serialize' );
+}
 
 done_testing;
