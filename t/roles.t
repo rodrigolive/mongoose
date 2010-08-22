@@ -1,6 +1,6 @@
 use strict;
 use warnings;
-use Test::More tests => 4;
+use Test::More;
 
 {
 	package Person;
@@ -21,3 +21,5 @@ is( Person->does('Mongoose::Document'), 1, 'does doc' );
 is( Person->does('Mongoose::EmbeddedDocument'), 0, 'does not emb doc' );
 is( Address->does('Mongoose::Document'), 1, 'does doc too' );
 is( Address->does('Mongoose::EmbeddedDocument'), 1, 'does embdoc' );
+
+done_testing;

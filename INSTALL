@@ -1,0 +1,33 @@
+INSTALL
+-------
+
+You now the drill:
+
+	make
+	make test
+	make install
+
+Or just use CPAN:
+
+	cpan Mongoose
+
+Or the lighter App::Cpanminus
+
+	cpanm Mongoose
+
+Before installing and running tests, make sure you have a
+MongoDB instance running.
+
+* Setting an alternate testing database
+
+By default tests are run against a MongoDB instance
+on localhost, default port, and DB named '_mongoose_testing'.
+
+To change defaults, set the MONGOOSEDB env variable to a
+comma-separated parameter list as expected by Mongoose->db:
+
+	export MONGOOSEDB=host,mongodb://anotherhost:12345,db_name,test_db_name
+
+* Skipping tests altogether
+
+	export MONGOOSE_SKIP=1

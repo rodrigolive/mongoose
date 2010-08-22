@@ -45,7 +45,11 @@ In case your class has attributes you don't want to store in the database.
 
 =head2 One-to-many Relationships
 
-This can be accomplished using the C<ArrayRef> Moose type.
+This can be accomplished several ways. 
+
+=head3 ArrayRef
+
+Use the C<ArrayRef> Moose type.
 
 	package Person;
     use Moose;
@@ -60,6 +64,67 @@ depending on how you want it stored.
 	use Moose;
 	with Mongoose::EmbeddedDocument;
 	has 'amount' => ...;
+
+But this has a memory and performance cost, since all related rows
+will be loaded in memory during object expansion.
+
+To avoid loading related rows, use a L<Mongoose::Join>
+parameterized type. 
+
+=head3 Mongoose::Join
+
+Establishing a Mongoose::Join relationship will load relationships
+lazily:
+
+	package Person;
+    use Moose; with 'Mongoose::Document';
+    has 'name' => ( is => 'rw', isa => 'Str', required => 1 );
+    has 'accounts'  => ( is => 'rw', isa => 'Mongoose::Join[Account]' );
+
+Then retrieve data with a cursor:
+
+	my $large_acc = $person->accounts->find({ amount => { '$gt' => 100000 } });
+	while( my $account = $large_acc->next ) {
+		...
+	}
+
+=head2 Sugar for Defining Relationships
+
+Use L<Mongoose::Class> instead of C<Moose>.
+
+	package Article;
+	use Mongoose::Class; with 'Mongoose::Document';
+	has 'title' => ( is=>'rw', isa=>'Str', required=>1 );
+	has_one 'author' => 'Author'; 
+	has_many 'comments' => 'Comment'; 
+	belongs_to => 'Account';
+
+=head2 Normalizing a Relationship
+
+Normalization is a relational concept, not natural to the
+document-oriented MongoDB, but an useful approach that
+should sometimes be taken into consideration. 
+
+Sometimes it may just be more adequate than storing relationships
+directly in objects:
+
+	package Authorship;
+	has_one 'author' => 'Author';
+	has_many 'articles' => 'Article';
+
+	package main;
+
+	# create
+	my $authorship = Authorship->new;
+	$authorship->author( Author->new );
+	$authorship->articles->add( Article->new );
+	$authorship->articles->add( Article->new );
+
+	# find
+	my $articles = Authorship->find_one({ author=>$author->_id });
+	while( my $article = $articles->next ) {
+		...
+	}
 
 =head2 Package aliasing
 

@@ -32,6 +32,10 @@ sub collapse {
 					my $id = $obj->_id;
 					$packed->{$key} = { '$ref' => $class->meta->{mongoose_config}->{collection_name}, '$id'=>$id };
 				} 
+				elsif( $class->isa('Mongoose::Join') ) {
+					my @objs = $obj->_save( $self, @scope );
+					$packed->{$key} = \@objs;
+				} 
 			} else {
 				#use Data::Structure::Util 'get_blessed';
 				#say "oo=" . join ',',map { ref } @{get_blessed($obj)};
@@ -117,7 +121,15 @@ sub expand {
 						$doc->{$name} = $class->find_one({ _id=>$_id }, undef, $scope );
 					}
 				}
-			} 
+			} elsif( $class->isa('Mongoose::Join') ) {
+				my $ref_arr = delete( $doc->{$name} );
+				#print "class=$class\n";
+				#$doc->{$name} = bless { parent=>$doc->{'_id'} } => $class;
+				#print "DOC=$doc,  name=$name, docname=" . $doc->{$name};
+				my $ref_class = $type->type_parameter->class ;
+				#$doc->{$name} = bless { parent=>$doc->{'_id'} } => $class;
+				$doc->{$name} = bless { with_class=>$ref_class, children=>$ref_arr } => $class;
+			}
 		}
 		else { #non-moose
 			my $data = delete $doc->{$name};
@@ -159,21 +171,22 @@ sub save {
 	my $coll = $self->collection;
 	my $doc = $self->collapse( @scope );
 	return unless defined $doc;
+
 	if( $self->_id  ) {
-		#say $self->collection_name} . ' - save from id';
+		## update on my id
 		my $id = $self->_id;
 		my $ret = $coll->update( { _id=>$id }, $doc, { upsert=>1 } );
 		return $id;
 	} else {
 		if( ref $self->meta->{mongoose_config}->{pk} ) {
-			#say ref($doc) . ' - upsert from pk';
+			## upsert using a primary key
 			my $pk = $self->_primary_key_from_hash($doc);
 			my $ret = $coll->update( $pk, $doc, { upsert=>1 } );
 			my $id = $coll->find_one( $pk, { _id=>1 } );
 			$self->_id( $id->{_id} );
 			return $id->{_id};
 		} else {
-			#say ref($doc) . ' - save without pk' . exists($doc->{_last_state} );
+			# save without pk
 			my $id = $coll->save( $doc );
 			$self->_id( $id );
 			return $id; 
@@ -276,7 +289,7 @@ sub find_one {
 
 =head1 NAME
 
-Mongoose::Engine::Base
+Mongoose::Engine::Base - heavy lifting done here
 
 =head1 DESCRIPTION
 

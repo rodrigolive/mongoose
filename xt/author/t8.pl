@@ -1,8 +1,8 @@
 package Person;
 use Moose;
-#use MooseX::Mongo::Engine::Serialize;
-with 'MooseX::Mongo::Document' =>
-  { pk => ['name'], };#engine => 'MooseX::Mongo::Engine::Serialize' };
+#use Mongoose::Engine::Serialize;
+with 'Mongoose::Document' =>
+  { pk => ['name'], };#engine => 'Mongoose::Engine::Serialize' };
 
 has 'name' => ( is=>'rw', isa=>'Str', required=>1 );
 has 'age' => ( is=>'rw', isa=>'Int', default=>40 );
@@ -11,7 +11,7 @@ has 'spouse' => ( is=>'rw', isa=>'Person' );
   package Address;
   use Moose;
   use Moose::Util::TypeConstraints;
-  with 'MooseX::Mongo::EmbeddedDocument';
+  with 'Mongoose::EmbeddedDocument';
 
   use Locale::US;
   use Regexp::Common 'zip';
@@ -38,9 +38,9 @@ has 'spouse' => ( is=>'rw', isa=>'Person' );
 
 package main;
 use v5.10;
-use MooseX::Mongo;
+use Mongoose;
 use Benchmark;
-my $db = MooseX::Mongo->db( 'mediadb' );
+my $db = Mongoose->db( 'mediadb' );
 $db->run_command({ drop=>'person' }); 
 
 my $o = do {
@@ -58,4 +58,4 @@ say $p->name, $p->age;
 my $homer = Person->new( name => "Homer Simpson", age=>50 );
 $homer->save;
 
-say Address->does('MooseX::Mongo::EmbeddedDocument');
+say Address->does('Mongoose::EmbeddedDocument');

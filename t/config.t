@@ -15,14 +15,17 @@ use Test::More;
 }
 
 package main;
-use Mongoose;
-my $db = Mongoose->db( '_mxm_testing' ) or die $!;
+use lib 't/lib';
+use MongooseT; # this connects to the db for me
+my $db = db;
 
 my $homer = Test::Person->new( name => "Homer" );
 
 $db->run_command({ drop=>'people' }); 
+$db->run_command({ drop=>'person' }); 
 $db->run_command({ drop=>'simpsons' }); 
 $db->run_command({ drop=>'FOOBAR' }); 
+$db->run_command({ drop=>'FOOPKG' }); 
 
 {
 	$homer->save;
@@ -69,6 +72,7 @@ $db->run_command({ drop=>'FOOBAR' });
 		has 'name' => ( is=>'rw', isa=>'Str', required=>1 );
 	}
 
+	$db->FOOPKG->drop;
 	my $f = FooPkg->new( name=>'Yoyo' );
 	$f->save;
 	my @all = $db->FOOPKG->find->all;

@@ -1,11 +1,12 @@
 use strict;
 use warnings;
 use Test::More;
+use v5.10;
 
-use lib 't/lib';
-use MongooseT; # this connects to the db for me
-my $db = db;
+sub x::pp { use YAML; print Dump(@_) . "\n" }
 
+use Mongoose;
+my $db = Mongoose->db( '_mxm_testing' );
 $db->run_command({ drop=>'employee' }); 
 $db->run_command({ drop=>'department' }); 
 $db->run_command({ drop=>'person' }); 
@@ -109,5 +110,4 @@ package main;
 }
 
 done_testing;
-
 

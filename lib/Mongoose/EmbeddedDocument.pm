@@ -12,7 +12,7 @@ role {
 
 =head1 NAME
 
-Mongoose::EmbeddedDocument - A Mongo document role for embedding documents. 
+Mongoose::EmbeddedDocument - role for embedded documents
 
 =head1 SYNOPSIS
 

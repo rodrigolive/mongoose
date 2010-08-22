@@ -1,9 +1,10 @@
 use strict;
 use warnings;
 use Test::More;
+use lib 't/lib';
+use MongooseT; # this connects to the db for me
+my $db = db;
 
-use Mongoose;
-my $db = Mongoose->db( '_mxm_testing' );
 $db->run_command( { drop => 'person' } );
 
 {

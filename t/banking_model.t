@@ -43,9 +43,12 @@ use Test::More;
 }
 # ---------- run tests
 package main;
-use Mongoose;
-my $db = Mongoose->db( '_mxm_testing' );
+use lib 't/lib';
+use MongooseT; # connects to the db for me
+
+my $db = db;
 $db->run_command({  'drop' => 'bank_account'  }); 
+$db->run_command({  'drop' => 'checking_account'  }); 
 
 {
 	my $savings_account = BankAccount->new( balance => 250 );

@@ -30,7 +30,7 @@ use Digest::SHA;
 
 =head1 NAME
 
-Mongoose::Digest
+Mongoose::Digest - deprecated persistance document state keeper
 
 =head1 DESCRIPTION
 

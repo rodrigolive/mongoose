@@ -1,6 +1,7 @@
 package Mongoose;
 use MongoDB;
 use MooseX::Singleton;
+use Mongoose::Join;
 use Mongoose::Meta::AttributeTraits;
 
 has '_db' => ( is => 'rw', isa => 'HashRef[MongoDB::Database]' );

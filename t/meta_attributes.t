@@ -1,6 +1,6 @@
 use strict;
 use warnings;
-use Test::More tests => 6;
+use Test::More;
 
 package Test::Person;
 use Moose;
@@ -11,8 +11,9 @@ with 'Mongoose::Document' => {
 has 'name' => ( is=>'rw', isa=>'Str', required=>1 );
 
 package main;
-use Mongoose;
-my $db = Mongoose->db( '_mxm_testing' );
+use lib 't/lib';
+use MongooseT; # this connects to the db for me
+my $db = db;
 
 my $homer = Test::Person->new( name => "Homer" );
 

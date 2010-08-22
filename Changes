@@ -1,6 +1,8 @@
-0.01_02 2010-08-16 16:15:00
+0.01_02 Mon Aug 23 00:45:39 CEST 2010
     * Fixed docs, better cookbook
     * Skip tests when no MongoDB installed
+	* Joining with Mongoose::Join
+	* New Mongoose::Class sugar: has_many, has_one, belongs_to
 
 0.01_01 2010-08-16 00:10:37 
     * Initial release

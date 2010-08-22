@@ -59,7 +59,7 @@ role {
 
 =head1 NAME
 
-Mongoose::Document - A Mongo document role
+Mongoose::Document - a Mongo document role
 
 =head1 SYNOPSIS
 
@@ -70,7 +70,7 @@ Mongoose::Document - A Mongo document role
 
 =head1 SEE ALSO
 
-Read the Mongoose intro or cookbook. 
+Read the Mongoose L<Mongoose::Intro|intro> or L<Mongoose::Cookbook|cookbook>.
 
 =cut
 
