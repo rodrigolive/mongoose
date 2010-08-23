@@ -7,33 +7,35 @@ use Moose::Meta::TypeConstraint::Registry;
 my $REGISTRY = Moose::Meta::TypeConstraint::Registry->new;
 $REGISTRY->add_type_constraint(
     Moose::Meta::TypeConstraint::Parameterizable->new(
-        name               => 'Mongoose::Join',
-        package_defined_in => __PACKAGE__,
-        parent             => find_type_constraint('Item'),
-        constraint         => sub { die 'constrained' },
+        name                 => 'Mongoose::Join',
+        package_defined_in   => __PACKAGE__,
+        parent               => find_type_constraint('Item'),
+        constraint           => sub { die 'constrained' },
         constraint_generator => sub {
             my $type_parameter = shift;
+
             #print "constraint_generator...@_\n";
             return sub { return {} };
         }
     )
 );
 
-Moose::Util::TypeConstraints::add_parameterizable_type( $REGISTRY->get_type_constraint( 'Mongoose::Join' ) );
+Moose::Util::TypeConstraints::add_parameterizable_type(
+    $REGISTRY->get_type_constraint('Mongoose::Join') );
 
-has 'class' => (is=>'rw', isa=>'Str' );
-has 'with_class' => (is=>'rw', isa=>'Str' );
-has '_with_collection_name' => (is=>'rw', isa=>'Str' );
-has 'parent' => (is=>'rw', isa=>'MongoDB::OID' );
-has 'children' => (is=>'rw', isa=>'ArrayRef' );
-has 'buffer' => (is=>'rw', isa=>'HashRef', default=>sub{{}} );
+has 'class'                 => ( is => 'rw', isa => 'Str' );
+has 'with_class'            => ( is => 'rw', isa => 'Str' );
+has '_with_collection_name' => ( is => 'rw', isa => 'Str' );
+has 'parent'                => ( is => 'rw', isa => 'MongoDB::OID' );
+has 'children'              => ( is => 'rw', isa => 'ArrayRef' );
+has 'buffer' => ( is => 'rw', isa => 'HashRef', default => sub { {} } );
 
 use Scalar::Util qw/refaddr/;
 
 sub add {
-    my ($self, @objs) = @_;
-    for( @objs ) {
-        $self->buffer->{ refaddr $_ } = $_; 
+    my ( $self, @objs ) = @_;
+    for (@objs) {
+        $self->buffer->{ refaddr $_ } = $_;
     }
 }
 
@@ -45,24 +47,25 @@ sub with_collection_name {
         $self->with_class->meta->{mongoose_config}->{collection_name} );
 }
 
-sub _insert {  #TODO insert and commit
+sub _insert {    #TODO insert and commit
 }
 
 sub _save {
-    my ($self, $parent, @scope )=@_;
+    my ( $self, $parent, @scope ) = @_;
+
     #die 'parent=' . x::pp( $parent );
     my @objs;
     my $collection_name = $self->with_collection_name;
-    for( keys %{ $self->buffer } ) {
+    for ( keys %{ $self->buffer } ) {
         my $obj = delete $self->buffer->{$_};
         $obj->save;
-        push @objs, { '$ref'=>$collection_name, '$id'=>$obj->_id };
+        push @objs, { '$ref' => $collection_name, '$id' => $obj->_id };
     }
     return @objs;
 }
 
 sub find {
-    my ($self, $opts, @scope ) = @_;
+    my ( $self, $opts, @scope ) = @_;
     my $class = $self->with_class;
     $opts ||= {};
     my @children = map { $_->{'$id'} } @{ $self->children || [] };
@@ -71,7 +74,7 @@ sub find {
 }
 
 sub query {
-    my ($self, $opts, $attrs, @scope ) = @_;
+    my ( $self, $opts, $attrs, @scope ) = @_;
     my $class = $self->with_class;
     $opts ||= {};
     my @children = map { $_->{'$id'} } @{ $self->children || [] };
@@ -81,7 +84,7 @@ sub query {
 
 sub all {
     my $self = shift;
-    return $self->find( @_ )->all;
+    return $self->find(@_)->all;
 }
 
 =head1 NAME

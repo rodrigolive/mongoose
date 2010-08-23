@@ -3,48 +3,49 @@ use Moose ();
 use Moose::Exporter;
 
 Moose::Exporter->setup_import_methods(
-  with_meta => [ 'has_many', 'belongs_to', 'has_one' ],
-  also      => 'Moose',
+    with_meta => [ 'has_many', 'belongs_to', 'has_one' ],
+    also      => 'Moose',
 );
 
 sub has_many {
-	my $meta = shift;
-	my $name = shift;
-	my %options;
-	if( scalar @_ == 1 ) { $options{isa} = shift; }
-	else { %options = @_; }
+    my $meta = shift;
+    my $name = shift;
+    my %options;
+    if   ( scalar @_ == 1 ) { $options{isa} = shift; }
+    else                    { %options      = @_; }
 
-	my $isa_original = $options{isa};
-	$options{isa} = 'Mongoose::Join[' . $options{isa} . ']';
-	$options{default} ||= sub{ Mongoose::Join->new( with_class => "$isa_original" ) };
-	$options{is} ||= 'ro';
-	$meta->add_attribute( $name, %options,);
+    my $isa_original = $options{isa};
+    $options{isa} = 'Mongoose::Join[' . $options{isa} . ']';
+    $options{default} ||=
+      sub { Mongoose::Join->new( with_class => "$isa_original" ) };
+    $options{is} ||= 'ro';
+    $meta->add_attribute( $name, %options, );
 }
 
 sub belongs_to {
-	my $meta = shift;
-	my $name = shift;
-	my %options;
-	if( scalar @_ == 1 ) {
-		$options{isa} = shift;
-		$options{is} = 'rw';
-	}
-	else { %options = @_; }
+    my $meta = shift;
+    my $name = shift;
+    my %options;
+    if ( scalar @_ == 1 ) {
+        $options{isa} = shift;
+        $options{is}  = 'rw';
+    }
+    else { %options = @_; }
 
-	$meta->add_attribute( $name, %options,);
+    $meta->add_attribute( $name, %options, );
 }
 
 sub has_one {
-	my $meta = shift;
-	my $name = shift;
-	my %options;
-	if( scalar @_ == 1 ) {
-		$options{isa} = shift;
-		$options{is} = 'rw';
-	}
-	else { %options = @_; }
+    my $meta = shift;
+    my $name = shift;
+    my %options;
+    if ( scalar @_ == 1 ) {
+        $options{isa} = shift;
+        $options{is}  = 'rw';
+    }
+    else { %options = @_; }
 
-	$meta->add_attribute( $name, %options,);
+    $meta->add_attribute( $name, %options, );
 }
 
 =head1 NAME
@@ -74,8 +75,8 @@ Moose's own C<has>.
 	has_one
 	belongs_to
 
-The idea is to have to type fewer keystrokes, and to 
-improve readability by self documenting. 
+The idea: fewer keystrokes and improved readability
+by self-documenting your class. 
 
 =head1 METHODS
 
@@ -95,15 +96,18 @@ This:
 
 	has_many 'employees' => ( isa=>'Employee' );
 
+	# or
+
+	has_manu 'employees' => 'Employee';
+
 Becomes this:
 
     has 'employees' => (
         is      => 'ro',
         isa     => 'Mongoose::Join[Employee]',
-        default => sub { Mongoose::Join->new }
+        default => sub { Mongoose::Join->new( with_class=>'Employee' ) }
     );
 	
-
 =cut
 
 1;
