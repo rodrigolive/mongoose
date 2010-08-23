@@ -1,3 +1,6 @@
+
+=pod
+
 =head1 NAME
 
 Mongoose::Cookbook - recipes, recipes
@@ -10,15 +13,15 @@ Here we go.
 
 Then connect to a database anywhere before starting to use your classes. 
 
-	use Mongoose;
-	Mongoose->db( 'mydb'); # looks for a localhost connection
+    use Mongoose;
+    Mongoose->db( 'mydb'); # looks for a localhost connection
 
-	# or, for more control:
+    # or, for more control:
 
-	Mongoose->db(
-		host=>'mongodb://data.server:4000',
-		db_name=>'mydb'
-	);           
+    Mongoose->db(
+        host=>'mongodb://data.server:4000',
+        db_name=>'mydb'
+    );           
 
 This is done globally here for simplicity sake, 
 but a more object oriented notation is also supported.
@@ -27,10 +30,23 @@ but a more object oriented notation is also supported.
 
 This is a work in progress. Right now this syntax is supported:
 
-	Mongoose->db( class=>'Person', db_name=>'mydbone', ... );
-	Mongoose->db( class=>'Address', db_name=>'mydbtwo', ... );
+    Mongoose->db( class=>'Person', db_name=>'mydbone', ... );
+    Mongoose->db( class=>'Address', db_name=>'mydbtwo', ... );
 
 But this will most certainly change.
+
+=head2 Loading a Schema
+
+To quickly load your classes, use the C<load_schema> method:
+
+    package main;
+    Mongoose->load_schema( search_path=>'MyApp::Schema', shorten=>1 );
+
+Use it only once in your program. Your modules will be required
+and may be used from anywhere else. 
+
+The C<shorten> option will alias C<MyApp::Schema::MyClass> into
+C<MyClass> for your convenience.
 
 =head2 Preventing attributes from being stored
 
@@ -39,6 +55,7 @@ In case your class has attributes you don't want to store in the database.
     package Person;
     use Moose;
     with 'Mongoose::Document';
+
     has 'name' => ( is => 'rw', isa => 'Str', required => 1 );
     has 'age'  => ( is => 'rw', isa => 'Int', default  => 40 );
     has 'salary' => ( is => 'rw', isa => 'Int', traits => ['DoNotSerialize'] );
@@ -51,19 +68,21 @@ This can be accomplished several ways.
 
 Use the C<ArrayRef> Moose type.
 
-	package Person;
+    package Person;
     use Moose;
     with 'Mongoose::Document';
+
     has 'name' => ( is => 'rw', isa => 'Str', required => 1 );
     has 'accounts'  => ( is => 'rw', isa => 'ArrayRef[Account]' );
 
 Then, define the Account class, either as a document or embedded document, 
 depending on how you want it stored.
 
-	package Address;
-	use Moose;
-	with Mongoose::EmbeddedDocument;
-	has 'amount' => ...;
+    package Address;
+    use Moose;
+    with Mongoose::EmbeddedDocument;
+
+    has 'amount' => ...;
 
 But this has a memory and performance cost, since all related rows
 will be loaded in memory during object expansion.
@@ -76,28 +95,29 @@ parameterized type.
 Establishing a Mongoose::Join relationship will load relationships
 lazily:
 
-	package Person;
+    package Person;
     use Moose; with 'Mongoose::Document';
+
     has 'name' => ( is => 'rw', isa => 'Str', required => 1 );
     has 'accounts'  => ( is => 'rw', isa => 'Mongoose::Join[Account]' );
 
 Then retrieve data with a cursor:
 
-	my $large_acc = $person->accounts->find({ amount => { '$gt' => 100000 } });
-	while( my $account = $large_acc->next ) {
-		...
-	}
+    my $large_acc = $person->accounts->find({ amount => { '$gt' => 100000 } });
+    while( my $account = $large_acc->next ) {
+        ...
+    }
 
 =head2 Sugar for Defining Relationships
 
 Use L<Mongoose::Class> instead of C<Moose>.
 
-	package Article;
-	use Mongoose::Class; with 'Mongoose::Document';
-	has 'title' => ( is=>'rw', isa=>'Str', required=>1 );
-	has_one 'author' => 'Author'; 
-	has_many 'comments' => 'Comment'; 
-	belongs_to => 'Account';
+    package Article;
+    use Mongoose::Class; with 'Mongoose::Document';
+    has 'title' => ( is=>'rw', isa=>'Str', required=>1 );
+    has_one 'author' => 'Author'; 
+    has_many 'comments' => 'Comment'; 
+    belongs_to => 'Account';
 
 =head2 Normalizing a Relationship
 
@@ -108,52 +128,52 @@ should sometimes be taken into consideration.
 Sometimes it may just be more adequate than storing relationships
 directly in objects:
 
-	package Authorship;
-	has_one 'author' => 'Author';
-	has_many 'articles' => 'Article';
+    package Authorship;
+    has_one 'author' => 'Author';
+    has_many 'articles' => 'Article';
 
-	package main;
+    package main;
 
-	# create
-	my $authorship = Authorship->new;
-	$authorship->author( Author->new );
-	$authorship->articles->add( Article->new );
-	$authorship->articles->add( Article->new );
+    # create
+    my $authorship = Authorship->new;
+    $authorship->author( Author->new );
+    $authorship->articles->add( Article->new );
+    $authorship->articles->add( Article->new );
 
-	# find
-	my $articles = Authorship->find_one({ author=>$author->_id });
-	while( my $article = $articles->next ) {
-		...
-	}
+    # find
+    my $articles = Authorship->find_one({ author=>$author->_id });
+    while( my $article = $articles->next ) {
+        ...
+    }
 
 =head2 Package aliasing
 
 To make a long package name shorter, use:
 
-	package My::Mumbo::Jumbo::Class;
-	with 'Mongoose::Document' => {
-		-as    => 'Mumbo',
-	};
+    package My::Mumbo::Jumbo::Class;
+    with 'Mongoose::Document' => {
+        -as    => 'Mumbo',
+    };
 
-	# then in your code
+    # then in your code
 
-	my $obj = Mumbo->find_one({ flavor=>'gum' })
+    my $obj = Mumbo->find_one({ flavor=>'gum' })
 
-	print ref $obj;
-	# prints 'My::Mumbo::Jumbo::Class'
+    print ref $obj;
+    # prints 'My::Mumbo::Jumbo::Class'
 
-	print $obj->isa('Mumbo')
-	# prints 1
+    print $obj->isa('Mumbo')
+    # prints 1
 
 =head2 Method aliasing
 
 In case you don't want a C<find_one> or C<save> method
 polluting your class.
 
-	package BankAccount;
-	with 'Mongoose::Document' => {
-		-alias    => { 'find_one' => '_find_one' },
-		-excludes => { 'find_one' },
-	};
+    package BankAccount;
+    with 'Mongoose::Document' => {
+        -alias    => { 'find_one' => '_find_one' },
+        -excludes => { 'find_one' },
+    };
 
 =cut

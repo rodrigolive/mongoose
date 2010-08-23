@@ -306,12 +306,14 @@ into your class package.
 =head2 find
 
 Just like L<MongoDB::Collection/find>, but returns
-a L<Mongoose::Cursor> of blessed documents.
+a L<Mongoose::Cursor> of documents blessed into
+your package.
 
 =head2 query
 
-Just like L<MongoDB::Collection/find>, but returns
-a L<Mongoose::Cursor> of blessed documents.
+Just like L<MongoDB::Collection/query>, but returns
+a L<Mongoose::Cursor> of documents blessed into
+your package.
 
 =head2 delete 
 

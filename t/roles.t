@@ -13,7 +13,6 @@ use Test::More;
 	package Address;
 	use Moose;
 	with 'Mongoose::EmbeddedDocument';
-	use namespace::autoclean;
 }
 
 package main;

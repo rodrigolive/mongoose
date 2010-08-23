@@ -1,27 +1,23 @@
 package Mongoose::Join;
 use Moose;
-#extends 'Moose::Meta::TypeConstraint::Parameterizable';
 use Moose::Util::TypeConstraints;
 use Moose::Meta::TypeConstraint::Parameterizable;
 use Moose::Meta::TypeConstraint::Registry;
-#subtype 'Mongoose::Join' => as 'ArrayRef[Any]'; 
-#coerce 'Mongoose::Join[Employee]' => from 'Any' => via { die 'aaa' };
 
 my $REGISTRY = Moose::Meta::TypeConstraint::Registry->new;
 $REGISTRY->add_type_constraint(
-	Moose::Meta::TypeConstraint::Parameterizable->new(
-		name               => 'Mongoose::Join',
-		package_defined_in => __PACKAGE__,
-		parent             => find_type_constraint('Item'),
-		constraint         => sub { die 'constrained' },
-		constraint_generator => sub {
-			my $type_parameter = shift;
-			#print "constraint_generator...@_\n";
-			return sub { return {} };
-		}
-	)
+    Moose::Meta::TypeConstraint::Parameterizable->new(
+        name               => 'Mongoose::Join',
+        package_defined_in => __PACKAGE__,
+        parent             => find_type_constraint('Item'),
+        constraint         => sub { die 'constrained' },
+        constraint_generator => sub {
+            my $type_parameter = shift;
+            #print "constraint_generator...@_\n";
+            return sub { return {} };
+        }
+    )
 );
-#coerce 'Mongoose::Join' => from 'Employee' => via { die 'aaa' };
 
 Moose::Util::TypeConstraints::add_parameterizable_type( $REGISTRY->get_type_constraint( 'Mongoose::Join' ) );
 
@@ -35,16 +31,16 @@ has 'buffer' => (is=>'rw', isa=>'HashRef', default=>sub{{}} );
 use Scalar::Util qw/refaddr/;
 
 sub add {
-	my ($self, @objs) = @_;
-	for( @objs ) {
-		$self->buffer->{ refaddr $_ } = $_;	
-	}
+    my ($self, @objs) = @_;
+    for( @objs ) {
+        $self->buffer->{ refaddr $_ } = $_; 
+    }
 }
 
 sub with_collection_name {
-	my $self = shift;
-	defined $self->_with_collection_name
-		and return $self->_with_collection_name;
+    my $self = shift;
+    defined $self->_with_collection_name
+        and return $self->_with_collection_name;
     return $self->_with_collection_name(
         $self->with_class->meta->{mongoose_config}->{collection_name} );
 }
@@ -53,39 +49,39 @@ sub _insert {  #TODO insert and commit
 }
 
 sub _save {
-	my ($self, $parent, @scope )=@_;
-	#die 'parent=' . x::pp( $parent );
-	my @objs;
-	my $collection_name = $self->with_collection_name;
-	for( keys %{ $self->buffer } ) {
-		my $obj = delete $self->buffer->{$_};
-		$obj->save;
-		push @objs, { '$ref'=>$collection_name, '$id'=>$obj->_id };
-	}
-	return @objs;
+    my ($self, $parent, @scope )=@_;
+    #die 'parent=' . x::pp( $parent );
+    my @objs;
+    my $collection_name = $self->with_collection_name;
+    for( keys %{ $self->buffer } ) {
+        my $obj = delete $self->buffer->{$_};
+        $obj->save;
+        push @objs, { '$ref'=>$collection_name, '$id'=>$obj->_id };
+    }
+    return @objs;
 }
 
 sub find {
-	my ($self, $opts, @scope ) = @_;
-	my $class = $self->with_class;
-	$opts ||= {};
-	my @children = map { $_->{'$id'} } @{ $self->children || [] };
-	$opts->{_id} = { '$in' => \@children };
-	return $class->find( $opts, @scope );
+    my ($self, $opts, @scope ) = @_;
+    my $class = $self->with_class;
+    $opts ||= {};
+    my @children = map { $_->{'$id'} } @{ $self->children || [] };
+    $opts->{_id} = { '$in' => \@children };
+    return $class->find( $opts, @scope );
 }
 
 sub query {
-	my ($self, $opts, $attrs, @scope ) = @_;
-	my $class = $self->with_class;
-	$opts ||= {};
-	my @children = map { $_->{'$id'} } @{ $self->children || [] };
-	$opts->{_id} = { '$in' => \@children };
-	return $class->query( $opts, $attrs, @scope );
+    my ($self, $opts, $attrs, @scope ) = @_;
+    my $class = $self->with_class;
+    $opts ||= {};
+    my @children = map { $_->{'$id'} } @{ $self->children || [] };
+    $opts->{_id} = { '$in' => \@children };
+    return $class->query( $opts, $attrs, @scope );
 }
 
 sub all {
-	my $self = shift;
-	return $self->find( @_ )->all;
+    my $self = shift;
+    return $self->find( @_ )->all;
 }
 
 =head1 NAME
@@ -94,7 +90,7 @@ Mongoose::Join - simple class relationship resolver
 
 =head1 SYNOPSIS
 
-	package Author;
+    package Author;
     use Moose; with 'Mongoose::Document';
     has 'articles'  => ( is => 'rw', isa => 'Mongoose::Join[Article]' );
 
@@ -117,19 +113,19 @@ Add (join) a Mongoose::Document object for later saving.
 
 Saving the parent Mongoose::Document will save both. 
 
-	my $author = Author->new;
-	$author->articles->add( Article->new );
-	$author->save; # saves all objects
+    my $author = Author->new;
+    $author->articles->add( Article->new );
+    $author->save; # saves all objects
 
 =head2 find
 
 Run a MongoDB C<find> on the joint collection.
 
-	# searches for articles belonging to this collection
-	my $cursor = $author->articles->find({ title=>'foo article' });
-	while( my $article = $cursor->next ) {
-		...
-	}
+    # searches for articles belonging to this collection
+    my $cursor = $author->articles->find({ title=>'foo article' });
+    while( my $article = $cursor->next ) {
+        ...
+    }
 
 Returns a L<Mongoose::Cursor>. 
 

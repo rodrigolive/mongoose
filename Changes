@@ -1,3 +1,7 @@
+0.01_03 Mon Aug 23 10:15:17 CEST 2010
+	* fixed more broken depndencies on tests
+	* load_schema method implemented
+
 0.01_02 Mon Aug 23 00:45:39 CEST 2010
     * Fixed docs, better cookbook
     * Skip tests when no MongoDB installed
