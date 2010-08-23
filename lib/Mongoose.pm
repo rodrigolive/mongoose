@@ -109,6 +109,12 @@ Start by reading the introduction L<Mongoose::Intro>.
 
 Or proceed directly to the L<Mongoose::Cookbook> for many day-to-day recipes.
 
+=begin html
+
+<img src="http://cpansearch.perl.org/src/RODRIGO/Mongoose-0.01_02/etc/mongoose_icon.png" />
+
+=end html
+
 =head1 METHODS
 
 =head2 db
