@@ -1,3 +1,6 @@
+0.01_04 Mon Aug 23 15:11:19 CEST 2010
+	* cookbook clarifications
+
 0.01_03 Mon Aug 23 10:15:17 CEST 2010
 	* fixed more broken depndencies on tests
 	* load_schema method implemented
