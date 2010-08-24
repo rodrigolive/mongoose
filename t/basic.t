@@ -64,5 +64,31 @@ package main;
 	my $doc = Person->collection->find->next;
 	ok( !defined($doc->{crc}), 'do not serialize' );
 }
+{
+	Person->collection->drop;
+	for( 'aa', 'cc', 'bb', 'dd' ) {
+		Person->new( name=>$_ )->save;
+	}
+	my $sorted = join ',',
+		map{ $_->name } Person->query({}, { sort_by=>{ name=>1 } } )->all;
+	is $sorted, 'aa,bb,cc,dd', 'sorted ok';
+
+	my $limited = join ',',
+		map{ $_->name } Person->query({}, { sort_by=>{ name=>1 }, limit=>2, skip=>2 })->all;
+	is $limited, 'cc,dd', 'limited ok';
+	is(Person->collection->count(), 4, 'count totals');
+
+	my $cur = Person->query({}, { limit=>2, skip=>2 });
+	is $cur->count(), 4, 'cursor total';
+
+	my $cnt=0;
+	$cur->each(sub{$cnt++});
+	is $cnt,2,'each count';
+
+	# this is failing due to a problem in mongo with sort_by
+	#my $cur = Person->query({}, { sort_by=>{ name=>1 }, limit=>2, skip=>2 });
+	#is $cur->count(), 4, 'cursor total';
+}
+
 
 done_testing;

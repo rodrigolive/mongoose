@@ -11,7 +11,7 @@ Here we go.
 
 =head2 Connecting to MongoDB
 
-Then connect to a database anywhere before starting to use your classes. 
+First connect to a database before starting to use your classes. 
 
     use Mongoose;
     Mongoose->db( 'mydb'); # looks for a localhost connection
@@ -23,8 +23,8 @@ Then connect to a database anywhere before starting to use your classes.
         db_name=>'mydb'
     );           
 
-This is done globally here for simplicity sake, 
-but a more object oriented notation is also supported.
+This is done globally here for simplicity sake, but multiple
+connections and databases are also supported. 
 
 =head2 Connecting to more than one database
 
@@ -33,20 +33,21 @@ This is a work in progress. Right now this syntax is supported:
     Mongoose->db( class=>'Person', db_name=>'mydbone', ... );
     Mongoose->db( class=>'Address', db_name=>'mydbtwo', ... );
 
-But this will most certainly change.
+This is quite rudimentary, and will probably change in the future.
 
 =head2 Loading a Schema
 
-To quickly load your classes, use the C<load_schema> method:
+To quickly load your Mongoose classes (or any kind of 
+package for that matter), use the C<load_schema> method:
 
     package main;
     Mongoose->load_schema( search_path=>'MyApp::Schema', shorten=>1 );
 
-Use it only once in your program. Your modules will be required
+Use it only once in your program. Your modules will be C<require>d
 and may be used from anywhere else. 
 
-The C<shorten> option will alias C<MyApp::Schema::MyClass> into
-C<MyClass> for your convenience.
+If set to 1, the C<shorten> option will alias C<MyApp::Schema::MyClass>
+into C<MyClass> for convenience.
 
 =head2 Preventing attributes from being stored
 
@@ -129,18 +130,25 @@ Sometimes it may just be more adequate than storing relationships
 directly in objects:
 
     package Authorship;
+    use Mongoose::Class; with 'Mongoose::Document';
+
     has_one 'author' => 'Author';
     has_many 'articles' => 'Article';
+
+    # or even:
+    #  has_one 'article' => 'Article';
 
     package main;
 
     # create
+
     my $authorship = Authorship->new;
     $authorship->author( Author->new );
     $authorship->articles->add( Article->new );
     $authorship->articles->add( Article->new );
 
     # find
+
     my $articles = Authorship->find_one({ author=>$author->_id });
     while( my $article = $articles->next ) {
         ...
@@ -175,5 +183,59 @@ polluting your class.
         -alias    => { 'find_one' => '_find_one' },
         -excludes => { 'find_one' },
     };
+
+=head2 Paging and Sorting
+
+Just use MongoDB's C<query> standard syntax:
+
+    # sorting
+
+    my $sorted = Person->query( {}, { sort_by => { name => 1 } } )->each(
+        sub {
+            my $person = shift;
+            print $person->name;
+        }
+    );
+
+    # paging
+
+    my $paged = Person->query(
+        {},
+        {
+            sort_by => { name => 1 },
+            limit   => 20,
+            skip    => 40
+        }
+      )->each(
+        sub {
+            my $person = shift;
+            print $person->name;
+        }
+      );
+
+=head2 Direct access to MongoDB Calls
+
+To skip Mongoose and have direct access to MongoDB, use the
+C<db> and C<collection> methods on your class: 
+
+    # finds and expands documents into objects
+
+    my $cur = Person->find;
+    
+    # or just get the plain documents (hashrefs)
+
+    my $cur = Person->collection->find;
+
+    # get the MongoDB::Database object for your class
+
+    my $db = Person->db;
+    $db->run_command({ shutdown => 1 });
+
+This can be useful for performance reasons, when you 
+don't need to expand objects, or need to access
+MongoDB functionality not available in Mongoose. It's also 
+useful for testing, to compare if some set of query results
+returned by Mongoose are identical to the straight MongoDB
+driver's results. 
 
 =cut

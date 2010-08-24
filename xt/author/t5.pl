@@ -1,7 +1,7 @@
 package Request;
 use Moose;
 use Moose::Util::TypeConstraints;
-with 'Document';
+with 'Mongoose::Document';
 
 use HTTP::Headers  ();
 use Params::Coerce ();
@@ -42,13 +42,17 @@ has 'headers'  => (
 
 package main;
 use v5.10;
-use MooseX::Mongo;
+use Mongoose;
 use Benchmark;
-my $db = MooseX::Mongo->db( 'mediadb' );
+my $db = Mongoose->db( 'mediadb' );
+$db->requestkioku->drop;
 $db->run_command({ drop=>'request' }); 
 {
 	my $r = new Request( base=>'http://example.com', headers=>{ "user-agent"=> 'mozilla' });
 	timethis( 2000, sub {  $r->save } );
+	timethis( 2000, sub {
+	my $r = new Request( base=>'http://example.com', headers=>{ "user-agent"=> 'mozilla' });
+	$r->save } );
 }
 #$r->save;
 
@@ -62,12 +66,15 @@ $db->run_command({ drop=>'request' });
 	my $conn = MongoDB::Connection->new(host => 'localhost');
 	my $db = $conn->get_database('mediadb');
 
-	my $rc = KiokuDB::Backend::MongoDB->new('collection' => $db->get_collection('request') );
+	my $rc = KiokuDB::Backend::MongoDB->new('collection' => $db->requestkioku );#$db->get_collection('request') );
 	my $coll = KiokuDB->new( backend => $rc, allow_classes=>['HTTP::Headers'] );
 
 	my $s     = $coll->new_scope;
 	my $r = new Request( base=>'http://example.com', headers=>{ "user-agent"=> 'mozilla' });
 	timethis( 2000, sub {  $coll->store($r) } );
+	timethis( 2000, sub {
+	my $r = new Request( base=>'http://example.com', headers=>{ "user-agent"=> 'mozilla' });
+	$coll->store($r) } );
 }
 
 

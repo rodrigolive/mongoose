@@ -309,14 +309,14 @@ By default, Mongoose will turn package names into collections
 this way:
 
     Package name          | Collection name
-    ----------------------+---------------------
+    ----------------------+----------------------
     Person                | person
     Humpty::Dumpty        | humpty_dumpty
     HumptyDumpty          | humpty_dumpty
-    MyApp::Schema::Jumbo  | myapp_schema_jumbo
+    MyApp::Schema::Jumbo  | my_app_schema_jumbo
 
 You can change this standard anytime, by setting the
-C<Mongoose::naming> anonymous sub to somethings 
+C<Mongoose::naming> anonymous sub to something
 of your liking:
 
     # remove prefix and return
@@ -410,6 +410,15 @@ happened:
 At this time, no C<BUILD> or C<BUILDARGS> methods are
 called, which could be used to rearrange the object
 into the new schema.  This will be probably fixed soon. 
+
+On the meanwhile, you can always invoke an "alignment"
+method after loading the data, or do a bulk migration:
+
+	Author->find->each( sub{
+		my $obj = shift;
+		$obj->first_name( delete $obj->{name} );
+		$obj->save;
+	});
     
 =head1 SEE ALSO
 
