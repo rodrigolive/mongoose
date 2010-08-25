@@ -111,7 +111,7 @@ Or proceed directly to the L<Mongoose::Cookbook> for many day-to-day recipes.
 
 =begin html
 
-<img src="http://cpansearch.perl.org/src/RODRIGO/Mongoose-0.01_02/etc/mongoose_icon.png" />
+<img src="http://cpansearch.perl.org/src/RODRIGO/Mongoose-0.01/etc/mongoose_icon.png" />
 
 =end html
 
@@ -217,4 +217,13 @@ Report bugs via RT. Send me test cases.
 =head1 SEE ALSO
 
 L<KiokuDB>
+
+=head1 AUTHOR
+
+	Rodrigo de Oliveira (rodrigolive), C<rodrigolive@gmail.com>
+
+=head1 LICENSE
+
+This library is free software. You can redistribute it and/or modify it under
+the same terms as Perl itself.
 

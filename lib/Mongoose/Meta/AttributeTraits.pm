@@ -46,6 +46,18 @@ has 'lazy_select' => (
 	sub register_implementation {'Mongoose::Meta::Attribute::Trait::DoNotSerialize'}
 }
 
+# -----------------------------------------------------------------
+
+{
+	package Mongoose::Meta::Attribute::Trait::Raw;
+	use strict;
+	use Moose::Role;
+}
+{
+	package Moose::Meta::Attribute::Custom::Trait::Raw;
+	sub register_implementation {'Mongoose::Meta::Attribute::Trait::Raw'}
+}
+
 #package Moose::Meta::Attribute::Custom::DoNotSerialize;
 #use Moose::Role;
 
@@ -59,6 +71,14 @@ Mongoose::Meta::AttributeTraits - Mongoose related attribute traits
 =head1 DESCRIPTION
 
 All Moose attribute traits used by Mongoose are defined here.
+
+=head2 DoNotSerialize
+
+Makes Mongoose skip collapsing or expanding the attribute.
+
+=head2 Raw
+
+Skips unblessing of an attribute when saving an object. 
 
 =cut
 

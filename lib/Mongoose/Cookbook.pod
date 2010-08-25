@@ -184,6 +184,80 @@ polluting your class.
         -excludes => { 'find_one' },
     };
 
+=head2 Raw Storage of Attribute Values
+
+By default when collapsing data into the DB,
+Mongoose always sends to the MongoDB driver an unblessed
+version of your attribute.
+
+But there are special types of objects that the 
+Perl MongoDB driver may expect to receive blessed,
+such as a C<DateTime> object. 
+
+To skip the Mongoose Engine collapsing process
+altogether, use the C<Raw> trait. That way,
+the MongoDB driver will receive the attribute
+as is. 
+
+	has 'date' => ( is=>'rw', isa=>'DateTime', traits=>['Raw'] );
+
+=head2 DateTime Handling
+
+By default, DateTime objects are unblessed and collapsed
+by Mongoose.
+
+This attribute:
+
+	has 'date' => (
+		is=>'rw',
+		isa=>'DateTime',
+		default=>sub{ DateTime->now }
+	);
+
+Becomes a rather humongous:
+
+	{ "_id" : ObjectId("4c75049ca741006788000000"),
+	  "date" : {
+		  "local_rd_secs" : { "floatApprox" : 42908 },
+		  "local_rd_days" : { "floatApprox" : 734009 },
+		  "rd_nanosecs" : { "floatApprox" : 0 },
+		  "utc_rd_secs" : { "floatApprox" : 42908 },
+		  "local_c" : { "hour" : { "floatApprox" : 11 },
+					  "second" : { "floatApprox" : 8 },
+					  "month" : { "floatApprox" : 8 },
+					  "quarter" : { "floatApprox" : 3 },
+					  "day_of_year" : { "floatApprox" : 237 },
+					  "day_of_quarter" : { "floatApprox" : 56 },
+					  "minute" : { "floatApprox" : 55 },
+					  "day" : { "floatApprox" : 25 },
+					  "day_of_week" : { "floatApprox" : 3 },
+					  "year" : { "floatApprox" : 2010 } },
+					  "formatter" : null,
+					  "utc_year" : { "floatApprox" : 2011 },
+					  "offset_modifier" : { "floatApprox" : 0 },
+					  "utc_rd_days" : { "floatApprox" : 734009 }
+		  }
+	}
+
+The MongoDB driver provides a much leaner implementation
+for DateTime, but that requires you to tell Mongoose that
+the attribute value should go unblessed:
+
+	has 'date' => (
+		is=>'rw',
+		isa=>'DateTime',
+		traits=>['Raw'],
+		default=>sub{ DateTime->now }
+	);
+
+Which in turn is stored as a much more acceptable:
+
+	{    "_id" : ObjectId("4c750574a74100a588000000"),
+		"date" : "Wed Aug 25 2010 13:58:44 GMT+0200 (CEST)" }
+
+Either way the object will be expanded back from the database
+into a C<DateTime> object. 
+
 =head2 Paging and Sorting
 
 Just use MongoDB's C<query> standard syntax:
