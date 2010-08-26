@@ -287,6 +287,60 @@ Just use MongoDB's C<query> standard syntax:
         }
       );
 
+
+=head2 FileHandle
+
+Support for the FileHandle Moose type is done making use
+of L<MooseDB::GridFS>. 
+
+    package Thing;
+    use Mongoose::Class; with 'Mongoose::Document';
+    has 'file' => ( is=>'rw', isa=>'FileHandle' );
+
+Then store it using a C<FileHandle> type object:
+
+    require IO::File;
+    my $fh = new IO::File "myfile.txt", "r";
+    my $t = Thing->new( file=>$fh );
+    $t->save;
+
+The file is stored in Mongo's GridFS using the 
+C<_id> as filename. A special reference is created in
+your document to point to the GridFS file. The C<thing>
+collection BSON may look like this:
+
+    { "file":
+        { "$ref": "FileHandle",
+          "$id": ObjectId("4c7619d02f2e70d7a4140000") }
+    }
+
+When expanding the doc, the file attibute becomes
+a L<Mongoose::File>, an extension of L<MongoDB::GridFS::File>,
+which can be easily slurped or streamed.
+
+    my $file = Thing->find_one->file;
+
+    print $file->isa('MongoDB::GridFS::File'); # prints 1
+
+This is asymmetric, which means it's probably best
+if you check the attribute if it isa C<Mongoose::File>
+before using it as such, specially in your class methods.
+
+    package Thing;
+    # ...
+    sub my_file_method {
+        my $self = shift;
+        if( $self->file->isa('Mongoose::File') ) {
+            my $data = $file->slurp; 
+            # do stuff 
+        } else {
+            # probably an IO::File filehandle still
+        }
+    }
+
+This less-than-optimal asymmetric behavior may change in
+the future. 
+
 =head2 Direct access to MongoDB Calls
 
 To skip Mongoose and have direct access to MongoDB, use the

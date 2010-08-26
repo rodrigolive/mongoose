@@ -17,10 +17,21 @@ sub collapse {
 	my $packed = { %$self }; # cheesely clone the data 
 	for my $key ( keys %$packed ) {
 		my $attrib = $self->meta->get_attribute($key);
+
+		# treat special cases based on Moose attribute defs or traits
 		if( defined $attrib ) {
 			delete $packed->{$key} , next
 				if $attrib->does('Mongoose::Meta::Attribute::Trait::DoNotSerialize');
+
 			next if $attrib->does('Mongoose::Meta::Attribute::Trait::Raw');
+
+			if( my $type = $attrib->type_constraint ) {
+				if( $type->is_a_type_of('FileHandle') ) {
+					my $grid = $self->db->get_gridfs;	
+					my $id = $grid->put( delete $packed->{$key} );
+					$packed->{$key} = { '$ref'=>'FileHandle', '$id'=>$id };
+				}
+			}
 		}
 
 		my $obj = $packed->{$key};
@@ -40,9 +51,6 @@ sub collapse {
 					$packed->{$key} = \@objs;
 				} 
 			} else {
-				#use Data::Structure::Util 'get_blessed';
-				#say "oo=" . join ',',map { ref } @{get_blessed($obj)};
-				#say "oo=" . ref($obj);
 				my $reftype = reftype($obj);
 				if( $reftype eq 'ARRAY' ) {
 					$packed->{$key} = [ @$obj ];
@@ -94,6 +102,12 @@ sub expand {
 			# nothing to do on HASH
 			next;
 		}
+		elsif( $type->is_a_type_of('FileHandle') ) {
+			my $file = $self->db->get_gridfs->find_one({ _id=>$doc->{$name}->{'$id'} });
+			delete $doc->{$name}, next unless defined $file;
+			$doc->{$name} = bless $file, 'Mongoose::File';
+			next;
+		}
 		elsif( $type->is_a_type_of('ArrayRef') ) {
 			my $array_class = $type->{type_parameter} . "";
 			#say "ary class $array_class";
@@ -112,12 +126,12 @@ sub expand {
 			$doc->{$name} = \@objs;
 			next;
 		}
-		#say "type=$type" . $type->is_a_type_of('ArrayRef');
-		#say "type=$type, class=$class" . $type->{type_parameter};
 		if( $class->can('meta') ) { # moose subobject
+
 			if( $class->does('Mongoose::EmbeddedDocument') ) {
-				$doc->{$name} = $class->new( $doc->{$name} ) ;
-			} elsif( $class->does('Mongoose::Document') ) {
+				$doc->{$name} = bless $doc->{$name}, $class;
+			}
+			elsif( $class->does('Mongoose::Document') ) {
 				if( my $_id = delete $doc->{$name}->{'$id'} ) {
 					if( my $circ_doc = $scope->{"$_id"} ) {
 						$doc->{$name} = bless( $circ_doc , $class );
@@ -127,37 +141,25 @@ sub expand {
 						$doc->{$name} = $class->find_one({ _id=>$_id }, undef, $scope );
 					}
 				}
-			} elsif( $class->isa('Mongoose::Join') ) {
+			}
+			elsif( $class->isa('Mongoose::Join') ) {
 				my $ref_arr = delete( $doc->{$name} );
-				#print "class=$class\n";
-				#$doc->{$name} = bless { parent=>$doc->{'_id'} } => $class;
-				#print "DOC=$doc,  name=$name, docname=" . $doc->{$name};
 				my $ref_class = $type->type_parameter->class ;
-				#$doc->{$name} = bless { parent=>$doc->{'_id'} } => $class;
-				$doc->{$name} = bless { with_class=>$ref_class, children=>$ref_arr } => $class;
+				$doc->{$name} = bless { with_class=>$ref_class, children=>$ref_arr, buffer=>{} } => $class;
 			}
 		}
 		else { #non-moose
 			my $data = delete $doc->{$name};
 			my $data_type =  ref $data;
-			#say "ref=$data_type";
+
 			if( !$data_type ) {
-				#$doc->{$name} = bless \( $data ) => $class;
-				#$doc->{$name} = $class->new( $data );
 				push @later, { attrib=>$name, value=>$data };
 			} else {
 				$doc->{$name} = bless $data => $class;
 			}
 		}
 	}
-	#for my $key ( grep { ref($doc{$_}) eq 'ARRAY' } keys %$doc ) {
-		#for my $item ( @{ $doc{$key} || [] } ) {
-			#if( ref($item) eq 'HASH' && exists( $item->{'$id'} ) ) {
-				#$doc{$key} = 
-			#}
-		#}
-	#}
-	#my $obj = $coll_name->new( $doc );
+
 	return undef unless defined $doc;
 	my $obj = bless $doc => $class_main;
 	for( @later )  {

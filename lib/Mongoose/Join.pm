@@ -27,16 +27,60 @@ has 'class'                 => ( is => 'rw', isa => 'Str' );
 has 'with_class'            => ( is => 'rw', isa => 'Str' );
 has '_with_collection_name' => ( is => 'rw', isa => 'Str' );
 has 'parent'                => ( is => 'rw', isa => 'MongoDB::OID' );
+
+# once the object is expanded, it has children too
 has 'children'              => ( is => 'rw', isa => 'ArrayRef' );
+
+# before being saved, objects are stored in this buffer
 has 'buffer' => ( is => 'rw', isa => 'HashRef', default => sub { {} } );
+
+# deleting happens at a later moment, meanwhile delete candidates are here
+has 'delete_buffer' => ( is => 'rw', isa => 'HashRef', default => sub { {} } );
 
 use Scalar::Util qw/refaddr/;
 
 sub add {
     my ( $self, @objs ) = @_;
-    for (@objs) {
-        $self->buffer->{ refaddr $_ } = $_;
+    for my $obj (@objs) {
+        $self->buffer->{ refaddr $obj } = $obj;
     }
+}
+
+sub remove {
+    my ( $self, @objs ) = @_;
+
+    # if the collection is live, remove from memory
+    if( my $buffer = $self->buffer ) {
+        for my $obj (@objs) {
+            next unless defined $obj;
+            delete $buffer->{ refaddr $obj };
+        }
+    }
+
+    # children get cleaned too
+    if( defined ( my $children = $self->children ) ) {
+        for my $obj (@objs) {
+            my $id = $obj->{_id};
+            next unless defined $id; 
+            $self->children([
+                grep { $_->{'$id'} ne $id } @{ $children } 
+            ]);
+        }
+    }
+
+    # save action for later (when save is called)
+    my $delete_buffer = defined $self->delete_buffer
+        ? $self->delete_buffer
+        : $self->delete_buffer({});
+    for my $obj (@objs) {
+        $delete_buffer->{ refaddr $obj } = $obj;
+    }
+}
+
+sub collection {
+    my $self = shift;
+    defined $self->with_class
+        and return $self->with_class->collection;
 }
 
 sub with_collection_name {
@@ -53,14 +97,29 @@ sub _insert {    #TODO insert and commit
 sub _save {
     my ( $self, $parent, @scope ) = @_;
 
-    #die 'parent=' . x::pp( $parent );
-    my @objs;
+    my @objs = @{ delete $self->{children} || [] };
     my $collection_name = $self->with_collection_name;
-    for ( keys %{ $self->buffer } ) {
-        my $obj = delete $self->buffer->{$_};
-        $obj->save;
+
+    # load buffers
+    my $buffer = delete $self->{buffer};
+    my $delete_buffer = delete $self->{delete_buffer};
+
+    # save buffered children
+    for ( keys %{ $buffer } ) {
+        my $obj = delete $buffer->{$_};
+        next if exists $delete_buffer->{ refaddr $obj };
+        $obj->save( @scope );
         push @objs, { '$ref' => $collection_name, '$id' => $obj->_id };
     }
+
+    # adjust
+    $self->buffer( $buffer ); # restore the list
+    $self->delete_buffer({});
+
+    # make sure unique children is saved
+    my %unique = map { $_->{'$id'} => $_ } @objs;
+    @objs = values %unique;
+    $self->children( \@objs );
     return @objs;
 }
 
@@ -71,6 +130,15 @@ sub find {
     my @children = map { $_->{'$id'} } @{ $self->children || [] };
     $opts->{_id} = { '$in' => \@children };
     return $class->find( $opts, @scope );
+}
+
+sub find_one {
+    my ( $self, $opts, @scope ) = @_;
+    my $class = $self->with_class;
+    $opts ||= {};
+    my @children = map { $_->{'$id'} } @{ $self->children || [] };
+    $opts->{_id} = { '$in' => \@children };
+    return $class->find_one( $opts, @scope );
 }
 
 sub query {
@@ -120,6 +188,14 @@ Saving the parent Mongoose::Document will save both.
     $author->articles->add( Article->new );
     $author->save; # saves all objects
 
+=head2 remove
+
+Delete from the relationship list.
+
+    my $author = Author->find_one;
+    my $first_article = $author->articles->find_one;
+    $author->articles->remove( $first_article );
+
 =head2 find
 
 Run a MongoDB C<find> on the joint collection.
@@ -132,6 +208,10 @@ Run a MongoDB C<find> on the joint collection.
 
 Returns a L<Mongoose::Cursor>. 
 
+=head2 find_one
+
+Just like find, but with a C<find_one> twist. 
+
 =head2 all
 
 Same as C<find>, but returns an ARRAY with all the results, instead 
@@ -140,6 +220,10 @@ of a cursor.
 =head2 query
 
 Run a MongoDB C<query> on the joint collection.
+
+=head2 collection
+
+Returns the L<MongoDB::Collection> for the joint collection.
 
 =head2 with_collection_name
 

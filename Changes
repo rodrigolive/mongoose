@@ -1,3 +1,8 @@
+0.03 Thu Aug 26 09:42:31 CEST 2010
+	* Fixed has_many with belongs_to circularity error (arthur)
+	* Fixed live join object errors
+	* New FileHandler with GridFS support
+
 0.02 Wed Aug 25 14:08:07 CEST 2010
 	* New Raw trait for storing without processing
 	* Raw DateTime recipe

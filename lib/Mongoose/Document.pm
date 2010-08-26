@@ -18,7 +18,6 @@ role {
     my $class_name = $args{consumer}->name;
 
     my $collection_name = $p->{'-collection_name'} || do {
-
         # sanitize the class name
         Mongoose->naming->($class_name);
     };

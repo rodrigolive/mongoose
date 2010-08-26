@@ -2,6 +2,7 @@ package Mongoose;
 use MongoDB;
 use MooseX::Singleton;
 use Mongoose::Join;
+use Mongoose::File;
 use Mongoose::Meta::AttributeTraits;
 use Carp;
 
@@ -221,6 +222,10 @@ L<KiokuDB>
 =head1 AUTHOR
 
 	Rodrigo de Oliveira (rodrigolive), C<rodrigolive@gmail.com>
+
+=head1 CONTRIBUTORS
+
+	Arthur Wolf
 
 =head1 LICENSE
 
