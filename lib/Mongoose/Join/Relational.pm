@@ -29,43 +29,54 @@ Moose::Util::TypeConstraints::add_parameterizable_type(
 has reciprocal => ( isa => 'Str', is => 'rw');
 has owner => ( isa => 'Any', is => 'rw');
 
-sub add{
+use Scalar::Util qw/refaddr/;
+
+after remove => sub {
     my ( $self, @objs ) = @_;
-    use Scalar::Util qw(refaddr);
     for my $obj ( @objs ){
-        if( $obj->meta->get_attribute($self->reciprocal)->type_constraint =~ m{^Mongoose::Join::Relational} ){
-            $self->buffer->{ refaddr $obj } = $obj;
-        }else{
-            $obj->{$self->reciprocal} = $self->owner;
-            $self->buffer->{ refaddr $obj } = $obj;
+        if( $obj->meta->get_attribute($self->reciprocal)->type_constraint !~ m{^Mongoose::Join::Relational} ){
+            delete $obj->{$self->reciprocal};
         }
     }
-}
+};
 
-sub find{
-    my ( $self, $opts, @scope ) = @_;
+after add => sub {
+    my ( $self, @objs ) = @_;
+    for my $obj ( @objs ){
+        if( $obj->meta->get_attribute($self->reciprocal)->type_constraint !~ m{^Mongoose::Join::Relational} ){
+            $obj->{$self->reciprocal} = $self->owner;
+        }
+    }
+};
+
+
+sub find {
+    my $self = shift;
+    my ( $opts, @scope ) = @_;
     my $class = $self->with_class;
     $opts = $opts || {};
-    return $class->find( { $self->reciprocal => $self->owner, %$opts }, @scope ); 
+    
+    if( $self->with_class->meta->get_attribute($self->reciprocal)->type_constraint !~ m{^Mongoose::Join::Relational} ){
+        return $class->find( { $self->reciprocal => $self->owner, %$opts }, @scope ); 
+    }else{
+        $opts->{$self->reciprocal . '.$id'} = $self->owner->_id;
+        return $class->find( $opts, @scope );
+    }
 }
 
 sub find_one{
-    my ( $self, $opts, @scope ) = @_;
+    my $self = shift;
+    my ( $opts, @scope ) = @_;
     my $class = $self->with_class;
     $opts = $opts || {};
-    return $class->find_one( { $self->reciprocal => $self->owner, %$opts }, @scope ); 
-}
-
-sub _save{
-    my ( $self, $parent, @scope ) = @_;
-    my $buffer = delete $self->{buffer};
-    for ( keys %{ $buffer } ) {
-        my $obj = delete $buffer->{$_};
-        $obj->save( @scope );
+    
+    if( $self->with_class->meta->get_attribute($self->reciprocal)->type_constraint !~ m{^Mongoose::Join::Relational} ){
+        return $class->find_one( { $self->reciprocal => $self->owner, %$opts }, @scope ); 
+    }else{
+        $opts->{$self->reciprocal . '.$id'} = $self->owner->_id;
+        return $class->find_one( $opts, @scope );
     }
 }
-
-
 
 1;
 

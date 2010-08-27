@@ -109,15 +109,18 @@ package main;
 	my $au = Author->new( name=>'Jack' );
 	$ar->authors->add( $au );
 	$au->articles->add( $ar );
+    
 	$au->save;
 
     my $author = Author->find_one;
+    print "author: " , $author->_id, "\n";
     my $first_article = $author->articles->find_one;
 	ok $first_article->isa('Article'), 'find_one on join';
 	is $author->articles->find->count, 1, 'count ok';
     $author->articles->remove( $first_article );
+    is $author->articles->find->count, 1, 'count after remove but before save ok';
 	$author->save;
-	is $author->articles->find->count, 0, 'count after remove ok';
+	is $author->articles->find->count, 0, 'count after remove and save ok';
 }
 {
     my $author = Author->find_one;
