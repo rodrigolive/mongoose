@@ -1,42 +1,38 @@
-#!/usr/bin/perl
+use strict;
+
+package Cat;
+use Mongoose::Class;
+with 'Mongoose::Document';
+use lib '/home/arthur/dev/mongoose/lib/';
+use Mongoose::Join::Relational;
+has 'balls' => ( is => 'ro', isa => 'Mongoose::Join::Relational', default => sub { Mongoose::Join::Relational->new( with_class=>'Ball', owner => shift, child_reciprocal => 'cat' ) } );
+
+
+package Ball;
+use Mongoose::Class;
+with 'Mongoose::Document';
+belongs_to cat => 'Cat';
+
+
+package main;
+
 use Test::More;
-use lib '/home/arthur/dev/svn/libs';
+use lib '/home/arthur/dev/svn/libs'; use_ok('DB');
 
-#Test uses
-use_ok('DB');
-use_ok('Test::Document');
+Cat->collection->remove;
+Ball->collection->remove;
 
-#Clean
-Test::Document->collection->remove;
-#Test::Document::Dog->collection->remove;
-#Test::Document::Cat->collection->remove;
+my $cat = Cat->new();
 
-my $document = Test::Document->new(number => 323);
-$document->save;
-ok( $document->number == 323 , 'number is 323' );
+$cat->balls->add( Ball->new( cat => $cat ) );
 
-my $id = $document->_id;
-ok( $id, 'has_as_id: ' . $id );
-
-
-my $new_document = Test::Document->find_one({ _id => $id });
-ok( $id == $new_document->_id, 'id is same: ' . $id);
-
-my $dog = Test::Document::Dog->new(name => 'woofy', document => $document);
-$document->dog($dog);
-ok( $document->dog->name eq 'woofy', 'has_one');
-ok( $document->dog->document->number == 323, 'belongs_to');
-
-for my $id ( 1 .. 2 ){
-    my $cat = Test::Document::Cat->new(name => "cat $id");
-    $cat->save;
-    $document->cats->add( $cat );
+for( 1 .. 2 ){
+    my $ball = Ball->new();
+    $cat->balls->add( $ball ); #We don't have to specify the owner of the ball, the join does that
 }
-#$document->save;
-is( $document->cats->find->count, 2, "inserted 2 cats" );
 
-#$new_document->delete;
-#my $check = Test::Document->find({ _id => $id });
-#ok( ! $check->has_next, 'was deleted' );
+$cat->save; #Won't work unless we add elsif( $class->isa('Mongoose::Join') or $class->isa('My::Join')  ) { in Mongoose/Engine/Base.pm
+
+is( $cat->balls->find->count, 3, "added 3 balls" );
 
 done_testing();
