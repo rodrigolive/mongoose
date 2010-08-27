@@ -119,20 +119,19 @@ package main;
     $author->articles->remove( $first_article );
     is $author->articles->find->count, 1, 'count after remove but before save ok';
 	$author->save;
-    #$first_article->save;
 	is $author->articles->find->count, 0, 'count after remove and save ok';
 }
 
 {
     my $author = Author->find_one;
 	my $article = Article->new(title=>'OnMoney'); 
-	$author->articles->add( $article );
-	$author->save;
-	$author->articles->add( $article );
+	#$author->articles->add( $article );
+	#$author->save;
+	#$author->articles->add( $article );
 	$author->articles->add( $article );
 	my $buffer = $author->articles->buffer;
 	is scalar(keys(%{$author->articles->buffer})), 1, 'buffer is not empty';
-	$author->save;
+	#$author->save;
 	$author->save;
 	is scalar(keys(%{$author->articles->buffer})), 0, 'buffer is flushed after save';
 	is $author->articles->find->count, 1, 'count ok';
