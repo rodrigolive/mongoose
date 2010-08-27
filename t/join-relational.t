@@ -88,9 +88,7 @@ package main;
 	Author->collection->drop;
 	my $ar = Article->new( title=>'on foo' );
 	my $au = Author->new( name=>'Jack' );
-    #print Dumper $au;
 	$ar->authors->add( $au );
-    #print Dumper $au;
 	$au->articles->add( $ar );
 	$au->save;
 
@@ -102,10 +100,6 @@ package main;
 {
 	my $article = Article->find_one({ title=>'on foo' });
 	is $article->authors->find({ name=>'Jack' })->count, 1, 'join find';
-    for my $test ( $article->authors->find({ name=>'Unknown' })->all ){
-        #print Dumper $test;
-        
-    }
 	is $article->authors->find({ name=>'Unknown' })->count, 0, 'join find not';
 }
 {

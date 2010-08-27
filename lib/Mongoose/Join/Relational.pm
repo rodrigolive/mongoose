@@ -33,7 +33,6 @@ sub add{
     my ( $self, @objs ) = @_;
     use Scalar::Util qw(refaddr);
     for my $obj ( @objs ){
-        #print $obj->meta->get_attribute($self->reciprocal)->type_constraint , "\n";
         if( $obj->meta->get_attribute($self->reciprocal)->type_constraint =~ m{^Mongoose::Join::Relational} ){
             $self->buffer->{ refaddr $obj } = $obj;
         }else{
@@ -47,7 +46,14 @@ sub find{
     my ( $self, $opts, @scope ) = @_;
     my $class = $self->with_class;
     $opts = $opts || {};
-    return $class->find( { $self->reciprocal => $self->owner, %$opts }, @scope ); #We find based on a reference in the Ball objects
+    return $class->find( { $self->reciprocal => $self->owner, %$opts }, @scope ); 
+}
+
+sub find_one{
+    my ( $self, $opts, @scope ) = @_;
+    my $class = $self->with_class;
+    $opts = $opts || {};
+    return $class->find_one( { $self->reciprocal => $self->owner, %$opts }, @scope ); 
 }
 
 sub _save{
