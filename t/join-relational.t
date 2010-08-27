@@ -102,6 +102,10 @@ package main;
 {
 	my $article = Article->find_one({ title=>'on foo' });
 	is $article->authors->find({ name=>'Jack' })->count, 1, 'join find';
+    for my $test ( $article->authors->find({ name=>'Unknown' })->all ){
+        #print Dumper $test;
+        
+    }
 	is $article->authors->find({ name=>'Unknown' })->count, 0, 'join find not';
 }
 {
