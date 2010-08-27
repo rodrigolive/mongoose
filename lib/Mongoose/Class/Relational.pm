@@ -16,7 +16,7 @@ sub has_many {
 
     my $isa_original = $options{isa};
     my $reciprocal = delete $options{reciprocal};
-    $options{isa} = 'Mongoose::Join::Relational';
+    $options{isa} = 'Mongoose::Join::Relational[' . $options{isa} . ']';
     $options{default} ||=
       sub {
           use lib '/home/arthur/dev/mongoose/lib/';

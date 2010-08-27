@@ -184,6 +184,7 @@ sub expand {
 			}
 			elsif( $class->isa('Mongoose::Join') ) {
 				my $ref_arr = delete( $doc->{$name} );
+                print "$type\n";
 				my $ref_class = $type->type_parameter->class ;
 				$doc->{$name} = bless {
 					class=>$class_main, field=>$name, parent=>$doc->{_id},
