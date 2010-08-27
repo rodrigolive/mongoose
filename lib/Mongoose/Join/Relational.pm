@@ -33,8 +33,13 @@ sub add{
     my ( $self, @objs ) = @_;
     use Scalar::Util qw(refaddr);
     for my $obj ( @objs ){
-        $obj->{$self->reciprocal} = $self->owner;
-        $self->buffer->{ refaddr $obj } = $obj;
+        #print $obj->meta->get_attribute($self->reciprocal)->type_constraint , "\n";
+        if( $obj->meta->get_attribute($self->reciprocal)->type_constraint =~ m{^Mongoose::Join::Relational} ){
+            $self->buffer->{ refaddr $obj } = $obj;
+        }else{
+            $obj->{$self->reciprocal} = $self->owner;
+            $self->buffer->{ refaddr $obj } = $obj;
+        }
     }
 }
 

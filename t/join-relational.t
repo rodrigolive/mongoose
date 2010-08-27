@@ -83,13 +83,14 @@ package main;
 	is $per->department->code, 'Devel', 'belongs to ok';
 }
 {
+    use Data::Dumper;
 	Article->collection->drop;
 	Author->collection->drop;
 	my $ar = Article->new( title=>'on foo' );
 	my $au = Author->new( name=>'Jack' );
+    #print Dumper $au;
 	$ar->authors->add( $au );
-    use Data::Dumper;
-    print Dumper $au;
+    #print Dumper $au;
 	$au->articles->add( $ar );
 	$au->save;
 
