@@ -58,7 +58,6 @@ around add => sub {
         }else{
             $obj->{$self->reciprocal}->add('no_recursion', $self->owner) if $recurse;
         }
-        #TODO : Same thing as for remove
     }
     return $self->$orig(@objs);
 };
@@ -73,10 +72,7 @@ sub find {
     if( $self->with_class->meta->get_attribute($self->reciprocal)->type_constraint !~ m{^Mongoose::Join::Relational} ){
         return $class->find( { $self->reciprocal => $self->owner, %$opts }, @scope ); 
     }else{
-        #my @children = map { $_->{'$id'} } @{ $self->children || [] };
-        #$opts->{_id} = { '$in' => \@children };
         $opts->{$self->reciprocal . '.$id'} = $self->owner->_id;
-        #$opts->{'$or'} => [ { _id => { '$in' => \@children } } , { $self->reciprocal . '.$id' => $self->owner->_id } ];
         return $class->find( $opts, @scope );
     }
 }
@@ -92,6 +88,20 @@ sub find_one{
     }else{
         $opts->{$self->reciprocal . '.$id'} = $self->owner->_id;
         return $class->find_one( $opts, @scope );
+    }
+}
+
+sub query{
+    my $self = shift;
+    my ( $opts, $attrs, @scope ) = @_;
+    my $class = $self->with_class;
+    $opts = $opts || {};
+    
+    if( $self->with_class->meta->get_attribute($self->reciprocal)->type_constraint !~ m{^Mongoose::Join::Relational} ){
+        return $class->query( { $self->reciprocal => $self->owner, %$opts }, $attrs, @scope ); 
+    }else{
+        $opts->{$self->reciprocal . '.$id'} = $self->owner->_id;
+        return $class->query( $opts, $attrs, @scope );
     }
 }
 

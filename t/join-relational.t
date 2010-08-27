@@ -125,19 +125,20 @@ package main;
 {
     my $author = Author->find_one;
 	my $article = Article->new(title=>'OnMoney'); 
-	#$author->articles->add( $article );
-	#$author->save;
-	#$author->articles->add( $article );
+	$author->articles->add( $article );
+	$author->save;
+	$author->articles->add( $article );
 	$author->articles->add( $article );
 	my $buffer = $author->articles->buffer;
 	is scalar(keys(%{$author->articles->buffer})), 1, 'buffer is not empty';
-	#$author->save;
+	$author->save;
 	$author->save;
 	is scalar(keys(%{$author->articles->buffer})), 0, 'buffer is flushed after save';
 	is $author->articles->find->count, 1, 'count ok';
 }
 {
-	my $article = Article->find_one({ title=>'on foo' });
+	my $article = Article->find_one({ title=>'OnMoney' });
+    is $article->authors->find({ name=>'Jack' })->count, 1, 'count ok';
 	my $q1 = $article->authors->query({ name=>'Jack' });
 	is $q1->count, 1, 'join query';
 
