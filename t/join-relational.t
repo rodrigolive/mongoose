@@ -20,7 +20,7 @@ $db->run_command({ drop=>'person' });
 {
 	package Employee;
 	use Moose;
-    use Mongoose::Class;
+    use Mongoose::Class::Relational;
 	with 'Mongoose::Document';
 	has 'name' => ( is=>'rw', isa=>'Str', required=>1 );
     belongs_to 'department' => ( is=>'rw', isa=>'Department' );
@@ -28,42 +28,41 @@ $db->run_command({ drop=>'person' });
 
 {
 	package Person;
-	use Mongoose::Class;
+	use Mongoose::Class::Relational;
 	with 'Mongoose::Document';
 	has 'name' => ( is=>'rw', isa=>'Str', required=>1 );
 	belongs_to 'department' => ( is=>'rw', isa=>'Department', );
 }
 {
 	package Article;
-	use Mongoose::Class;
+	use Mongoose::Class::Relational;
 	with 'Mongoose::Document';
 	has 'title' => ( is=>'rw', isa=>'Str', required=>1 );
-	has_many 'authors' => 'Author'; 
+	has_many 'authors' => ( is=>'rw', isa=>'Author', reciprocal => 'articles' );
 }
 {
 	package Author;
-	use Mongoose::Class; with 'Mongoose::Document';
+	use Mongoose::Class::Relational;
+    with 'Mongoose::Document';
 	has 'name' => ( is=>'rw', isa=>'Str', required=>1 );
-	has_many 'articles' => 'Article'; 
+	has_many 'articles' => ( is=>'rw', isa=>'Article', reciprocal => 'authors' );
 }
 {
 	package Authorship;
-	use Mongoose::Class; with 'Mongoose::Document';
+	use Mongoose::Class::Relational;
+    with 'Mongoose::Document';
 	has_one 'author' => 'Author';
-	has_many 'articles' => 'Article';
+	has_many 'articles' => ( is=>'rw', isa=>'Article', reciprocal => 'authors' );
 }
 package main;
 {
     my $c = Department->new( code=>'ACC' );
-    
-	#$c->locs->push( 'me' );
+
 	for( 1..15 ) {
 		my $e = Employee->new( name=>'Bob' . $_ );
 		$c->employees->add( $e );
 	}
 	$c->save;
-    use Data::Dumper;
-    #print Dumper $c;
 }
 
 {
@@ -89,6 +88,8 @@ package main;
 	my $ar = Article->new( title=>'on foo' );
 	my $au = Author->new( name=>'Jack' );
 	$ar->authors->add( $au );
+    use Data::Dumper;
+    print Dumper $au;
 	$au->articles->add( $ar );
 	$au->save;
 
