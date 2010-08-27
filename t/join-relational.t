@@ -12,7 +12,6 @@ $db->run_command({ drop=>'person' });
 
 {
 	package Department;
-    use lib '/home/arthur/dev/mongoose/lib/';
 	use Mongoose::Class::Relational;
 	with 'Mongoose::Document';
     has 'code' => ( is=>'rw', isa=>'Str');
@@ -56,12 +55,15 @@ $db->run_command({ drop=>'person' });
 package main;
 {
     my $c = Department->new( code=>'ACC' );
+    
 	#$c->locs->push( 'me' );
 	for( 1..15 ) {
 		my $e = Employee->new( name=>'Bob' . $_ );
 		$c->employees->add( $e );
 	}
 	$c->save;
+    use Data::Dumper;
+    #print Dumper $c;
 }
 
 {

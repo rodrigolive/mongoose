@@ -42,7 +42,7 @@ sub find{
     my ( $self, $opts, @scope ) = @_;
     my $class = $self->with_class;
     use Data::Dumper;
-    print Dumper { $self->reciprocal => $self->owner};
+    #print Dumper { $self->reciprocal => $self->owner};
     return $class->find( { $self->reciprocal => $self->owner}, @scope ); #We find based on a reference in the Ball objects
 }
 

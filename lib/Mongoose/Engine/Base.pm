@@ -186,8 +186,9 @@ sub expand {
 				my $ref_arr = delete( $doc->{$name} );
 				my $ref_class = $type->type_parameter->class ;
 				$doc->{$name} = bless {
-					class=>$class_main, field=>$name, parent=>$doc->{_id},
-					with_class=>$ref_class, children=>$ref_arr, buffer=>{} } => $class;
+                                       class=>$class_main, field=>$name, parent=>$doc->{_id},
+                                       with_class=>$ref_class, children=>$ref_arr, buffer=>{}
+                                      } => $class;
 			}
 		}
 		else { #non-moose
@@ -358,6 +359,8 @@ sub query {
 sub find_one {
 	my ($self,$query,$fields, $from) = @_;
 	my $doc = $self->collection->find_one( $query, $fields );
+    use Data::Dumper;
+    print Dumper $self->expand( $doc, $fields, $from );
 	return undef unless defined $doc;
 	return $self->expand( $doc, $fields, $from );
 }
