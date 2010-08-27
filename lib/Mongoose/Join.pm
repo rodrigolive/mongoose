@@ -24,6 +24,7 @@ Moose::Util::TypeConstraints::add_parameterizable_type(
     $REGISTRY->get_type_constraint('Mongoose::Join') );
 
 has 'class'                 => ( is => 'rw', isa => 'Str' );
+has 'field'                 => ( is => 'rw', isa => 'Str' );
 has 'with_class'            => ( is => 'rw', isa => 'Str' );
 has '_with_collection_name' => ( is => 'rw', isa => 'Str' );
 has 'parent'                => ( is => 'rw', isa => 'MongoDB::OID' );
@@ -121,6 +122,15 @@ sub _save {
     @objs = values %unique;
     $self->children( \@objs );
     return @objs;
+}
+
+sub _children_refs {
+	my ($self)=@_;
+	my @found;
+	$self->find->each( sub{
+		push @found, { '$id' => $_[0]->{_id}, '$ref' => $_[0]->_collection_name };
+	});
+	return @found;
 }
 
 sub find {
