@@ -31,14 +31,21 @@ has owner => ( isa => 'Any', is => 'rw');
 
 use Scalar::Util qw/refaddr/;
 
-after remove => sub {
-    my ( $self, @objs ) = @_;
+around remove => sub {
+    my ( $orig, $self, @objs ) = @_;
+    
+    my $recurse = 1; if( $objs[0] eq 'no_recursion'){ $recurse = 0; shift @objs; }
+    
     for my $obj ( @objs ){
         if( $obj->meta->get_attribute($self->reciprocal)->type_constraint !~ m{^Mongoose::Join::Relational} ){
             delete $obj->{$self->reciprocal};
+        }else{
+            $obj->{$self->reciprocal}->remove('no_recursion', $self->owner) if $recurse;
         }
     }
+    return $self->$orig(@objs);
 };
+
 
 after add => sub {
     my ( $self, @objs ) = @_;

@@ -105,6 +105,11 @@ sub _save {
     my $buffer = delete $self->{buffer};
     my $delete_buffer = delete $self->{delete_buffer};
 
+    # save deleted, couldn't see how to put this in Join::Relational without creating infinte loops
+    for my $deleted ( values %{$delete_buffer}){
+        $deleted->save;
+    }
+
     # save buffered children
     for ( keys %{ $buffer } ) {
         my $obj = delete $buffer->{$_};
@@ -112,6 +117,7 @@ sub _save {
         $obj->save( @scope );
         push @objs, { '$ref' => $collection_name, '$id' => $obj->_id };
     }
+
 
     # adjust
     $self->buffer( $buffer ); # restore the list
