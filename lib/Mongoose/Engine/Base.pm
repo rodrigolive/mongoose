@@ -105,7 +105,16 @@ sub expand {
 	my $config = $self->meta->{mongoose_config};
 	my $coll_name = $config->{collection_name};
 	my $class_main = ref $self || $self;
+
 	$scope = {} unless ref $scope eq 'HASH';
+
+	# check if it's an straight ref
+	if( defined $doc->{'$id'} ) {
+		my $ref_id = $doc->{'$id'};
+		defined $scope->{$ref_id} and return $scope->{$ref_id};
+		return $class_main->find_one({ _id=>$doc->{'$id'} });
+	}
+
 	for my $attr ( $class_main->meta->get_all_attributes ) {
 		my $name = $attr->name;
 		next unless exists $doc->{$name};
@@ -117,23 +126,46 @@ sub expand {
 			next;
 		}
 		elsif( $type->is_a_type_of('HashRef') ) {
-			if(  defined $type->{type_parameter} ) {
-				my $hash_class = $type->{type_parameter} . "";
+			if( defined $type->{type_parameter} ) {
+				# HashRef[ parameter ]
+				my $param = $type->{type_parameter};
+				if( my $param_class = $param->{class} ) {
+					for my $key ( keys %{ $doc->{$name} || {} } ) {
+						$doc->{$name}->{$key} = $param_class->expand( $doc->{$name}->{$key}, undef, $scope );
+					}
+					next;
+				} else {
+					next;
+				}
+			} else {
+				# nothing to do on pure HASH
+				next;
+			}
+		}
+		elsif( $type->is_a_type_of('ArrayRef') ) {
+			if( defined $type->{type_parameter} ) {
+				# ArrayRef[ parameter ]
 				my @objs;
-				for my $item ( values %{ $doc->{$name} || {} } ) {
-					if( my $_id = delete $item->{'$id'} ) {
-						if( my $circ_doc = $scope->{ $_id } ) {
-							push @objs, bless( $circ_doc , $hash_class );
-						} else {	
-							push @$scope, $doc; 
-							my $hash_obj = $hash_class->find_one({ _id=>$_id }, undef, $scope );
-							push @objs, $hash_obj if defined $hash_obj;
+				my $param = $type->{type_parameter};
+				if( my $param_class = $param->{class} ) {
+					for my $item ( @{ $doc->{$name} || [] } ) {
+						if( my $_id = delete $item->{'$id'} ) {
+							if( my $circ_doc = $scope->{ $_id } ) {
+								push @objs, bless( $circ_doc , $param_class );
+							} else {	
+								#$scope->{ $_id } = $doc->{
+								my $ary_obj = $param_class->find_one({ _id=>$_id }, undef, $scope );
+								push @objs, $ary_obj if defined $ary_obj;
+							}
 						}
 					}
+				} else {
+					@objs = @{ $doc->{$name} || [] };
 				}
-
+				$doc->{$name} = \@objs;
+				next;
 			} else {
-				# nothing to do on HASH
+				# ARRAY
 				next;
 			}
 		}
@@ -143,29 +175,7 @@ sub expand {
 			$doc->{$name} = bless $file, 'Mongoose::File';
 			next;
 		}
-		elsif( $type->is_a_type_of('ArrayRef') ) {
-			if(  defined $type->{type_parameter} ) {
-				# ArrayRef[ parameter ]
-				my $array_class = $type->{type_parameter} . "";
-				my @objs;
-				for my $item ( @{ $doc->{$name} || [] } ) {
-					if( my $_id = delete $item->{'$id'} ) {
-						if( my $circ_doc = $scope->{ $_id } ) {
-							push @objs, bless( $circ_doc , $array_class );
-						} else {	
-							push @$scope, $doc; 
-							my $ary_obj = $array_class->find_one({ _id=>$_id }, undef, $scope );
-							push @objs, $ary_obj if defined $ary_obj;
-						}
-					}
-				}
-				$doc->{$name} = \@objs;
-				next;
-			} else {
-				# old plain ArrayRef
-				next;
-			}
-		}
+
 		if( $class->can('meta') ) { # moose subobject
 
 			if( $class->does('Mongoose::EmbeddedDocument') ) {
@@ -356,10 +366,10 @@ sub query {
 }
 
 sub find_one {
-	my ($self,$query,$fields, $from) = @_;
+	my ($self,$query,$fields, $scope) = @_;
 	my $doc = $self->collection->find_one( $query, $fields );
 	return undef unless defined $doc;
-	return $self->expand( $doc, $fields, $from );
+	return $self->expand( $doc, $fields, $scope );
 }
 
 =head1 NAME

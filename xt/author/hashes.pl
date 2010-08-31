@@ -1,6 +1,8 @@
+use Test::More;
 use v5.10;
 use YAML;
 sub x::pp { say Dump( @_ ) }
+
 {
 	package Person;
 	use Mongoose::Class;
@@ -19,6 +21,8 @@ sub x::pp { say Dump( @_ ) }
 	has_one 'alive_more' => 'ArrayRef';
 	has_one 'hh' => 'HashRef[ArrayRef]';
 	has_one 'tt' => 'HashRef[Person]';
+    has_one 'arr' => 'ArrayRef[Person]';
+    has_one 'arr_int' => 'ArrayRef[Int]';
 	has 'cc' => ( is=>'rw', isa=>'CodeRef', traits=>['DoNotSerialize'] );
 
 	sub foo { print 'me' }
@@ -41,7 +45,10 @@ sub x::pp { say Dump( @_ ) }
 	Thing->collection->drop;
 	my $na = "adf";
 	my $t = Thing->new( alive_more=>[55], tt=>{ aa=>Person->new(name=>'Bobby') },
-		hh=>{ aa=>[11,22,33] }, name => 'Jack', age=>22, alive=>0, cc=>sub{ say $na } );
+		hh=>{ aa=>[11,22,33] },
+        arr => [ Person->new(name=>'Karen' ) ],
+        arr_int => [ 10, 11, 23 ],
+        name => 'Jack', age=>22, alive=>0, cc=>sub{ say $na } );
 
 	#use B::Deparse;
     #    my $deparse = B::Deparse->new("-p", "-sC");
@@ -54,6 +61,15 @@ sub x::pp { say Dump( @_ ) }
 	$t->save;
 	my $t2 = Thing->find_one;
 	print $t2->dump;
+
+    is ref($t2->tt), 'HASH', 'expanded hash 1';
+    is ref($t2->tt->{aa}), 'Person', 'expanded hash key into class';
+    is $t2->alive_more->[0], 55, 'basic arrayref resolved';
+    is $t2->tt->{aa}->name, 'Bobby', 'doc $ref resolved';
+    is $t2->arr->[0]->name, 'Karen', 'doc array $ref resolved';
+    is $t2->arr_int->[0],  10, 'doc array $ref resolved';
+    is ref($t2->hh), 'HASH', 'expanded hash 2';
+    is ref($t2->hh->{aa}), 'ARRAY', 'expanded hash into array';
 	#Benchmark::timethis( 20000, sub {
 		#Thing->new( name => 'Jack'.$_ )->save;
 	#});
@@ -61,3 +77,4 @@ sub x::pp { say Dump( @_ ) }
 	#Thing->find->each(sub{ say $_[0]->{name} } );
 }
 
+done_testing;
