@@ -11,13 +11,28 @@ sub has_many {
     my $meta = shift;
     my $name = shift;
     my %options;
-    if   ( scalar @_ == 1 ) { $options{isa} = shift; }
-    else                    { %options      = @_; }
+
+    my $isa;
+    if   ( scalar @_ % 2 == 1 ) {
+        $isa = shift;
+    }
+    %options      = @_;
+    $options{isa} = $isa if $isa;
 
     my $isa_original = $options{isa};
-    $options{isa} = 'Mongoose::Join[' . $options{isa} . ']';
-    $options{default} ||=
-      sub { Mongoose::Join->new( with_class => "$isa_original" ) };
+    if( exists $options{foreign} ){
+        my $foreign = delete $options{foreign};
+        $options{isa} = 'Mongoose::Join::Relational[' . $options{isa} . ']';
+        $options{default} ||=
+          sub {
+              use lib '/home/arthur/dev/mongoose/lib/';
+              use Mongoose::Join::Relational;
+              Mongoose::Join::Relational->new( with_class => "$isa_original", owner => shift, reciprocal => $foreign );
+            };        
+    }else{
+        $options{isa} = 'Mongoose::Join[' . $options{isa} . ']';
+        $options{default} ||= sub { Mongoose::Join->new( with_class => "$isa_original" ) };
+    }
     $options{is} ||= 'ro';
     $meta->add_attribute( $name, %options, );
 }

@@ -12,47 +12,47 @@ $db->run_command({ drop=>'person' });
 
 {
 	package Department;
-	use Mongoose::Class::Relational;
+    use Mongoose::Class;
 	with 'Mongoose::Document';
     has 'code' => ( is=>'rw', isa=>'Str');
-    has_many 'employees' => ( is=>'rw', isa=>'Employee', reciprocal => 'department' );
+    has_many 'employees' => 'Employee', foreign => 'department';
 }
 {
 	package Employee;
 	use Moose;
-    use Mongoose::Class::Relational;
+    use Mongoose::Class;
 	with 'Mongoose::Document';
 	has 'name' => ( is=>'rw', isa=>'Str', required=>1 );
-    belongs_to 'department' => ( is=>'rw', isa=>'Department' );
+    belongs_to 'department' => 'Department';
 }
 
 {
 	package Person;
-	use Mongoose::Class::Relational;
+	use Mongoose::Class;
 	with 'Mongoose::Document';
 	has 'name' => ( is=>'rw', isa=>'Str', required=>1 );
-	belongs_to 'department' => ( is=>'rw', isa=>'Department', );
+	belongs_to 'department' => 'Department';
 }
 {
 	package Article;
-	use Mongoose::Class::Relational;
+	use Mongoose::Class;
 	with 'Mongoose::Document';
 	has 'title' => ( is=>'rw', isa=>'Str', required=>1 );
-	has_many 'authors' => ( is=>'rw', isa=>'Author', reciprocal => 'articles' );
+    has_many 'authors' => 'Author', foreign => 'articles';
 }
 {
 	package Author;
-	use Mongoose::Class::Relational;
+	use Mongoose::Class;
     with 'Mongoose::Document';
 	has 'name' => ( is=>'rw', isa=>'Str', required=>1 );
-	has_many 'articles' => ( is=>'rw', isa=>'Article', reciprocal => 'authors' );
+	has_many 'articles' => 'Article', foreign => 'authors';
 }
 {
 	package Authorship;
-	use Mongoose::Class::Relational;
+	use Mongoose::Class;
     with 'Mongoose::Document';
 	has_one 'author' => 'Author';
-	has_many 'articles' => ( is=>'rw', isa=>'Article', reciprocal => 'authors' );
+	has_many 'articles' => 'Article', foreign => 'authors';
 }
 package main;
 {
