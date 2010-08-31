@@ -40,7 +40,8 @@ sub collapse {
 		my $obj = $packed->{$key};
 		if( my $class = blessed $obj ) {
 			#say "checking.... $class....";
-			$packed->{$key} = $self->_unbless( $obj, $class, @scope ); 
+            my $unblessed = $self->_unbless( $obj, $class, @scope );
+			$packed->{$key} = $unblessed unless !defined $unblessed ; #This is required to not store anything when in a relational relationship
 		}
 		elsif( ref $obj eq 'ARRAY' ) {
 			my @docs;
@@ -82,8 +83,12 @@ sub _unbless {
 					$ret = { '$ref' => $class->meta->{mongoose_config}->{collection_name}, '$id'=>$id };
 				} 
 				elsif( $class->isa('Mongoose::Join') ) {
-					my @objs = $obj->_save( $self, @scope );
-					$ret = \@objs;
+					my ( $first, @objs ) = $obj->_save( $self, @scope );
+                    if( !defined $first ){
+                        $ret = undef;
+                    }else{
+                        $ret = [ $first, @objs ];
+                    }
 				} 
 			} else {
 				# non-moose class
