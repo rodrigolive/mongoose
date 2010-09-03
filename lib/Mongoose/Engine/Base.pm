@@ -40,8 +40,7 @@ sub collapse {
 		my $obj = $packed->{$key};
 		if( my $class = blessed $obj ) {
 			#say "checking.... $class....";
-            my $unblessed = $self->_unbless( $obj, $class, @scope );
-			$packed->{$key} = $unblessed unless !defined $unblessed ; #This is required to not store anything when in a relational relationship
+			$packed->{$key} = $self->_unbless( $obj, $class, @scope );
 		}
 		elsif( ref $obj eq 'ARRAY' ) {
 			my @docs;
@@ -83,12 +82,7 @@ sub _unbless {
 					$ret = { '$ref' => $class->meta->{mongoose_config}->{collection_name}, '$id'=>$id };
 				} 
 				elsif( $class->isa('Mongoose::Join') ) {
-					my ( $first, @objs ) = $obj->_save( $self, @scope );
-                    if( !defined $first ){
-                        $ret = undef;
-                    }else{
-                        $ret = [ $first, @objs ];
-                    }
+					$ret = [ $obj->_save( $self, @scope ) ];
 				} 
 			} else {
 				# non-moose class
@@ -113,8 +107,7 @@ sub expand {
 	$scope = {} unless ref $scope eq 'HASH';
 	for my $attr ( $class_main->meta->get_all_attributes ) {
 		my $name = $attr->name;
-		next unless exists $doc->{$name};
-		my $type = $attr->type_constraint or next;
+        my $type = $attr->type_constraint or next;
 		my $class = $self->_get_blessed_type( $type );
 		$class or next;
 
@@ -192,6 +185,7 @@ sub expand {
 				my $ref_class = $type->type_parameter->class ;
                 if( $class eq 'Mongoose::Join::Relational' ){
                     $doc->{$name} = $class_main->meta->get_attribute($name)->default->($doc);
+
                 }else{
                     $doc->{$name} = bless {
                                            class=>$class_main, field=>$name, parent=>$doc->{_id}, with_class=>$ref_class,

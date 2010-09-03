@@ -18,16 +18,16 @@ sub has_many {
     }
     %options      = @_;
     $options{isa} = $isa if $isa;
-
+    
     my $isa_original = $options{isa};
     if( exists $options{foreign} ){
         my $foreign = delete $options{foreign};
         $options{isa} = 'Mongoose::Join::Relational[' . $options{isa} . ']';
         $options{default} ||=
           sub {
-              use lib '/home/arthur/dev/mongoose/lib/';
+              my $owner = shift;
               use Mongoose::Join::Relational;
-              Mongoose::Join::Relational->new( with_class => "$isa_original", owner => shift, reciprocal => $foreign );
+              Mongoose::Join::Relational->new( with_class => "$isa_original", owner => $owner, reciprocal => $foreign );
             };        
     }else{
         $options{isa} = 'Mongoose::Join[' . $options{isa} . ']';

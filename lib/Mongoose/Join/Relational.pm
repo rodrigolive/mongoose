@@ -66,7 +66,7 @@ sub _save {
     
     #We collapse into a list only if we are in a many-to-many configuration
     return @objs if $self->with_class->meta->get_attribute($self->reciprocal)->type_constraint =~ m{^Mongoose::Join::Relational};
-    return undef;
+    return ();
 }
 
 around remove => sub {
@@ -91,6 +91,7 @@ around add => sub {
     my $recurse = 1; if( $objs[0] eq 'no_recursion'){ $recurse = 0; shift @objs; }
     
     for my $obj ( @objs ){
+        #next if grep { } 
         if( $obj->meta->get_attribute($self->reciprocal)->type_constraint !~ m{^Mongoose::Join::Relational} ){
             $obj->{$self->reciprocal} = $self->owner;
         }else{
@@ -107,12 +108,16 @@ sub find {
     my $class = $self->with_class;
     $opts = $opts || {};
     
-    if( $self->with_class->meta->get_attribute($self->reciprocal)->type_constraint !~ m{^Mongoose::Join::Relational} ){
-        return $class->find( { $self->reciprocal => $self->owner, %$opts }, @scope ); 
-    }else{
+    #if( $self->with_class->meta->get_attribute($self->reciprocal)->type_constraint !~ m{^Mongoose::Join::Relational} ){
+        #print Dumper { $self->reciprocal => $self->owner, %$opts };
+        #print $self->reciprocal , " ",  $self->owner, "\n";
+        #return $class->find( { $self->reciprocal => $self->owner, %$opts }, @scope );
         $opts->{$self->reciprocal . '.$id'} = $self->owner->_id;
         return $class->find( $opts, @scope );
-    }
+    #}else{
+    #    $opts->{$self->reciprocal . '.$id'} = $self->owner->_id;
+    #    return $class->find( $opts, @scope );
+    #}
 }
 
 sub find_one{
@@ -121,12 +126,12 @@ sub find_one{
     my $class = $self->with_class;
     $opts = $opts || {};
     
-    if( $self->with_class->meta->get_attribute($self->reciprocal)->type_constraint !~ m{^Mongoose::Join::Relational} ){
-        return $class->find_one( { $self->reciprocal => $self->owner, %$opts }, @scope ); 
-    }else{
+    #if( $self->with_class->meta->get_attribute($self->reciprocal)->type_constraint !~ m{^Mongoose::Join::Relational} ){
+    #    return $class->find_one( { $self->reciprocal => $self->owner, %$opts }, @scope ); 
+    #}else{
         $opts->{$self->reciprocal . '.$id'} = $self->owner->_id;
         return $class->find_one( $opts, @scope );
-    }
+    #}
 }
 
 sub query{
@@ -135,12 +140,12 @@ sub query{
     my $class = $self->with_class;
     $opts = $opts || {};
     
-    if( $self->with_class->meta->get_attribute($self->reciprocal)->type_constraint !~ m{^Mongoose::Join::Relational} ){
-        return $class->query( { $self->reciprocal => $self->owner, %$opts }, $attrs, @scope ); 
-    }else{
+    #if( $self->with_class->meta->get_attribute($self->reciprocal)->type_constraint !~ m{^Mongoose::Join::Relational} ){
+    #    return $class->query( { $self->reciprocal => $self->owner, %$opts }, $attrs, @scope ); 
+    #}else{
         $opts->{$self->reciprocal . '.$id'} = $self->owner->_id;
         return $class->query( $opts, $attrs, @scope );
-    }
+    #}
 }
 
 1;

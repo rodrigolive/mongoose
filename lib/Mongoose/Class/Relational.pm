@@ -13,13 +13,12 @@ sub has_many {
     my %options;
     if   ( scalar @_ == 1 ) { $options{isa} = shift; }
     else                    { %options      = @_; }
-
+    
     my $isa_original = $options{isa};
     my $reciprocal = delete $options{reciprocal};
     $options{isa} = 'Mongoose::Join::Relational[' . $options{isa} . ']';
     $options{default} ||=
       sub {
-          use lib '/home/arthur/dev/mongoose/lib/';
           use Mongoose::Join::Relational;
           Mongoose::Join::Relational->new( with_class => "$isa_original", owner => shift, reciprocal => $reciprocal  );
         };
