@@ -9,10 +9,12 @@ use Carp;
 use List::Util qw/first/;
 use Mongoose::Cursor; #initializes moose
 
-with 'Mongoose::Role::Collapser';
-with 'Mongoose::Role::Expander';
-with 'Mongoose::Role::Engine';
-	
+#with 'Mongoose::Role::Collapser';
+#with 'Mongoose::Role::Expander';
+#with 'Mongoose::Role::Engine';
+
+with 'Mongoose::Engine::Base::DocumentMethods';
+
 sub collapse {
 	my ($self, @scope )=@_;
 	return $self
@@ -343,28 +345,7 @@ sub _collection_name {
 	return $self->meta->{mongoose_config}->{collection_name} ;
 }
 
-sub find {
-	my ($self,$query,$attrs) = @_;
-	my $cursor = bless $self->collection->find($query,$attrs), 'Mongoose::Cursor';
-	$cursor->_collection_name( $self->meta->{mongoose_config}->{collection_name} );
-	$cursor->_class( ref $self || $self );
-	return $cursor;
-}
 
-sub query {
-	my ($self,$query,$attrs) = @_;
-	my $cursor = bless $self->collection->query($query,$attrs), 'Mongoose::Cursor';
-	$cursor->_collection_name( $self->meta->{mongoose_config}->{collection_name} );
-	$cursor->_class( ref $self || $self );
-	return $cursor;
-}
-
-sub find_one {
-	my ($self,$query,$fields, $from) = @_;
-	my $doc = $self->collection->find_one( $query, $fields );
-	return undef unless defined $doc;
-	return $self->expand( $doc, $fields, $from );
-}
 
 =head1 NAME
 

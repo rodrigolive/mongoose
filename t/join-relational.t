@@ -136,6 +136,7 @@ package main;
 	$author->save;
 	is scalar(keys(%{$author->articles->buffer})), 0, 'buffer is flushed after save';
 	is $author->articles->find->count, 1, 'count ok';
+    is scalar $author->articles->find->all, 1, 'all ok';
 }
 {
 	my $article = Article->find_one({ title=>'OnMoney' });
