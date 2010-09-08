@@ -87,22 +87,34 @@ sub update_all{
 }
 
 sub update_or_create{
-    my ( $self, $vals, $attrs ) = @_;
+    my ( $self, $vals, $modification, $attrs ) = @_;
+    $vals ||= {};
+    $modification ||= {};
     my $maybe = $self->_exists( $vals, $attrs );
     if( $maybe and my $match = $maybe->first ){
-        return $match->update($vals);
+        for ( keys %{$vals} ){
+            $modification->{'$set'}->{$_} = $vals->{$_} unless $modification->{'$set'}->{$_};
+        }
+        $match->update($modification);
+        return $self->find_one( '_id' => $match->_id );
     }else{
         return $self->create( %{$vals} );
     }
 }
 
 sub update_or_new{
-    my ( $self, $vals, $attrs ) = @_;
+    my ( $self, $vals, $modification, $attrs ) = @_;
+    $vals ||= {};
+    $modification ||= {};
     my $maybe = $self->_exists( $vals, $attrs );
     if( $maybe and my $match = $maybe->first ){
-        return $match->update($vals);
+        for ( keys %{$vals} ){
+            $modification->{'$set'}->{$_} = $vals->{$_} unless $modification->{'$set'}->{$_};
+        }
+        $match->update($modification);
+        return $self->find_one( '_id' => $match->_id );
     }else{
-        return $self->_class->new( %{$vals} );
+        return $self->new_result( %{$vals} );
     }
 }
 
@@ -241,7 +253,7 @@ sub _exists{
     my $maybe = 0;
     if( $attrs->{key} ){
         if( $attrs->{key} eq 'primary' ){
-            $maybe = $self->find({ '_id' => $vals->{'_id'}});    
+            $maybe = $self->find({ '_id' => $vals->{'_id'}});
         }else{
             $maybe = $self->find({ $attrs->{key} => $vals->{$attrs->{key}}});    
         }

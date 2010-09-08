@@ -29,7 +29,7 @@ Moose::Util::TypeConstraints::add_parameterizable_type(
 has reciprocal => ( isa => 'Str', is => 'rw');
 has owner => ( isa => 'Any', is => 'rw');
 
-use Scalar::Util qw/refaddr/;
+use Scalar::Util qw/refaddr blessed/;
 
 sub _save {
     my ( $self, $parent, @scope ) = @_;
@@ -69,29 +69,36 @@ sub _save {
     return ();
 }
 
+sub delete { shift->remove( @_); }
 around remove => sub {
     my ( $orig, $self, @objs ) = @_;
-    
     my $recurse = 1; if( $objs[0] eq 'no_recursion'){ $recurse = 0; shift @objs; }
-    
-    for my $obj ( @objs ){
-        if( $obj->meta->get_attribute($self->reciprocal)->type_constraint !~ m{^Mongoose::Join::Relational} ){
-            delete $obj->{$self->reciprocal};
-        }else{
-            $obj->{$self->reciprocal}->remove('no_recursion', $self->owner) if $recurse;
+
+    if( scalar @objs and blessed $objs[0] ){
+        for my $obj ( @objs ){
+            if( $obj->meta->get_attribute($self->reciprocal)->type_constraint !~ m{^Mongoose::Join::Relational} ){
+                delete $obj->{$self->reciprocal};
+            }else{
+                $obj->{$self->reciprocal}->remove('no_recursion', $self->owner) if $recurse;
+            }
         }
+        return $self->$orig(@objs);
+    }else{
+        return $self->resultset->delete(@objs);
     }
-    return $self->$orig(@objs);
 };
+
+sub delete_all{shift->remove_all(@_)}
+sub remove_all{
+    my ( $self, $options ) = @_;
+    return $self->resultset->delete_all($options);
+}
 
 
 around add => sub {
     my ( $orig, $self, @objs ) = @_;
-
     my $recurse = 1; if( $objs[0] eq 'no_recursion'){ $recurse = 0; shift @objs; }
-    
     for my $obj ( @objs ){
-        #next if grep { } 
         if( $obj->meta->get_attribute($self->reciprocal)->type_constraint !~ m{^Mongoose::Join::Relational} ){
             $obj->{$self->reciprocal} = $self->owner;
         }else{
@@ -101,58 +108,95 @@ around add => sub {
     return $self->$orig(@objs);
 };
 
-
-sub find {
-    my $self = shift;
-    my ( $opts, @scope ) = @_;
-    my $class = $self->with_class;
+sub search{shift->find(@_);}
+sub find{
+    my ( $self, $opts, @scope ) = @_;
     $opts = $opts || {};
-    
-    #if( $self->with_class->meta->get_attribute($self->reciprocal)->type_constraint !~ m{^Mongoose::Join::Relational} ){
-        #print Dumper { $self->reciprocal => $self->owner, %$opts };
-        #print $self->reciprocal , " ",  $self->owner, "\n";
-        #return $class->find( { $self->reciprocal => $self->owner, %$opts }, @scope );
-        $opts->{$self->reciprocal . '.$id'} = $self->owner->_id;
-        return $class->find( $opts, @scope );
-    #}else{
-    #    $opts->{$self->reciprocal . '.$id'} = $self->owner->_id;
-    #    return $class->find( $opts, @scope );
-    #}
-}
-
-sub find_one{
-    my $self = shift;
-    my ( $opts, @scope ) = @_;
-    my $class = $self->with_class;
-    $opts = $opts || {};
-    
-    #if( $self->with_class->meta->get_attribute($self->reciprocal)->type_constraint !~ m{^Mongoose::Join::Relational} ){
-    #    return $class->find_one( { $self->reciprocal => $self->owner, %$opts }, @scope ); 
-    #}else{
-        $opts->{$self->reciprocal . '.$id'} = $self->owner->_id;
-        return $class->find_one( $opts, @scope );
-    #}
+    return $self->resultset->find( $opts, @scope );
 }
 
 sub query{
-    my $self = shift;
-    my ( $opts, $attrs, @scope ) = @_;
-    my $class = $self->with_class;
+    my ( $self, $opts, $attrs, @scope ) = @_;
     $opts = $opts || {};
-    
-    #if( $self->with_class->meta->get_attribute($self->reciprocal)->type_constraint !~ m{^Mongoose::Join::Relational} ){
-    #    return $class->query( { $self->reciprocal => $self->owner, %$opts }, $attrs, @scope ); 
-    #}else{
-        $opts->{$self->reciprocal . '.$id'} = $self->owner->_id;
-        return $class->query( $opts, $attrs, @scope );
-    #}
+    return $self->resultset->query( $opts, $attrs, @scope );
+}
+
+sub single{shift->find_one(@_)}
+sub find_one{
+    my ( $self, $opts, @scope ) = @_;
+    $opts = $opts || {};
+    return $self->resultset->find_one( $opts, @scope );
+}
+
+sub first{
+    return shift->resultset->first;
+}
+
+sub find_or_new {
+    my $self = shift;
+    my $obj = $self->resultset->find_or_new( @_ );
+    $self->add($obj);
+    return $obj;
+}
+
+sub find_or_create {
+    my $self = shift;
+    my $obj = $self->resultset->find_or_create( @_ );
+    $self->add($obj);
+    $self->owner->save;
+    return $obj;
+}
+
+sub update{
+    my $self = shift;
+    return $self->resultset->update(@_);
+}
+
+sub update_all{
+    my $self = shift;
+    return $self->resultset->update_all(@_);
+}
+
+sub update_or_create{
+    my $self = shift;
+    my $obj = $self->resultset->update_or_create(@_);
+    unless( @_{$self->reciprocal} ){
+        if( $obj->meta->get_attribute($self->reciprocal)->type_constraint !~ m{^Mongoose::Join::Relational} ){
+            $obj->{$self->reciprocal} = $self->owner;
+            $obj->save;
+        }else{
+            $obj->{$self->reciprocal}->add('no_recursion', $self->owner);
+            $obj->save;
+        }
+    }
+    $self->add( $obj );
+    $self->owner->save;
+    return $obj;
+}
+
+sub update_or_new{
+    my $self = shift;
+    my $obj = $self->resultset->update_or_new(@_);
+    unless( @_{$self->reciprocal} ){
+        if( $obj->meta->get_attribute($self->reciprocal)->type_constraint !~ m{^Mongoose::Join::Relational} ){
+            $obj->{$self->reciprocal} = $self->owner;
+        }else{
+            $obj->{$self->reciprocal}->add('no_recursion', $self->owner);
+        }
+    }
+    $self->add( $obj );
+    return $obj;
+}
+
+sub resultset{
+    my $self = shift;
+    return Mongoose::Resultset->new( _class => ref $self->with_class || $self->with_class, _query => { $self->reciprocal . '.$id' => $self->owner->_id } );
 }
 
 sub create{
     my $self = shift;
     my %data = @_;
-    my $obj = $self->with_class->create( %data );
-
+    my $obj = $self->resultset->create( %data );
     unless( $data{$self->reciprocal} ){
         if( $obj->meta->get_attribute($self->reciprocal)->type_constraint !~ m{^Mongoose::Join::Relational} ){
             $obj->{$self->reciprocal} = $self->owner;
@@ -163,9 +207,20 @@ sub create{
         }
     }
     $self->add( $obj );
-    
+    $self->owner->save;
     return $obj;
 }
+
+
+sub each{
+    my ( $self, $coderef ) = @_;
+    return $self->resultset->each($coderef);
+}
+
+sub count { return shift->resultset->count( @_ ); }
+
+sub all { return shift->resultset->all( @_ ); }
+
 
 1;
 

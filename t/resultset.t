@@ -132,15 +132,15 @@ package main;
     is $double->salary , 4, 'same as above';
     ok $employee->_id eq $double->_id, 'is same, not new';
     $double->save;
-    is( Employee->resultset->find({ salary => 4 })->count, 1, 'still only one employee' );    
+    is( Employee->resultset->find({ salary => 4 })->count, 1, 'still only one employee' );  
 }
 
 #Find then update, or create
 {
-    my $employee = Employee->resultset->update_or_create( { name => 'Anna', salary => 5 }, { key => 'name' });
+    my $employee = Employee->resultset->update_or_create( { name => 'Anna', salary => 5 }, {}, { key => 'name' });
     is $employee->salary , 5, 'new employee created';
     is( Employee->resultset->find({ salary => 4 })->count, 1, 'only one employee' );
-    my $double = Employee->resultset->update_or_create( { name => 'Anna', salary => 6 }, { key => 'name' });
+    my $double = Employee->resultset->update_or_create( { name => 'Anna', salary => 6 } , {}, { key => 'name' });
     is $double->salary , 6, 'same as above';
     ok $employee->_id eq $double->_id, 'is same, not new';
     $double->save;
@@ -149,15 +149,15 @@ package main;
 
 #Find then update, or new
 {
-    my $employee = Employee->resultset->update_or_new( { name => 'Bill', salary => 10 }, { key => 'name' });
+    my $employee = Employee->resultset->update_or_new( { name => 'Bill', salary => 10 }, {}, { key => 'name' });
     is $employee->salary , 10, 'new employee created';
     ok !$employee->in_storage, 'not yet in storage';
     $employee->save;
     #ok $employee->in_storage, 'now in storage'; #not yet working
     is( Employee->resultset->find({ salary => 4 })->count, 1, 'only one employee' );
-    my $double = Employee->resultset->update_or_new( { name => 'Bill', salary => 11 }, { key => 'name' });
+    my $double = Employee->resultset->update_or_new( { name => 'Bill', salary => 11 }, {}, { key => 'name' });
     is $double->salary , 11, 'same as above';
-    ok $employee->_id eq $double->_id, 'is same, not new';
+    is $employee->_id, $double->_id, 'is same, not new';
     $double->save;
     is( Employee->resultset->find({ salary => 11 })->count, 1, 'still only one employee, has good salary' );    
 }

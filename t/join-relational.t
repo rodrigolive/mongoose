@@ -153,8 +153,8 @@ package main;
 	package Cat;
 	use Mongoose::Class;
 	with 'Mongoose::Document';
-	has_many balls => 'Ball';
-	has_many mice  => 'Mouse';
+	has_many balls => 'Ball', foreign => 'cat';
+	has_many mice  => 'Mouse', foreign => 'cat';
 
 }
 {
@@ -162,12 +162,15 @@ package main;
 	use Mongoose::Class;
 	with 'Mongoose::Document';
 	belongs_to cat => 'Cat'; # funky circularity
+    has number => ( isa => 'Num' , is => 'rw' );
 
 }
 {
 	package Mouse;
 	use Mongoose::Class;
 	with 'Mongoose::Document';
+	belongs_to cat => 'Cat'; # funky circularity
+    has number => ( isa => 'Num' , is => 'rw' );
 
 }
 {
@@ -179,19 +182,91 @@ package main;
 	$cat->save;
 
 	for( 1 .. 10 ){
-		my $ball = Ball->new( cat => $cat );
+		my $ball = Ball->new( cat => $cat, number => $_ );
 		$cat->balls->add( $ball );
 	}
 
 	for( 1 .. 10 ){
-		my $mouse = Mouse->new();
+		my $mouse = Mouse->new( number => $_ );
 		$cat->mice->add( $mouse );
 	}
 
 	$cat->save;
 
 	is( Cat->find_one({_id => $cat->_id})->balls->find->count, 10, "added 10 balls" );
-	is( Cat->find_one({_id => $cat->_id})->mice->find->count, 10, "added 10 mice" ); 
+	is( Cat->find_one({_id => $cat->_id})->mice->find->count, 10, "added 10 mice" );
+
+    ok 1, 'dbix class like methods';
+
+    #find_or_new
+    $cat = Cat->find_one({_id => $cat->_id});
+    my $mouse = $cat->mice->find_or_new({ number => 11 }, { key => 'number' });
+    is $cat->mice->count, 10, 'still 10 mice after find_or_new';
+    $mouse->save;
+    is $cat->mice->count, 11, '11 mice after find_or_new and save';
+    $mouse = $cat->balls->find_or_new({ number => 11 }, { key => 'number' });
+    $mouse->save;
+    is $cat->mice->count, 11, 'still 11 mice after double find_or_new and save';
+
+    #find_or_create
+    is $cat->mice->count, 11, 'still 11 mice before find_or_create';
+    $mouse = $cat->mice->find_or_create({ number => 12 }, { key => 'number' });
+    is $cat->mice->count, 12, '12 mice after find_or_create';
+    $mouse = $cat->balls->find_or_new({ number => 12 }, { key => 'number' });
+    is $cat->mice->count, 12, 'still 12 mice after double find_or_create';
+
+    #update
+    $cat->balls->update({'$set' => { number => 100}});
+    is $cat->balls->find( number => 100 )->count, 11, 'now 11 balls with number = 100';
+    is $cat->balls->find( number => 0 )->count, 0, 'now 0 balls with number = 0';
+
+    #update_all
+    $cat->mice->update({'$set' => { number => 100}});
+    is $cat->mice->find( number => 100 )->count, 12, 'now 12 mice with number = 100';
+    is $cat->mice->find( number => 0 )->count, 0, 'now 0 balls with number = 0';
+
+    #update_or_create
+    $mouse = $cat->mice->update_or_create( { number => 101 } , { '$set' => {'number' => 102}  }, { key => 'number' } );
+    is( Mouse->search( number => 102 )->count , 0, 'update_or_create create' );
+    is( Mouse->search( number => 101 )->count , 1, 'update_or_create create' );
+    my $mouse2 = $cat->mice->update_or_create( { number => 101 } , { '$set' => {'number' => 102}  }, { key => 'number' } );
+    is( Mouse->search( number => 101 )->count , 0, 'update_or_create update' );
+    is( Mouse->search( number => 102 )->count , 1, 'update_or_create update' );
+    is $mouse->_id , $mouse2->_id, 'returned the same object';
+
+    #update_or_new
+    $mouse = $cat->mice->update_or_new( { number => 201 } , { '$set' => {'number' => 202}  }, { key => 'number' } );
+    $mouse->save;
+    is( Mouse->search( number => 202 )->count , 0, 'update_or_new new but not update' );
+    is( Mouse->search( number => 201 )->count , 1, 'update_or_new new' );
+    $mouse2 = $cat->mice->update_or_new( { number => 201 } , { '$set' => {'number' => 202}  }, { key => 'number' } );
+    $mouse2->save;
+    is( Mouse->search( number => 201 )->count , 0, 'update_or_new did update' );
+    is( Mouse->search( number => 202 )->count , 1, 'update_or_create did update but not create' );
+    is $mouse->_id , $mouse2->_id, 'returned the same object';
+
+    #Remove for objects
+    is $cat->mice->count, 14, 'before delete the join way';
+    is scalar $cat->mice->all, 14, 'before delete';
+    $cat->mice->remove( $cat->mice->all );
+    $cat->save;
+    is $cat->mice->count, 0, 'deleted mice with a list of objects';
+
+    #Remove the same way resultsets does
+    is $cat->balls->count, 12, 'before delete the resultset way';
+    is scalar $cat->balls->all, 12, 'before delete';
+    $cat->balls->search({number => 12})->remove;
+    is $cat->balls->count, 11, 'deleted one with delete';
+    $cat->balls->remove_all({});
+    is $cat->balls->count, 0, 'deleted balls with delete_all';
+
+    #Each
+    $cat->balls->create( number => 10 );
+    is $cat->balls->search( number => 10 )->count, 1, 'create works by the way ...';
+    $cat->balls->each(sub{ shift->delete; });
+    is $cat->balls->search( number => 10 )->count, 0, 'each works';
+    
+    
 
 }
 
