@@ -5,31 +5,47 @@ has _class =>      ( isa => 'Str'      , is => 'rw' );
 has _query =>      ( isa => 'HashRef'  , is => 'rw' , default => sub{{}} );
 has _attributes => ( isa => 'HashRef'  , is => 'rw' , default => sub{{}} );
 has _fields =>     ( isa => 'HashRef'  , is => 'rw' , default => sub{{}} );
+has _scope  =>     ( isa => 'HashRef'  , is => 'rw' , default => sub{{}} );
 has _cursor =>     ( isa => 'Maybe[Mongoose::Cursor]', is => 'rw' );
 
 #Search methods
 sub search{shift->find(@_);}
 sub find{
-    my ( $self, $query, $attributes ) = @_;
-    return $self->_clone->_append_query( $query )->_append_attributes( $attributes );
+    my $self = shift;
+
+    #Can get hashref or hash
+    my ( $query, $attributes );
+    return ( wantarray ? $self->all : $self->_clone ) unless scalar @_;
+    if( scalar @_ && ref($_[0]) ne 'HASH'  ){ $query = {@_}; }else{ ( $query, $attributes ) = @_; }
+
+    my $new_rs = $self->_clone->_append_query( $query )->_append_attributes( $attributes );
+    return ( wantarray ? $new_rs->all : $new_rs );
 }
 
 sub query{
-    my ( $self, $query, $attributes ) = @_;
-    return $self->find( $query, $attributes );
+    my $self = shift;
+    return $self->find( @_ );
 }
 
 sub single{shift->find_one(@_)}
 sub find_one{
-    my ( $self, $query, $fields ) = @_;
-    $self->limit(-1);
-    return $self->_clone->limit(-1)->_append_query( $query )->_append_fields( $fields )->next;
+    my $self = shift;
+
+    #Can get hashref or hash
+    my ( $query, $fields, $scope  );
+    return $self->_clone->next unless scalar @_;
+    if( scalar @_ && ref($_[0]) ne 'HASH'  ){ $query = {@_}; }else{ ( $query, $fields, $scope ) = @_; }
+
+    #return $self->_clone->limit(-1)->_append_query( $query )->_append_fields( $fields )->_set_scope( $scope )->next;
+    my $doc = $self->_class->collection->find_one( $query, $fields );
+	return undef unless defined $doc;
+	return $self->_class->expand( $doc, $fields, $scope );
+
 }
 
 sub first{
     my $self = shift;
-    $self->reset;
-    return $self->limit(-1)->next;
+    return $self->reset->limit(-1)->next;
 }
 
 sub find_or_new{
@@ -65,7 +81,7 @@ sub update_all{
     my ( $self, $modification, $options ) = @_;
     my $objects = $self->find;
     while( my $object = $objects->next ){
-        $self->_class->collection->update( { _id => $object->_id }, $modification, $options );
+        $object->update( $modification );
     }
     return 1;
 }
@@ -74,8 +90,7 @@ sub update_or_create{
     my ( $self, $vals, $attrs ) = @_;
     my $maybe = $self->_exists( $vals, $attrs );
     if( $maybe and my $match = $maybe->first ){
-        $match->update($vals);
-        return $match;
+        return $match->update($vals);
     }else{
         return $self->create( %{$vals} );
     }
@@ -85,8 +100,7 @@ sub update_or_new{
     my ( $self, $vals, $attrs ) = @_;
     my $maybe = $self->_exists( $vals, $attrs );
     if( $maybe and my $match = $maybe->first ){
-        $match->update($vals);
-        return $match;
+        return $match->update($vals);
     }else{
         return $self->_class->new( %{$vals} );
     }
@@ -103,8 +117,9 @@ sub delete_all{shift->remove_all(@_)}
 sub remove_all{
     my ( $self, $options ) = @_;
     my $objects = $self->find;
-    while( my $object = $objects->next ){
-        $self->_class->collection->delete( { _id => $object->_id }, $options );
+    my $rs = $self->_clone;
+    while( my $object = $rs->next ){
+        $object->delete;
     }
     return 1;
 }
@@ -113,6 +128,7 @@ sub remove_all{
 sub reset{
     my $self = shift;
     $self->_cursor( undef );
+    return $self;
 }
 
 #Retreiver methods
@@ -137,6 +153,17 @@ sub all{
 sub cursor{
     my $self = shift;
     return $self->_cursor_or_new;
+}
+
+sub each{
+    my ( $self, $coderef ) = @_;
+    my $cursor = $self->_cursor_or_new;
+    my $index = 0;
+    while( my $object = $cursor->next ){
+        $coderef->( $object, $index );
+        $index++;
+    }
+    return $self;
 }
 
 #New result and create
@@ -198,6 +225,12 @@ sub _append_fields{
         $final_fields->{$fields_item} = $fields->{$fields_item};
     }
     $self->_fields( $final_fields );
+    return $self;
+}
+
+sub _set_scope{
+    my ( $self, $scope ) = @_;
+    $self->_scope( $scope );
     return $self;
 }
 

@@ -102,6 +102,7 @@ sub _unbless {
 
 sub expand {
 	my ($self,$doc,$fields,$scope)=@_;
+    #print "$self $doc\n";
 	my @later;
 	my $config = $self->meta->{mongoose_config};
 	my $coll_name = $config->{collection_name};
@@ -114,6 +115,9 @@ sub expand {
 		$class or next;
 
 		if( defined $attr && $attr->does('Mongoose::Meta::Attribute::Trait::Raw') ) {
+			next;
+		}
+		if( defined $attr && $attr->does('Mongoose::Meta::Attribute::Trait::DoNotSerialize') ) {
 			next;
 		}
 		elsif( $type->is_a_type_of('HashRef') ) {
@@ -172,6 +176,8 @@ sub expand {
 				$doc->{$name} = bless $doc->{$name}, $class;
 			}
 			elsif( $class->does('Mongoose::Document') ) {
+                #use Data::Dumper;
+                #print $doc->{$name}->{'$id'}, " ", $doc->{_id}, "\n";
 				if( my $_id = delete $doc->{$name}->{'$id'} ) {
 					if( my $circ_doc = $scope->{"$_id"} ) {
 						$doc->{$name} = bless( $circ_doc , $class );
@@ -279,16 +285,6 @@ sub _get_blessed_type {
 	return $parent->name;
 }
 
-# shallow delete
-sub delete {
-	my ($self, $args )=@_;
-	return $self->collection->remove($args) if ref $args;
-	my $id = $self->_id;
-	return $self->collection->remove({ _id => $id }) if ref $id;
-	my $pk = $self->_primary_key_from_hash();
-	return $self->collection->remove($pk) if ref $pk;
-	return undef;
-}
 
 #sub delete_cascade {
 #	my ($self, $args )=@_;

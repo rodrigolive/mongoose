@@ -39,11 +39,18 @@ package main;
 }
 #Query methods in document classes
 {
-    my $employees = Employee->find;
+    my $employees = Employee->resultset;
     isa_ok $employees, 'Mongoose::Resultset', 'find return';
     is $employees->count, 15, 'resultset from find has good count';
+    is( Employee->search->count, 15, 'resultset from find from class has good count');
+    my @found = grep { $_ } $employees->find(salary => 0);
+    ok scalar @found == 15, 'resultset in array context returns ->all';
+    @found = grep { $_ } Employee->find(salary => 0);
+    ok scalar @found == 15, 'resultset from class in array context returns ->all';
     ok $employees->find({ name => 'Bob1' })->count == 1, 'find on a resultset works';
+    ok $employees->find( name => 'Bob1' )->count == 1, 'find on a resultset works without references';
     ok $employees->search({ name => 'Bob1' })->count == 1, 'search on a resultset works';
+    ok $employees->search( name => 'Bob1' )->count == 1, 'search on a resultset works without references';
     ok $employees->find_one({ name => 'Bob1' })->name eq 'Bob1' , 'find_one on a resultset works';
     ok $employees->single({ name => 'Bob1' })->name eq 'Bob1' , 'single on a resultset works';
     ok $employees->search({ name => 'Bob1' })->first->name eq 'Bob1' , 'first on a resultset works';
@@ -58,6 +65,11 @@ package main;
     my $employee = Employee->find_one;
     isa_ok $employee, 'Employee', 'find_one return';
 }
+{
+    Employee->resultset->find( name => 'Bob8' )->each(sub{ my $obj = shift; $obj->update({'$set' => {salary => 12}}); $obj->salary(12); $obj->save; });
+    is( Employee->find( name => 'Bob8' )->first->salary, 12, 'each works');
+}
+
 
 #Querying returns a clone
 {
@@ -83,7 +95,7 @@ package main;
     ok $employee_rs->count == 0, 'delete worked';
     my $other_employees = Employee->find;
     ok $other_employees->count eq 14, 'delete really worked';    
-    $other_employees->delete; #oh noes !
+    $other_employees->delete_all; #oh noes !
     ok $other_employees->count == 0, 'delete worked';
     is(Employee->find->count, 0, 'delete really worked' );
 }
