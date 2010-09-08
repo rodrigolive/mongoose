@@ -148,5 +148,24 @@ sub query{
     #}
 }
 
+sub create{
+    my $self = shift;
+    my %data = @_;
+    my $obj = $self->with_class->create( %data );
+
+    unless( $data{$self->reciprocal} ){
+        if( $obj->meta->get_attribute($self->reciprocal)->type_constraint !~ m{^Mongoose::Join::Relational} ){
+            $obj->{$self->reciprocal} = $self->owner;
+            $obj->save;
+        }else{
+            $obj->{$self->reciprocal}->add('no_recursion', $self->owner);
+            $obj->save;
+        }
+    }
+    $self->add( $obj );
+    
+    return $obj;
+}
+
 1;
 
