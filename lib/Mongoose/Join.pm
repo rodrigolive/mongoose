@@ -33,7 +33,7 @@ has 'parent'                => ( is => 'rw', isa => 'MongoDB::OID' );
 has 'children'              => ( is => 'rw', isa => 'ArrayRef' );
 
 # before being saved, objects are stored in this buffer
-has 'buffer' => ( is => 'rw', isa => 'HashRef', default => sub { {} } );
+has 'buffer' => ( is => 'rw', isa => 'HashRef', default => sub { {} }, weak_ref => 1 );
 
 # deleting happens at a later moment, meanwhile delete candidates are here
 has 'delete_buffer' => ( is => 'rw', isa => 'HashRef', default => sub { {} } );
