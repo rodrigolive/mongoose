@@ -37,6 +37,7 @@ sub insert {
     my $self = shift;
     return $self if $self->in_storage;
     $self->save;
+    $self = $self->resultset->find_one({ _id => $self->_id });
     return $self;
 }
 
