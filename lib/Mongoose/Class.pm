@@ -60,8 +60,8 @@ sub has_one {
         $options{isa} = shift;
         $options{is}  = 'rw';
     }
-    $options{weak_ref} = 1 unless defined $options{weak_ref};
     else { %options = @_; }
+    $options{weak_ref} = 1 unless defined $options{weak_ref};
 
     $meta->add_attribute( $name, %options, );
 }
