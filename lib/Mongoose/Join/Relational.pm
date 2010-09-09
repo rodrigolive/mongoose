@@ -27,7 +27,7 @@ Moose::Util::TypeConstraints::add_parameterizable_type(
     $REGISTRY->get_type_constraint('Mongoose::Join::Relational') );
 
 has reciprocal => ( isa => 'Str', is => 'rw');
-has owner => ( isa => 'Any', is => 'rw');
+has owner => ( isa => 'Any', is => 'rw', weak_ref => 1);
 
 use Scalar::Util qw/refaddr blessed/;
 
@@ -208,6 +208,21 @@ sub create{
     }
     $self->add( $obj );
     $self->owner->save;
+    return $obj;
+}
+
+sub new_result{
+    my $self = shift;
+    my %data = @_;
+    my $obj = $self->resultset->new_result( %data );
+    unless( $data{$self->reciprocal} ){
+        if( $obj->meta->get_attribute($self->reciprocal)->type_constraint !~ m{^Mongoose::Join::Relational} ){
+            $obj->{$self->reciprocal} = $self->owner;
+        }else{
+            $obj->{$self->reciprocal}->add('no_recursion', $self->owner);
+        }
+    }
+    $self->add( $obj );
     return $obj;
 }
 
