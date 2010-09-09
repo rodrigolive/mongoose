@@ -38,11 +38,12 @@ has 'buffer' => ( is => 'rw', isa => 'HashRef', default => sub { {} } );
 # deleting happens at a later moment, meanwhile delete candidates are here
 has 'delete_buffer' => ( is => 'rw', isa => 'HashRef', default => sub { {} } );
 
-use Scalar::Util qw/refaddr/;
+use Scalar::Util qw/refaddr weaken/;
 
 sub add {
     my ( $self, @objs ) = @_;
     for my $obj (@objs) {
+        weaken $obj;
         $self->buffer->{ refaddr $obj } = $obj;
     }
 }
