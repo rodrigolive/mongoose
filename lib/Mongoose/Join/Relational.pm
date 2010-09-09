@@ -66,7 +66,7 @@ sub _save {
     
     #We collapse into a list only if we are in a many-to-many configuration
     return @objs if $self->with_class->meta->get_attribute($self->reciprocal)->type_constraint =~ m{^Mongoose::Join::Relational};
-    return ();
+    return undef;
 }
 
 sub delete { shift->remove( @_); }

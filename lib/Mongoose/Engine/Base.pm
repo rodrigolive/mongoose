@@ -19,14 +19,17 @@ sub collapse {
 	my ($self, @scope )=@_;
 	return $self
 		if first { refaddr($self) == refaddr($_) } @scope; #check for circularity
-	my $packed = { %$self }; # cheesely clone the data 
+	my $packed = { %$self }; # cheesely clone the data
 	for my $key ( keys %$packed ) {
 		my $attrib = $self->meta->get_attribute($key);
 
 		# treat special cases based on Moose attribute defs or traits
 		if( defined $attrib ) {
 			delete $packed->{$key} , next
-				if $attrib->does('Mongoose::Meta::Attribute::Trait::DoNotSerialize');
+              if $attrib->does('Mongoose::Meta::Attribute::Trait::DoNotSerialize');
+
+			delete $packed->{$key} , next
+              unless defined $packed->{$key};
 
 			next if $attrib->does('Mongoose::Meta::Attribute::Trait::Raw');
 
@@ -37,11 +40,16 @@ sub collapse {
 					$packed->{$key} = { '$ref'=>'FileHandle', '$id'=>$id };
 				}
 			}
+            
 		}
 
 		my $obj = $packed->{$key};
 		if( my $class = blessed $obj ) {
-			#say "checking.... $class....";
+            #print $key , " " , $class, " " , $class->isa('Mongoose::Join::Relational'), "\n";
+            if($class->isa('Mongoose::Join::Relational')){
+                delete $packed->{$key};
+                next;
+            }
 			$packed->{$key} = $self->_unbless( $obj, $class, @scope );
 		}
 		elsif( ref $obj eq 'ARRAY' ) {
@@ -64,10 +72,11 @@ sub collapse {
 		elsif( ref $obj eq 'HASH' ) {
 			my @docs;
 			for my $key ( grep { blessed $obj->{$_} } keys %$obj ) {
-				$obj->{$key} = $self->_unbless( $obj->{$key}, blessed($obj->{$key}), @scope );; 
+				$obj->{$key} = $self->_unbless( $obj->{$key}, blessed($obj->{$key}), @scope )  ;
 			}
 		}
 	}
+
 	return $packed;
 }
 
@@ -253,6 +262,7 @@ sub save {
 	my $coll = $self->collection;
 	my $doc = $self->collapse( @scope );
 	return unless defined $doc;
+    #print "saving a : $self\n";
 
 	if( $self->_id  ) {
 		## update on my id
