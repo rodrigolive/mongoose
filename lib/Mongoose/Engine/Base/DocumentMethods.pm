@@ -70,6 +70,11 @@ sub in_storage {
 
 }
 
+#Maybe
+sub tick{
+    my ( $self, $column ) = @_;
+    $self->{$column} = DateTime->now();
+}
 
 1;
 

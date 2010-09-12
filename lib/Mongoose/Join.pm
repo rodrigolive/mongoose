@@ -43,7 +43,8 @@ use Scalar::Util qw/refaddr weaken/;
 sub add {
     my ( $self, @objs ) = @_;
     for my $obj (@objs) {
-        $self->buffer->{ refaddr $obj } = weaken $obj;
+        weaken $obj;
+        $self->buffer->{ refaddr $obj } = $obj;
     }
 }
 

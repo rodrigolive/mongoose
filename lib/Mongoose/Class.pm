@@ -18,7 +18,7 @@ sub has_many {
     }
     %options      = @_;
     $options{isa} = $isa if $isa;
-    $options{weak_ref} = 1 unless defined $options{weak_ref};
+    #$options{weak_ref} = 1 unless defined $options{weak_ref};
     
     my $isa_original = $options{isa};
     if( exists $options{foreign} ){
@@ -47,7 +47,7 @@ sub belongs_to {
         $options{is}  = 'rw';
     }
     else { %options = @_; }
-    $options{weak_ref} = 1 unless defined $options{weak_ref};
+    #$options{weak_ref} = 1 unless defined $options{weak_ref};
 
     $meta->add_attribute( $name, %options, );
 }
@@ -61,7 +61,7 @@ sub has_one {
         $options{is}  = 'rw';
     }
     else { %options = @_; }
-    $options{weak_ref} = 1 unless defined $options{weak_ref};
+    #$options{weak_ref} = 1 unless defined $options{weak_ref};
 
     $meta->add_attribute( $name, %options, );
 }

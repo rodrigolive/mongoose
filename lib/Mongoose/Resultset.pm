@@ -17,7 +17,6 @@ sub find{
     my ( $query, $attributes );
     return ( wantarray ? $self->all : $self->_clone ) unless scalar @_;
     if( scalar @_ && ref($_[0]) ne 'HASH'  ){ $query = {@_}; }else{ ( $query, $attributes ) = @_; }
-
     my $new_rs = $self->_clone->_append_query( $query )->_append_attributes( $attributes );
     return ( wantarray ? $new_rs->all : $new_rs );
 }

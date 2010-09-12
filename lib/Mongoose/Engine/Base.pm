@@ -45,10 +45,15 @@ sub collapse {
 
 		my $obj = $packed->{$key};
 		if( my $class = blessed $obj ) {
-            #print $key , " " , $class, " " , $class->isa('Mongoose::Join::Relational'), "\n";
             if($class->isa('Mongoose::Join::Relational')){
-                delete $packed->{$key};
-                next;
+                my $unblessed = $self->_unbless( $obj, $class, @scope );
+                use Data::Dumper;
+                if ( $obj->with_class->meta->get_attribute($obj->reciprocal)->type_constraint =~ m{^Mongoose::Join::Relational} ){
+                    $packed->{$key} = $unblessed;
+                }else{
+                    delete $packed->{$key};
+                    next;
+                }
             }
 			$packed->{$key} = $self->_unbless( $obj, $class, @scope );
 		}
@@ -111,7 +116,6 @@ sub _unbless {
 
 sub expand {
 	my ($self,$doc,$fields,$scope)=@_;
-    #print "$self $doc\n";
 	my @later;
 	my $config = $self->meta->{mongoose_config};
 	my $coll_name = $config->{collection_name};
@@ -185,8 +189,6 @@ sub expand {
 				$doc->{$name} = bless $doc->{$name}, $class;
 			}
 			elsif( $class->does('Mongoose::Document') ) {
-                #use Data::Dumper;
-                #print $doc->{$name}->{'$id'}, " ", $doc->{_id}, "\n";
 				if( my $_id = delete $doc->{$name}->{'$id'} ) {
 					if( my $circ_doc = $scope->{"$_id"} ) {
 						$doc->{$name} = bless( $circ_doc , $class );
@@ -262,7 +264,6 @@ sub save {
 	my $coll = $self->collection;
 	my $doc = $self->collapse( @scope );
 	return unless defined $doc;
-    #print "saving a : $self\n";
 
 	if( $self->_id  ) {
 		## update on my id
@@ -300,6 +301,7 @@ sub _get_blessed_type {
 #	my ($self, $args )=@_;
 #	#TODO delete related collections
 #}
+
 
 sub db {
 	my $self=shift;

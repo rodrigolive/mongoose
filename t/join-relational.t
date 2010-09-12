@@ -1,6 +1,7 @@
 use strict;
 use warnings;
 use Test::More;
+use Data::Dumper;
 
 use lib 't/lib';
 use MongooseT; # this connects to the db for me
@@ -10,69 +11,63 @@ $db->run_command({ drop=>'employee' });
 $db->run_command({ drop=>'department' }); 
 $db->run_command({ drop=>'person' }); 
 
-{
-	package Department;
-    use Mongoose::Class;
-	with 'Mongoose::Document';
-    has 'code' => ( is=>'rw', isa=>'Str');
-    has_many 'employees' => 'Employee', foreign => 'department';
-}
-{
-	package Employee;
-	use Moose;
-    use Mongoose::Class;
-	with 'Mongoose::Document';
-	has 'name' => ( is=>'rw', isa=>'Str', required=>1 );
-    belongs_to 'department' => 'Department';
-}
 
-{
-	package Person;
-	use Mongoose::Class;
-	with 'Mongoose::Document';
-	has 'name' => ( is=>'rw', isa=>'Str', required=>1 );
-	belongs_to 'department' => 'Department';
-}
-{
-	package Article;
-	use Mongoose::Class;
-	with 'Mongoose::Document';
-	has 'title' => ( is=>'rw', isa=>'Str', required=>1 );
-    has_many 'authors' => 'Author', foreign => 'articles';
-}
-{
-	package Author;
-	use Mongoose::Class;
-    with 'Mongoose::Document';
-	has 'name' => ( is=>'rw', isa=>'Str', required=>1 );
-	has_many 'articles' => 'Article', foreign => 'authors';
-}
-{
-	package Authorship;
-	use Mongoose::Class;
-    with 'Mongoose::Document';
-	has_one 'author' => 'Author';
-	has_many 'articles' => 'Article', foreign => 'authors';
-}
+package Department;
+use Mongoose::Class;
+with 'Mongoose::Document';
+has 'code' => ( is=>'rw', isa=>'Str');
+has_many 'employees' => 'Employee', foreign => 'department';
+
+package Employee;
+use Moose;
+use Mongoose::Class;
+with 'Mongoose::Document';
+has 'name' => ( is=>'rw', isa=>'Str', required=>1 );
+belongs_to 'department' => 'Department';
+
+package Person;
+use Mongoose::Class;
+with 'Mongoose::Document';
+has 'name' => ( is=>'rw', isa=>'Str', required=>1 );
+belongs_to 'department' => 'Department';
+
+package Article;
+use Mongoose::Class;
+with 'Mongoose::Document';
+has 'title' => ( is=>'rw', isa=>'Str', required=>1 );
+has_many 'authors' => 'Author', foreign => 'articles';
+
+package Author;
+use Mongoose::Class;
+with 'Mongoose::Document';
+has 'name' => ( is=>'rw', isa=>'Str', required=>1 );
+has_many 'articles' => 'Article', foreign => 'authors';
+
+package Authorship;
+use Mongoose::Class;
+with 'Mongoose::Document';
+has_one 'author' => 'Author';
+has_many 'articles' => 'Article', foreign => 'authors';
+
 package main;
-{
-    my $c = Department->new( code=>'ACC' );
 
-	for( 1..15 ) {
-		my $e = Employee->new( name=>'Bob' . $_ );
-		$c->employees->add( $e );
-	}
-	$c->save;
+my $c = Department->new( code=>'ACC' );
+
+for( 1..15 ) {
+    my $e = Employee->new( name=>'Bob' . $_ );
+    $c->employees->add( $e );
+}
+$c->save;
+
+
+
+my $dep = Department->find_one({code=>'ACC'});
+my $cur = $dep->employees->find;
+is $cur->count, 15, 'joined ok';
+while( my $r = $cur->next ) {
+    #print "FOUND: " . $r;
 }
 
-{
-	my $dep = Department->find_one({code=>'ACC'});
-	my $cur = $dep->employees->find;
-	is $cur->count, 15, 'joined ok';
-	while( my $r = $cur->next ) {
-		#print "FOUND: " . $r;
-	}
-}
 {
 	my $dep = Department->new({code=>'Devel'});
 	my $per = Person->new( name=>'Mary', department=>$dep );
