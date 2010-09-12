@@ -193,6 +193,7 @@ sub create{
 sub skip{ my $self = shift->_clone; $self->_attributes->{skip} = shift; return $self; }
 sub limit{ my $self = shift->_clone; $self->_attributes->{limit} = shift; return $self; }
 sub sort_by { my $self = shift->_clone; $self->_attributes->{sort_by} = shift; return $self; }
+sub sort { my $self = shift->_clone; $self->_attributes->{sort_by} = shift; return $self; }
 sub fields { my $self = shift->_clone; $self->_fields( shift ); return $self; }
 
 
