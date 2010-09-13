@@ -2,6 +2,7 @@ use strict;
 use warnings;
 use Test::More;
 use Data::Dumper;
+use Devel::Cycle;
 
 use lib 't/lib';
 use MongooseT; # this connects to the db for me
@@ -59,7 +60,7 @@ for( 1..15 ) {
 }
 $c->save;
 
-
+find_cycle($c);    
 
 my $dep = Department->find_one({code=>'ACC'});
 my $cur = $dep->employees->find;
@@ -86,6 +87,8 @@ while( my $r = $cur->next ) {
 	$ar->authors->add( $au );
 	$au->articles->add( $ar );
 	$au->save;
+
+    find_cycle($au);    
 
 
 	my $authorship = Authorship->new;

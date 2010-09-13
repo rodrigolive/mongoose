@@ -49,6 +49,7 @@ role {
         $as->meta->{mongoose_config} = $config;
     }
 
+
 };
 
 =head1 NAME
