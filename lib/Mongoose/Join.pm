@@ -98,7 +98,6 @@ sub _insert {    #TODO insert and commit
 
 sub _save {
     my ( $self, $parent, @scope ) = @_;
-
     my @objs = @{ delete $self->{children} || [] };
     my $collection_name = $self->with_collection_name;
 

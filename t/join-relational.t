@@ -153,7 +153,15 @@ while( my $r = $cur->next ) {
 	with 'Mongoose::Document';
 	has_many balls => 'Ball', foreign => 'cat';
 	has_many mice  => 'Mouse', foreign => 'cat';
+    has_many fleas => 'Flea', foreign => 'animal';
 
+}
+{
+    package Flea;
+	use Mongoose::Class;
+	with 'Mongoose::Document';
+    has number => ( isa => 'Num' , is => 'rw' );
+    belongs_to animal => 'Any';
 }
 {
 	package Ball;
@@ -169,12 +177,13 @@ while( my $r = $cur->next ) {
 	with 'Mongoose::Document';
 	belongs_to cat => 'Cat'; # funky circularity
     has number => ( isa => 'Num' , is => 'rw' );
-
+    has_many fleas => 'Flea', foreign => 'animal';
 }
 {
 	Cat->collection->drop;
 	Mouse->collection->drop;
 	Ball->collection->drop;
+    Flea->collection->drop;
 
 	my $cat = Cat->new();
 	$cat->save;
@@ -264,9 +273,18 @@ while( my $r = $cur->next ) {
     $cat->balls->each(sub{ shift->delete; });
     is $cat->balls->search( number => 10 )->count, 0, 'each works';
     
-    
-
+    #Belongs_to Any
+    my $itchy = Mouse->create( number => 1 );
+    my $scratchy = Cat->create( number => 2 );
+    my $flea1 = $itchy->fleas->create(number => 1);
+    my $flea2 = $scratchy->fleas->create(number => 2);
+    isa_ok( $flea1, 'Flea' );
+    isa_ok( $flea2, 'Flea' );
+    isa_ok( $flea1->animal, 'Mouse');
+    isa_ok( $flea2->animal, 'Cat');
+    is( $flea1->animal->number, 1, 'belongs_to any');
 }
+
 
 done_testing;
 
