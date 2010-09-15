@@ -216,11 +216,19 @@ sub expand {
 		else { #non-moose
 			my $data = delete $doc->{$name};
 			my $data_type =  ref $data;
-
+                    
 			if( !$data_type ) {
 				push @later, { attrib=>$name, value=>$data };
 			} else {
-				$doc->{$name} = bless $data => $class;
+                if( $class eq 'Any' and $data and exists $data->{'$ref'} ){
+                    my $belongs_to_class = $class_main->db->{collection_to_class}->{$data->{'$ref'}};
+                    #print "$name, $class, $data, " , $data->{'$ref'} , " , $belongs_to_class\n";
+                    #We should make this lazy, but I don't know enough magic ...
+                    $doc->{$name} = $belongs_to_class->resultset->single( _id => $data->{'$id'});
+                }else{
+                    $doc->{$name} = bless $data => $class;
+                }
+                
 			}
 		}
 	}

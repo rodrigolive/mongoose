@@ -36,6 +36,10 @@ sub has_many {
     }
     $options{is} ||= 'ro';
     $meta->add_attribute( $name, %options, );
+
+    #So that belongs_to Any can find us
+    $meta->{package}->db->{collection_to_class}->{ Mongoose->naming->( $meta->{package} ) } = $meta->{package};
+
 }
 
 sub belongs_to {

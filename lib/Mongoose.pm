@@ -23,7 +23,9 @@ has 'naming' => (
             lc($n);
           }
     }
-);
+                );
+
+has 'collection_to_class' => ( is => 'rw', isa => 'HashRef', default => sub{ {} } );
 
 sub db {
     my $self = shift;

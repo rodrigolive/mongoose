@@ -34,7 +34,9 @@ sub find_one{
     my ( $query, $fields, $scope  );
     return $self->_clone->next unless scalar @_;
     if( scalar @_ && ref($_[0]) ne 'HASH'  ){ $query = {@_}; }else{ ( $query, $fields, $scope ) = @_; }
-
+    for my $key ( keys %{$self->_query} ){ $query->{$key} = $self->_query->{$key} unless $query->{$key}; }
+    for my $key ( keys %{$self->_fields} ){ $fields->{$key} = $self->_fields->{$key} unless $fields->{$key}; }
+    
     #return $self->_clone->limit(-1)->_append_query( $query )->_append_fields( $fields )->_set_scope( $scope )->next;
     my $doc = $self->_class->collection->find_one( $query, $fields );
 	return undef unless defined $doc;
@@ -95,7 +97,7 @@ sub update_or_create{
             $modification->{'$set'}->{$_} = $vals->{$_} unless $modification->{'$set'}->{$_};
         }
         $match->update($modification);
-        return $self->find_one( '_id' => $match->_id );
+        return $self->_class->resultset->find_one( '_id' => $match->_id );
     }else{
         return $self->create( %{$vals} );
     }
@@ -111,7 +113,7 @@ sub update_or_new{
             $modification->{'$set'}->{$_} = $vals->{$_} unless $modification->{'$set'}->{$_};
         }
         $match->update($modification);
-        return $self->find_one( '_id' => $match->_id );
+        return $self->_class->resultset->find_one( '_id' => $match->_id );
     }else{
         return $self->new_result( %{$vals} );
     }

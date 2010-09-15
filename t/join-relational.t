@@ -283,6 +283,12 @@ while( my $r = $cur->next ) {
     isa_ok( $flea1->animal, 'Mouse');
     isa_ok( $flea2->animal, 'Cat');
     is( $flea1->animal->number, 1, 'belongs_to any');
+    $flea1 = $itchy->fleas->single;
+    $flea2 = $scratchy->fleas->single;
+    isa_ok( $flea1, 'Flea' );
+    isa_ok( $flea2, 'Flea' );
+    isa_ok( $flea1->animal, 'Mouse');
+    isa_ok( $flea2->animal, 'Cat');
 }
 
 
