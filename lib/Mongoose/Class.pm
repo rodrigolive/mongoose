@@ -68,8 +68,8 @@ sub has_one {
 
 sub has_index {
     my $meta = shift;
-    my @index = @_;
-    if( scalar @_ && ref($_[0]) ne 'HASH'  ){ @index = ({@_}); }
+    my @index;
+    if( scalar @_ && ref($_[0]) ne 'HASH'  ){ @index = ({@_}); }else{@index = @_;}
     $meta->{package}->collection->ensure_index(@index);
 }
 

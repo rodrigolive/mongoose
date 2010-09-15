@@ -8,10 +8,7 @@ use lib 't/lib';
 use MongooseT; # this connects to the db for me
 my $db = db;
 
-$db->run_command({ drop=>'employee' }); 
 $db->run_command({ drop=>'department' }); 
-$db->run_command({ drop=>'person' }); 
-
 
 package Department;
 use Mongoose::Class;

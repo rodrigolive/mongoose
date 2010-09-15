@@ -190,7 +190,18 @@ sub update_or_new{
 
 sub resultset{
     my $self = shift;
-    return Mongoose::Resultset->new( _class => ref $self->with_class || $self->with_class, _query => { $self->reciprocal . '.$id' => $self->owner->_id } );
+    #print $self->reciprocal . " => [ '\$ref' => "  , $self->owner->collection->name , ", '\$id' => " , $self->owner->_id , " ]\n";
+    #return Mongoose::Resultset->new( _class => ref $self->with_class || $self->with_class, _query => { $self->reciprocal . '.$id' => $self->owner->_id } );
+    return Mongoose::Resultset->new(
+                                    _class => ref $self->with_class || $self->with_class,
+                                    _query => {
+                                               $self->reciprocal => {
+                                                                     '$ref' => $self->owner->collection->name,
+                                                                     '$id' => $self->owner->_id,
+                                                                     }
+                                              }
+                                   );
+
 }
 
 sub create{
