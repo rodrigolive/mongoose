@@ -3,7 +3,7 @@ use Moose ();
 use Moose::Exporter;
 
 Moose::Exporter->setup_import_methods(
-    with_meta => [ 'has_many', 'belongs_to', 'has_one' ],
+    with_meta => [ 'has_many', 'belongs_to', 'has_one','has_index' ],
     also      => 'Moose',
 );
 
@@ -64,6 +64,10 @@ sub has_one {
     #$options{weak_ref} = 1 unless defined $options{weak_ref};
 
     $meta->add_attribute( $name, %options, );
+}
+
+sub has_index {
+    shift->{package}->collection->ensure_index(@_);
 }
 
 =head1 NAME
