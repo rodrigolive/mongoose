@@ -67,7 +67,10 @@ sub has_one {
 }
 
 sub has_index {
-    shift->{package}->collection->ensure_index(@_);
+    my $meta = shift;
+    my @index = @_;
+    if( scalar @_ && ref($_[0]) ne 'HASH'  ){ @index = ({@_}); }
+    $meta->{package}->collection->ensure_index(@index);
 }
 
 =head1 NAME
