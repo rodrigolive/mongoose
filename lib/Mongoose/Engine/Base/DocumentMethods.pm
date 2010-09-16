@@ -45,6 +45,7 @@ sub update {
     my $self = shift;
     return $self->resulset->update(@_) if ref $self eq ''; #When calling on the unblessed class, we call the resultset
     my ( $modification ) = @_;
+    if( scalar @_ && ref($_[0]) ne 'HASH'  ){ $modification = {@_}; }
     $self->collection->update( { _id => $self->_id }, $modification );
     $self = $self->resultset->find_one({ _id => $self->_id });
     return $self;
