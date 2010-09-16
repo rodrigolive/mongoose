@@ -47,8 +47,20 @@ sub update {
     my ( $modification ) = @_;
     if( scalar @_ && ref($_[0]) ne 'HASH'  ){ $modification = {@_}; }
     $self->collection->update( { _id => $self->_id }, $modification );
-    $self = $self->resultset->find_one({ _id => $self->_id });
-    return $self;
+    my $new_self = $self->resultset->find_one({ _id => $self->_id });
+
+    #We update ourself
+    my $class_main = ref $self || $self;
+    for my $attr ( $class_main->meta->get_all_attributes ){
+		my $name = $attr->name;
+        my $type = $attr->type_constraint or next;
+		my $class = $self->_get_blessed_type( $type );
+		$class or next;
+        next if $class->can('meta') and $class->isa('Mongoose::Join');
+        $self->{$name} = $new_self->{$name};
+    }
+    
+    return $new_self;
 }
 
 # shallow delete

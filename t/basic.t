@@ -43,6 +43,11 @@ package main;
 	is( $p->spouse->name, 'Homer Simpson', 'spouse found');
 }
 {
+    my $p = Person->find_one({ name=>'Homer Simpson' });
+    my $n = $p->update('$set' => { name => 'Homer Jay Simpson'});
+    is( $p->name, 'Homer Jay Simpson' , 'update works');
+}
+{
 	my $cursor = Person->find;
 	my $cnt = 0;
 	while( my $p = $cursor->next ) {
