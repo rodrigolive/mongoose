@@ -39,6 +39,12 @@ sub collapse {
 					my $id = $grid->put( delete $packed->{$key} );
 					$packed->{$key} = { '$ref'=>'FileHandle', '$id'=>$id };
 				}
+                if( ( $type->is_a_type_of('Str') or $type->is_a_type_of('Maybe[Str]') ) and !$type->is_a_type_of('Num') and !$type->is_a_type_of('Int') and !$type->is_a_type_of('Maybe[Num]') and !$type->is_a_type_of('Maybe[Int]') ) {
+                    #This is needed due to http://github.com/yesdave/mongo-perl-driver/commit/0ade3be96c4a2dc8ba36552f426429d50223d07d badly converting string containing numbers to native mongodb numbers, so we have to enforce from the moose-tybe
+                    my $value = '' .  $packed->{$key};
+                    delete $packed->{$key};
+                    $packed->{$key} = $value;
+                }
 			}
             
 		}
