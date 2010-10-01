@@ -26,6 +26,7 @@ has 'naming' => (
                 );
 
 has 'collection_to_class' => ( is => 'rw', isa => 'HashRef', default => sub{ {} } );
+has 'loaded_classes' => ( is => 'rw', isa => 'HashRef', default => sub{ {} } );
 
 sub db {
     my $self = shift;

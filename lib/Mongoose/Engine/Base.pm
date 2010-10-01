@@ -15,6 +15,7 @@ use Mongoose::Cursor; #initializes moose
 
 with 'Mongoose::Engine::Base::DocumentMethods';
 
+
 sub collapse {
 	my ($self, @scope )=@_;
 	return $self

@@ -42,11 +42,18 @@ role {
     #method "_mxm_config" => sub{ $config };
     $class_name->meta->{mongoose_config} = $config;
 
+    my $meta = $class_name->meta;
+    #use Data::Dumper; print Dumper '', Mongoose->_db_for_class( $meta->{package} );
+    Mongoose->_db_for_class( $meta->{package} );
+    Mongoose->_db_for_class( $meta->{package} )->{collection_to_class}->{ Mongoose->naming->( $meta->{package} ) } = $meta->{package} unless $meta->{package} =~ m{^Moose::Meta};
+
     # aliasing
     if ( my $as = $p->{'-as'} ) {
         no strict 'refs';
         *{ $as . "::" } = \*{ $class_name . "::" };
         $as->meta->{mongoose_config} = $config;
+        $meta = $as->meta;
+        $meta->{package}->db->{collection_to_class}->{ Mongoose->naming->( $meta->{package} ) } = $meta->{package};
     }
 
 
