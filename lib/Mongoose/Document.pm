@@ -43,8 +43,6 @@ role {
     $class_name->meta->{mongoose_config} = $config;
 
     my $meta = $class_name->meta;
-    #use Data::Dumper; print Dumper '', Mongoose->_db_for_class( $meta->{package} );
-    Mongoose->_db_for_class( $meta->{package} );
     Mongoose->_db_for_class( $meta->{package} )->{collection_to_class}->{ Mongoose->naming->( $meta->{package} ) } = $meta->{package} unless $meta->{package} =~ m{^Moose::Meta};
 
     # aliasing

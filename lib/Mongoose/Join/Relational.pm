@@ -27,7 +27,7 @@ Moose::Util::TypeConstraints::add_parameterizable_type(
     $REGISTRY->get_type_constraint('Mongoose::Join::Relational') );
 
 has reciprocal => ( isa => 'Str', is => 'rw');
-has owner => ( isa => 'Any', is => 'rw', weak_ref => 1);
+has owner => ( isa => 'Any', is => 'rw');
 
 use Scalar::Util qw/refaddr blessed/;
 
@@ -242,6 +242,11 @@ sub each{
     my ( $self, $coderef ) = @_;
     return $self->resultset->each($coderef);
 }
+
+sub skip { return shift->resultset->skip( @_ ); }
+sub limit { return shift->resultset->limit( @_ ); }
+sub sort_by { return shift->resultset->sort_by( @_ ); }
+sub fields { return shift->resultset->fields( @_ ); }
 
 sub count { return shift->resultset->count( @_ ); }
 

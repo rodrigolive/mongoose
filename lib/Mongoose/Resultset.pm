@@ -182,7 +182,9 @@ sub each{
 #New result and create
 sub new_result{
     my $self = shift;
-    return $self->_class->new( @_ );
+    my %values;
+    if( scalar @_ && ref($_[0]) eq 'HASH'  ){ %values = %{$_[0]}; }else{ %values = @_; }
+    return $self->_class->new( %values );
 }
 
 sub create{
