@@ -88,9 +88,16 @@ sub update_all{
 }
 
 sub update_or_create{
-    my ( $self, $vals, $modification, $attrs ) = @_;
+    my $self = shift;
+    my ( $vals, $modification, $attrs );
+    if( scalar @_ == 2 ){
+        ( $vals, $attrs ) = @_;
+    }else{
+        ( $vals, $modification, $attrs ) = @_;
+    }
     $vals ||= {};
     $modification ||= {};
+    $attrs ||= {};
     my $maybe = $self->_exists( $vals, $attrs );
     if( $maybe and my $match = $maybe->first ){
         for ( keys %{$vals} ){
@@ -259,7 +266,12 @@ sub _exists{
         if( $attrs->{key} eq 'primary' ){
             $maybe = $self->find({ '_id' => $vals->{'_id'}});
         }else{
-            $maybe = $self->find({ $attrs->{key} => $vals->{$attrs->{key}}});    
+            use Scalar::Util qw(reftype);
+            if( reftype $attrs->{key} and reftype $attrs->{key} eq 'ARRAY' ){
+                $maybe = $self->find({ map { $_ =>  $vals->{$_} } @{$attrs->{key}} });    
+            }else{
+                $maybe = $self->find({ $attrs->{key} => $vals->{$attrs->{key}}});    
+            }
         }
     }
     return $maybe;
