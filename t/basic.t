@@ -47,10 +47,8 @@ package main;
     my $p = Person->find_one({ name=>'Homer Simpson' });
     my $n = $p->update('$set' => { name => 'Homer Jay Simpson'});
     is( $p->name, 'Homer Jay Simpson' , 'update works');
-    $p = $p->update('$set' => { spouse => Person->find_one({ name=>'Marge Simpson' }) });
-    use Data::Dumper;
-    print Dumper "" , Person->find_one({ name=>'Homer Jay Simpson' });
-    print Dumper "" , Person->find_one({ name=>'Marge Simpson' });
+    $p->update('$set' => { spouse => Person->find_one({ name=>'Marge Simpson' }) });
+    is( $p->spouse->name, 'Marge Simpson', 'spouse found');
 }
 {
 	my $cursor = Person->find;

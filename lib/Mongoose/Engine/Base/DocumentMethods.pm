@@ -57,7 +57,7 @@ sub update {
         my $type = $attr->type_constraint or next;
 		my $class = $self->_get_blessed_type( $type );
 		$class or next;
-        next if $class->can('meta') and $class->isa('Mongoose::Join'); #TODO : THIS IS UGLY
+        next if $class->can('meta') and $class->isa('Mongoose::Join');
         $self->{$name} = $new_self->{$name};
     }
     
@@ -71,6 +71,7 @@ sub _collapse_modification {
         for my $attribute ( keys %{$set} ){
             my $value = $set->{$attribute};
             next unless blessed $value;
+            next unless $value->can('meta');
             next unless $value->does('Mongoose::Document');
             $set->{$attribute} = { '$ref' => $value->meta->{mongoose_config}->{collection_name}, '$id'=>$value->_id  };
         }
