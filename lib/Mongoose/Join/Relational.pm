@@ -195,10 +195,9 @@ sub resultset{
     return Mongoose::Resultset->new(
                                     _class => ref $self->with_class || $self->with_class,
                                     _query => {
-                                               $self->reciprocal => {
-                                                                     '$ref' => $self->owner->collection->name,
-                                                                     '$id' => $self->owner->_id,
-                                                                     }
+                                               # This did not work due to hash order and $id being an invalid operator : $self->reciprocal => { '$ref' => $self->owner->collection->name, '$id' => $self->owner->_id, }
+                                                   $self->reciprocal . '.$ref' => $self->owner->collection->name,
+                                                   $self->reciprocal . '.$id'  => $self->owner->_id
                                               }
                                    );
 
