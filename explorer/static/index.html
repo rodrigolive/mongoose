@@ -344,7 +344,7 @@
 </script>
 
 <script id="attribute_value_tpl" type="text/x-jquery-tmpl">
-    {{if /(Num|Int)/.test(attribute.constraint) }}
+    {{if /(Num|Int|Bool)/.test(attribute.constraint) }}
         ${value}
     {{/if}}
     {{if /Str/.test(attribute.constraint) }}
@@ -367,7 +367,7 @@
         </a>
         <span style='color:#ccc' > ( ${ value.count} results ) </span>
     {{/if}}
-    {{if ! /(Int|Num|Str|DateTime|MongoDB::OID|Mongoose::Join)/.test( attribute.constraint )}}
+    {{if ! /(Bool|Int|Num|Str|DateTime|MongoDB::OID|Mongoose::Join)/.test( attribute.constraint ) && value['$id'] !== undefined }}
         <img src='/static/images/icons/page_next.png'>
         <a href='javascript:explorer.pages.query_document("${attribute.constraint}",  "${value['$id'].value}" )'>
             ${attribute.constraint} document

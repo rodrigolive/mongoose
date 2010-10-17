@@ -154,7 +154,7 @@ function Link( params ){
     };
     this.isa = function(){
         if( /(Mongoose::Join)/.test( this.constraint ) ){ return 'join'; }
-        if( ! /(Int|Num|Str|DateTime|MongoDB::OID|Mongoose::Join)/.test( this.constraint ) ){ return 'document'; }
+        if( ! /(Int|Num|Str|DateTime|MongoDB::OID|Mongoose::Join|Bool)/.test( this.constraint ) ){ return 'document'; }
         return 'value';
     };
     this.format_parameters = function(){
@@ -381,14 +381,14 @@ var explorer = {
         if( /Maybe/.test( constraint ) ){ images.push('maybe'); }else{ images.push('empty'); }
         if( /Str/.test( constraint ) ){ images.push('string'); }
         if( /DateTime/.test( constraint ) ){ images.push('date'); }
-        if( /(Num|Int)/.test( constraint ) ){ images.push('number'); }
+        if( /(Num|Int|Bool)/.test( constraint ) ){ images.push('number'); }
         if( /MongoDB::OID/.test( constraint ) ){ images.push('key'); }
         if( /Mongoose::Join::Relational/.test( constraint ) ){ images.push('join'); }
         if( /::/.test( constraint ) && images.length == 1 ){ images.push('object'); }
         return images;
     },
     constraint_link: function( constraint ){
-        if( ! /(Str|DateTime|Num|Int|OID)/.test( constraint ) ){
+        if( ! /(Str|DateTime|Num|Int|Bool|OID)/.test( constraint ) ){
             if( /Join/.test(constraint) ){
                 var class_name = constraint.match(/Mongoose::Join::Relational\[(.*?)\]/);
                 return 'Mongoose::Join::Relational[<a href="javascript:explorer.pages.explore_class(\'' + class_name[1] + '\')">' + class_name[1] + '</a>]';

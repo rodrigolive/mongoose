@@ -46,7 +46,7 @@ sub update {
     return $self->resulset->update(@_) if ref $self eq ''; #When calling on the unblessed class, we call the resultset
     my ( $modification ) = @_;
     if( scalar @_ && ref($_[0]) ne 'HASH'  ){ $modification = {@_}; }
-    $modification = $self->_collapse_modification( $modification );
+    $modification->{'$set'} = $self->resultset->_collapse_hash( $modification->{'$set'} ) if exists $modification->{'$set'};
     $self->collection->update( { _id => $self->_id }, $modification );
     my $new_self = $self->resultset->find_one({ _id => $self->_id });
 
@@ -62,22 +62,6 @@ sub update {
     }
     
     return $new_self;
-}
-sub _collapse_modification {
-    my ( $self, $modification ) = @_;
-    if( exists $modification->{'$set'} ){
-        my $set = $modification->{'$set'};
-        my $class_main = ref $self || $self;
-        for my $attribute ( keys %{$set} ){
-            my $value = $set->{$attribute};
-            next unless blessed $value;
-            next unless $value->can('meta');
-            next unless $value->does('Mongoose::Document');
-            $set->{$attribute} = { '$ref' => $value->meta->{mongoose_config}->{collection_name}, '$id'=>$value->_id  };
-        }
-        $modification->{'$set'} = $set;
-    }
-    return $modification;
 }
 
 # shallow delete

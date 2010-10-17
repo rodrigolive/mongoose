@@ -38,7 +38,9 @@ sub find_one{
     for my $key ( keys %{$self->_fields} ){ $fields->{$key} = $self->_fields->{$key} unless $fields->{$key}; }
     
     #return $self->_clone->limit(-1)->_append_query( $query )->_append_fields( $fields )->_set_scope( $scope )->next;
+    $query = $self->_collapse_hash($query);
     my $doc = $self->_class->collection->find_one( $query, $fields );
+    #use Data::Dumper; print Dumper { query => $query, result => $doc };
 	return undef unless defined $doc;
 	return $self->_class->expand( $doc, $fields, $scope );
 
@@ -99,6 +101,7 @@ sub update_or_create{
     $modification ||= {};
     $attrs ||= {};
     my $maybe = $self->_exists( $vals, $attrs );
+    
     if( $maybe and my $match = $maybe->first ){
         for ( keys %{$vals} ){
             $modification->{'$set'}->{$_} = $vals->{$_} unless $modification->{'$set'}->{$_};
@@ -216,11 +219,27 @@ sub _clone{
 sub _cursor_or_new{
     my $self = shift;
     return $self->_cursor if $self->_cursor;
+    $self->_query( $self->_collapse_hash($self->_query) );
     my $cursor = bless $self->_class->collection->query($self->_query,$self->_attributes), 'Mongoose::Cursor';
     $cursor->_collection_name( $self->_class->meta->{mongoose_config}->{collection_name} );
     $cursor->_class( $self->_class );
     $self->_cursor( $cursor );
     return $cursor;
+}
+
+sub _collapse_hash {
+    my ( $self, $set ) = @_;
+    my $class_main = ref $self || $self;
+    for my $attribute ( keys %{$set} ){
+        my $value = $set->{$attribute};
+        next unless blessed $value;
+        next unless $value->can('meta');
+        next unless $value->does('Mongoose::Document');
+        delete $set->{$attribute};
+        $set->{$attribute.'.$ref'} =  $value->meta->{mongoose_config}->{collection_name};
+        $set->{$attribute.'.$id'} = $value->_id ;
+    }
+    return $set;
 }
 
 sub _append_query{
@@ -268,9 +287,10 @@ sub _exists{
         }else{
             use Scalar::Util qw(reftype);
             if( reftype $attrs->{key} and reftype $attrs->{key} eq 'ARRAY' ){
-                $maybe = $self->find({ map { $_ =>  $vals->{$_} } @{$attrs->{key}} });    
+                $maybe = $self->find({ map { $_ =>  $vals->{$_} } @{$attrs->{key}} });
             }else{
-                $maybe = $self->find({ $attrs->{key} => $vals->{$attrs->{key}}});    
+                $maybe = $self->find({ $attrs->{key} => $vals->{$attrs->{key}}});
+
             }
         }
     }

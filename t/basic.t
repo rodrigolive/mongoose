@@ -51,6 +51,10 @@ package main;
     is( $p->spouse->name, 'Marge Simpson', 'spouse found');
 }
 {
+    my $homer = Person->find_one({spouse => Person->find_one({ name=>'Marge Simpson' }) });
+    is( $homer->name, 'Homer Jay Simpson', 'homer found because of marge');
+}
+{
 	my $cursor = Person->find;
 	my $cnt = 0;
 	while( my $p = $cursor->next ) {
