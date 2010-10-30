@@ -103,12 +103,14 @@ sub update_or_create{
     my $maybe = $self->_exists( $vals, $attrs );
     
     if( $maybe and my $match = $maybe->first ){
+        #print "update\n";
         for ( keys %{$vals} ){
             $modification->{'$set'}->{$_} = $vals->{$_} unless $modification->{'$set'}->{$_};
         }
         $match->update($modification);
         return $self->_class->resultset->find_one( '_id' => $match->_id );
     }else{
+        #print "create\n";
         return $self->create( %{$vals} );
     }
 }
@@ -294,6 +296,9 @@ sub _exists{
             }
         }
     }
+    #use Data::Dumper;
+    #print Dumper $maybe;
+    #print "count: " , $maybe->count, "\n";
     return $maybe;
 }
 

@@ -46,6 +46,12 @@ sub collapse {
                     delete $packed->{$key};
                     $packed->{$key} = $value;
                 }
+                if( ( $type->is_a_type_of('Num') or $type->is_a_type_of('Maybe[Num]') ) or $type->is_a_type_of('Int') or $type->is_a_type_of('Maybe[Int]') and !$type->is_a_type_of('Str') and !$type->is_a_type_of('Maybe[Str]') ) {
+                    #This is needed due to http://github.com/yesdave/mongo-perl-driver/commit/0ade3be96c4a2dc8ba36552f426429d50223d07d badly converting string containing numbers to native mongodb numbers, so we have to enforce from the moose-tybe
+                    my $value = 1 * $packed->{$key};
+                    delete $packed->{$key};
+                    $packed->{$key} = 1 * $value;
+                }
 			}
             
 		}
