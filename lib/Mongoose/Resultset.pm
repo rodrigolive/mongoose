@@ -8,6 +8,8 @@ has _fields =>     ( isa => 'HashRef'  , is => 'rw' , default => sub{{}} );
 has _scope  =>     ( isa => 'HashRef'  , is => 'rw' , default => sub{{}} );
 has _cursor =>     ( isa => 'Maybe[Mongoose::Cursor]', is => 'rw' );
 
+use Scalar::Util qw/reftype blessed/;
+
 #Search methods
 sub search{shift->find(@_);}
 sub find{
@@ -17,8 +19,12 @@ sub find{
     my ( $query, $attributes );
     return ( wantarray ? $self->all : $self->_clone ) unless scalar @_;
     if( scalar @_ && ref($_[0]) ne 'HASH'  ){ $query = {@_}; }else{ ( $query, $attributes ) = @_; }
+    use Data::Dumper;
+    #print Dumper $query;
     $query = $self->_collapse_hash($query);
+    #print Dumper $query;
     my $new_rs = $self->_clone->_append_query( $query )->_append_attributes( $attributes );
+    #print Dumper $new_rs->_query;
     return ( wantarray ? $new_rs->all : $new_rs );
 }
 
@@ -243,11 +249,14 @@ sub _collapse_hash {
         $set->{$attribute.'.$id'} = $value->_id ;
     }
     for my $attribute ( keys %{$set} ){
-        if( defined $set->{$attribute} and $self->_class->meta->has_attribute($attribute) and $self->_class->meta->get_attribute($attribute)->type_constraint->name =~ m{(Int|Num)}){
+        if( defined $set->{$attribute} and $self->_class->meta->has_attribute($attribute) and $self->_class->meta->get_attribute($attribute)->type_constraint->name =~ m{(Int|Num)} and not defined reftype $set->{$attribute}  ){
             #print "attribute $attribute is " . $self->_class->meta->get_attribute($attribute)->type_constraint->name . " with value : " . $set->{$attribute} . "\n";
             my $value = 1 * $set->{$attribute};
             delete $set->{$attribute};
             $set->{$attribute} = 1 * $value;
+        }
+        if( defined reftype $set->{$attribute} and reftype $set->{$attribute} eq 'HASH' and not blessed $set->{$attribute} ){
+            $set->{$attribute} = $self->_collapse_hash($set->{$attribute});
         }
     }
     return $set;
