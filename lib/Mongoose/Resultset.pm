@@ -17,6 +17,7 @@ sub find{
     my ( $query, $attributes );
     return ( wantarray ? $self->all : $self->_clone ) unless scalar @_;
     if( scalar @_ && ref($_[0]) ne 'HASH'  ){ $query = {@_}; }else{ ( $query, $attributes ) = @_; }
+    $query = $self->_collapse_hash($query);
     my $new_rs = $self->_clone->_append_query( $query )->_append_attributes( $attributes );
     return ( wantarray ? $new_rs->all : $new_rs );
 }
@@ -240,6 +241,14 @@ sub _collapse_hash {
         delete $set->{$attribute};
         $set->{$attribute.'.$ref'} =  $value->meta->{mongoose_config}->{collection_name};
         $set->{$attribute.'.$id'} = $value->_id ;
+    }
+    for my $attribute ( keys %{$set} ){
+        if( defined $set->{$attribute} and $self->_class->meta->has_attribute($attribute) and $self->_class->meta->get_attribute($attribute)->type_constraint->name =~ m{(Int|Num)}){
+            #print "attribute $attribute is " . $self->_class->meta->get_attribute($attribute)->type_constraint->name . " with value : " . $set->{$attribute} . "\n";
+            my $value = 1 * $set->{$attribute};
+            delete $set->{$attribute};
+            $set->{$attribute} = 1 * $value;
+        }
     }
     return $set;
 }

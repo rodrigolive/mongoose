@@ -35,19 +35,21 @@ sub collapse {
 			next if $attrib->does('Mongoose::Meta::Attribute::Trait::Raw');
 
 			if( my $type = $attrib->type_constraint ) {
+                #print "attrib: " . $attrib->name . " constraint: " . $type->name . "\n";
 				if( $type->is_a_type_of('FileHandle') ) {
 					my $grid = $self->db->get_gridfs;	
 					my $id = $grid->put( delete $packed->{$key} );
 					$packed->{$key} = { '$ref'=>'FileHandle', '$id'=>$id };
 				}
-                if( ( $type->is_a_type_of('Str') or $type->is_a_type_of('Maybe[Str]') ) and !$type->is_a_type_of('Num') and !$type->is_a_type_of('Int') and !$type->is_a_type_of('Maybe[Num]') and !$type->is_a_type_of('Maybe[Int]') ) {
+                if( ( $type->is_a_type_of('Str') or $type->is_a_type_of('Maybe[Str]') ) and ( !$type->is_a_type_of('Num') and !$type->is_a_type_of('Int') and !$type->is_a_type_of('Maybe[Num]') and !$type->is_a_type_of('Maybe[Int]') ) ){
                     #This is needed due to http://github.com/yesdave/mongo-perl-driver/commit/0ade3be96c4a2dc8ba36552f426429d50223d07d badly converting string containing numbers to native mongodb numbers, so we have to enforce from the moose-tybe
                     my $value = '' .  $packed->{$key};
                     delete $packed->{$key};
                     $packed->{$key} = $value;
                 }
-                if( ( $type->is_a_type_of('Num') or $type->is_a_type_of('Maybe[Num]') ) or $type->is_a_type_of('Int') or $type->is_a_type_of('Maybe[Int]') and !$type->is_a_type_of('Str') and !$type->is_a_type_of('Maybe[Str]') ) {
+                if( ( $type->is_a_type_of('Num') or $type->is_a_type_of('Maybe[Num]') or $type->is_a_type_of('Int') or $type->is_a_type_of('Maybe[Int]') ) and ( !$type->is_a_type_of('Str') and !$type->is_a_type_of('Maybe[Str]') ) ) {
                     #This is needed due to http://github.com/yesdave/mongo-perl-driver/commit/0ade3be96c4a2dc8ba36552f426429d50223d07d badly converting string containing numbers to native mongodb numbers, so we have to enforce from the moose-tybe
+                    #print "is a number " . $type->name . "\n";
                     my $value = 1 * $packed->{$key};
                     delete $packed->{$key};
                     $packed->{$key} = 1 * $value;
