@@ -226,6 +226,7 @@ L<KiokuDB>
 =head1 CONTRIBUTORS
 
 	Arthur Wolf
+    Solli Moreira Honorio (shonorio)
 
 =head1 LICENSE
 
