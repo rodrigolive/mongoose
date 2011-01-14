@@ -215,7 +215,15 @@ sub expand {
 	return undef unless defined $doc;
 	my $obj = bless $doc => $class_main;
 	for( @later )  {
-		$class_main->meta->get_attribute($_->{attrib})->set_value($obj, $_->{value});
+		my $attr = $class_main->meta->get_attribute($_->{attrib});
+        if( defined $attr ) {
+            # works for read-only values
+            $attr->set_value($obj, $_->{value});
+        } else {
+            # sometimes get_attribute is undef, old method instead:
+            my $meth = $_->{attrib};
+            $obj->$meth($_->{value});
+        }
 	}
 	return $obj;
 }
