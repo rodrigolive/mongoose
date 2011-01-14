@@ -1,6 +1,6 @@
 package Mongoose::Engine::Base;
 BEGIN {
-  $Mongoose::Engine::Base::VERSION = '0.03';
+  $Mongoose::Engine::Base::VERSION = '0.04';
 }
 use Moose::Role;
 use Params::Coerce;
@@ -215,8 +215,7 @@ sub expand {
 	return undef unless defined $doc;
 	my $obj = bless $doc => $class_main;
 	for( @later )  {
-		my $meth = $_->{attrib};
-		$obj->$meth($_->{value});
+		$class_main->meta->get_attribute($_->{attrib})->set_value($obj, $_->{value});
 	}
 	return $obj;
 }
