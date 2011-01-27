@@ -1,7 +1,8 @@
 package Mongoose::Engine::Base;
 BEGIN {
-  $Mongoose::Engine::Base::VERSION = '0.04';
+  $Mongoose::Engine::Base::VERSION = '0.06';
 }
+
 use Moose::Role;
 use Params::Coerce;
 use Scalar::Util qw/refaddr reftype/;
@@ -12,12 +13,12 @@ use Mongoose::Cursor; #initializes moose
 with 'Mongoose::Role::Collapser';
 with 'Mongoose::Role::Expander';
 with 'Mongoose::Role::Engine';
-	
+
 sub collapse {
 	my ($self, @scope )=@_;
 	return $self
 		if first { refaddr($self) == refaddr($_) } @scope; #check for circularity
-	my $packed = { %$self }; # cheesely clone the data 
+	my $packed = { %$self }; # cheesely clone the data
 	for my $key ( keys %$packed ) {
 		my $attrib = $self->meta->get_attribute($key);
 
@@ -30,7 +31,7 @@ sub collapse {
 
 			if( my $type = $attrib->type_constraint ) {
 				if( $type->is_a_type_of('FileHandle') ) {
-					my $grid = $self->db->get_gridfs;	
+					my $grid = $self->db->get_gridfs;
 					my $id = $grid->put( delete $packed->{$key} );
 					$packed->{$key} = { '$ref'=>'FileHandle', '$id'=>$id };
 				}
@@ -40,7 +41,7 @@ sub collapse {
 		my $obj = $packed->{$key};
 		if( my $class = blessed $obj ) {
 			#say "checking.... $class....";
-			$packed->{$key} = $self->_unbless( $obj, $class, @scope ); 
+			$packed->{$key} = $self->_unbless( $obj, $class, @scope );
 		}
 		elsif( ref $obj eq 'ARRAY' ) {
 			my @docs;
@@ -62,7 +63,7 @@ sub collapse {
 		elsif( ref $obj eq 'HASH' ) {
 			my @docs;
 			for my $key ( grep { blessed $obj->{$_} } keys %$obj ) {
-				$obj->{$key} = $self->_unbless( $obj->{$key}, blessed($obj->{$key}), @scope );; 
+				$obj->{$key} = $self->_unbless( $obj->{$key}, blessed($obj->{$key}), @scope );;
 			}
 		}
 	}
@@ -72,7 +73,7 @@ sub collapse {
 sub _unbless {
 	my ($self, $obj, $class, @scope ) = @_;
 	my $ret = $obj;
-			if( $class->can('meta') ) { # only mooses from here on 
+			if( $class->can('meta') ) { # only mooses from here on
 				if( $class->does('Mongoose::EmbeddedDocument') ) {
 					$ret = $obj->collapse( @scope, $self ) or next;
 				}
@@ -80,11 +81,11 @@ sub _unbless {
 					$obj->save( @scope, $self );
 					my $id = $obj->_id;
 					$ret = { '$ref' => $class->meta->{mongoose_config}->{collection_name}, '$id'=>$id };
-				} 
+				}
 				elsif( $class->isa('Mongoose::Join') ) {
 					my @objs = $obj->_save( $self, @scope );
 					$ret = \@objs;
-				} 
+				}
 			} else {
 				# non-moose class
 				my $reftype = reftype($obj);
@@ -149,10 +150,14 @@ sub expand {
 				my $param = $type->{type_parameter};
 				if( my $param_class = $param->{class} ) {
 					for my $item ( @{ $doc->{$name} || [] } ) {
-						if( my $_id = delete $item->{'$id'} ) {
+						if ( $param_class->does('Mongoose::EmbeddedDocument') ) {
+							push @objs, $param_class->expand($item);
+						}
+						elsif ( $param_class->does('Mongoose::Document') ) {
+							my $_id = delete $item->{'$id'};
 							if( my $circ_doc = $scope->{ $_id } ) {
 								push @objs, bless( $circ_doc , $param_class );
-							} else {	
+							} else {
 								#$scope->{ $_id } = $doc->{
 								my $ary_obj = $param_class->find_one({ _id=>$_id }, undef, $scope );
 								push @objs, $ary_obj if defined $ary_obj;
@@ -185,8 +190,8 @@ sub expand {
 				if( my $_id = delete $doc->{$name}->{'$id'} ) {
 					if( my $circ_doc = $scope->{"$_id"} ) {
 						$doc->{$name} = bless( $circ_doc , $class );
-						$scope->{ "$circ_doc->{_id}" } = $doc->{$name}; 
-					} else {	
+						$scope->{ "$circ_doc->{_id}" } = $doc->{$name};
+					} else {
 						$scope->{ "$doc->{_id}" } = $doc;
 						$doc->{$name} = $class->find_one({ _id=>$_id }, undef, $scope );
 					}
@@ -231,7 +236,7 @@ sub expand {
 sub _joint_fields {
 	my $self = shift;
 	return map { $_->name }
-		grep { 
+		grep {
 			$_->type_constraint->isa('Mongoose::Join')
 		}
 		$self->meta->get_all_attributes ;
@@ -276,7 +281,7 @@ sub save {
 			# save without pk
 			my $id = $coll->save( $doc );
 			$self->_id( $id );
-			return $id; 
+			return $id;
 		}
 	}
 }
@@ -389,8 +394,8 @@ version 0.03
 
 =head1 DESCRIPTION
 
-The Mongoose standard engine. Does all the dirty work. Very monolithic. 
-Replace it with your engine if you want. 
+The Mongoose standard engine. Does all the dirty work. Very monolithic.
+Replace it with your engine if you want.
 
 =head1 METHODS
 
@@ -411,13 +416,13 @@ Just like L<MongoDB::Collection/query>, but returns
 a L<Mongoose::Cursor> of documents blessed into
 your package.
 
-=head2 delete 
+=head2 delete
 
 Deletes the document in the database.
 
 =head2 collapse
 
-Turns an object into a hash document. 
+Turns an object into a hash document.
 
 =head2 expand
 
@@ -437,10 +442,10 @@ Returns the object's corresponding L<MongoDB::Database> instance.
 
 =head2 fix_integrity
 
-Checks all L<Mongoose::Join> fields for invalid references to 
-foreign object ids.  
+Checks all L<Mongoose::Join> fields for invalid references to
+foreign object ids.
 
-=cut 
+=cut
 
 1;
 
