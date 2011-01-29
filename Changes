@@ -1,3 +1,6 @@
+0.06 Sat Jan 29 14:17:24 CET 2011
+	* Fixed error in 'expand' method for ArrayRef with Mongoose::EmbeddedDocument (shonorio)
+
 0.05 Fri Jan 14 09:43:54 CET 2011
 	* Fixed crash with attributes 'read-only' (shonorio)
 
