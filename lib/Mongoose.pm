@@ -4,6 +4,7 @@ use MooseX::Singleton;
 use Mongoose::Join;
 use Mongoose::File;
 use Mongoose::Meta::AttributeTraits;
+use Moose::Util::TypeConstraints;
 use Carp;
 
 has '_db' => ( is => 'rw', isa => 'HashRef[MongoDB::Database]' );
@@ -12,18 +13,57 @@ has 'connection' => (
     is  => 'rw',
     isa => 'MongoDB::Connection',
 );
-has 'naming' => (
-    is      => 'rw',
-    isa     => 'CodeRef',
+
+# naming templates
+my %naming_template = (
+    same       => sub { $_[0] },
+    short      => sub { $_[0] =~ s{^.*\:\:(.*?)$}{$1}g; $_[0] },
+    plural     => sub { $_[0] =~ s{^.*\:\:(.*?)$}{$1}g; lc "$_[0]s" },
+    decamel    => sub { $_[0] =~ s{([a-z])([A-Z])}{$1_$2}g; lc $_[0] },
+    undercolon => sub { $_[0] =~ s{\:\:}{_}g; lc $_[0] },
+    lower      => sub { lc $_[0] },
+    lc         => sub { lc $_[0] },
+    upper      => sub { uc $_[0] },
+    uc         => sub { uc $_[0] },
     default => sub {
-        sub {
-            my $n = shift;
-            $n =~ s{([a-z])([A-Z])}{$1_$2}g;
-            $n =~ s{\:\:}{_}g;
-            lc($n);
-          }
+        $_[0] =~ s{([a-z])([A-Z])}{$1_$2}g;
+        $_[0] =~ s{\:\:}{_}g;
+        lc $_[0];
     }
 );
+subtype 'Mongoose::CodeRef' => as 'CodeRef';
+coerce 'Mongoose::CodeRef'
+    => from 'Str' => via {
+        my $template = $naming_template{ $_[0] }
+            or die "naming template '$_[0]' not found";
+        return $template;
+    }
+    => from 'ArrayRef' => via {
+        my @filters;
+        for( @{ $_[0] } ) {
+            my $template = $naming_template{ $_ }
+                or die "naming template '$_' not found";
+            # add filter to list
+            push @filters, sub { 
+                my $name = shift;
+                return $template->($name);
+            } 
+        }
+        # now, accumulate all filters
+        return sub {
+            my $name = shift;
+            map { $name = $_->($name) } @filters;
+            return $name;
+        }
+    };
+
+has 'naming' => (
+    is      => 'rw',
+    isa     => 'Mongoose::CodeRef',
+    coerce  => 1,
+    default => sub {$naming_template{default} }
+);
+
 
 sub db {
     my $self = shift;
@@ -52,11 +92,12 @@ sub load_schema {
     my ( $self, %args ) = @_;
     require Module::Pluggable;
     my $shorten = delete $args{shorten};
-    Module::Pluggable->import( search_path => $args{search_path} );
+    my $search_path = delete $args{search_path};
+    Module::Pluggable->import( search_path => $search_path );
     for my $module ( $self->plugins ) {
         eval "require $module";
         croak $@ if $@;
-        if ( $shorten && $module =~ m/Schema\:\:(.*?)$/ ) {
+        if ( $shorten && $module =~ m/$search_path\:\:(.*?)$/ ) {
             my $short_name = $1;
             no strict 'refs';
             *{ $short_name . "::" } = \*{ $module . "::" };
@@ -122,7 +163,7 @@ Or proceed directly to the L<Mongoose::Cookbook> for many day-to-day recipes.
 
 Sets the current MongoDB connection and/or db name. 
 
-	Mongoose->db( 'myappdb' );
+    Mongoose->db( 'myappdb' );
 
 The connection defaults to whatever MongoDB defaults are
 (typically localhost:27017).
@@ -147,25 +188,25 @@ or search dir.
 All arguments will be sent to Module::Pluggable's C<import>, except for 
 Mongoose specific ones. 
 
-	package main;
-	use Mongoose;
+    package main;
+    use Mongoose;
 
-	# to load a schema from a namespace path:
-	Mongoose->load_schema( search_path=>'MyApp::Schema' );
+    # to load a schema from a namespace path:
+    Mongoose->load_schema( search_path=>'MyApp::Schema' );
 
 
 This method can be used to shorten class names, aliasing them for
 convenience if you wish:
 
-	Mongoose->load_schema( search_path=>'MyApp::Schema', shorten=>1 );
+    Mongoose->load_schema( search_path=>'MyApp::Schema', shorten=>1 );
 
 Will shorten the module name to it's last bit:
 
-	MyApp::Schema::Author->new( ... );
+    MyApp::Schema::Author->new( ... );
 
-	# becomes
+    # becomes
 
-	Author->new( ... );
+    Author->new( ... );
 
 =head2 naming 
 
@@ -174,7 +215,7 @@ by replacing double-colon C<::> with underscores C<_>, separating camel-case,
 such as C<aB> with C<a_b> and uppercase with lowercase letters. 
 
 This method let's you change this behaviour, by setting
-setting the collection naming default sub. 
+the collection naming routine with a C<closure>.
 
 The closure receives the package name as first parameter and 
 should return the collection name. 
@@ -184,6 +225,30 @@ should return the collection name.
     #  to plain lowercase
 
     Mongoose->naming( sub { lc(shift) } );
+
+    # if you prefer, use a predefined naming template
+
+    Mongoose->naming( 'plural' );  # my favorite
+
+    # or combine them 
+
+    Mongoose->naming( ['decamel','plural' ] );  # same as 'shorties'
+
+Here are the templates available:
+
+     template     | package name             |  collection
+    --------------+--------------------------+---------------------------
+     short        | MyApp::Schema::FooBar    |  foobar
+     plural       | MyApp::Schema::FooBar    |  foobars
+     decamel      | MyApp::Schema::FooBar    |  foo_bar
+     lower        | MyApp::Schema::FooBar    |  myapp::schema::author
+     upper        | MyApp::Schema::FooBar    |  MYAPP::SCHEMA::AUTHOR
+     undercolon   | MyApp::Schema::FooBar    |  myapp_schema_foobar
+     default      | MyApp::Schema::FooBar    |  myapp_schema_foo_bar
+     none         | MyApp::Schema::Author    |  MyApp::Schema::Author
+
+BTW, you can just use the full package name (template C<none>) as a collection 
+in Mongo, as it won't complain about colons in the collection name. 
 
 =head2 connection
 
@@ -221,11 +286,11 @@ L<KiokuDB>
 
 =head1 AUTHOR
 
-	Rodrigo de Oliveira (rodrigolive), C<rodrigolive@gmail.com>
+    Rodrigo de Oliveira (rodrigolive), C<rodrigolive@gmail.com>
 
 =head1 CONTRIBUTORS
 
-	Arthur Wolf
+    Arthur Wolf
     Solli Moreira Honorio (shonorio)
 
 =head1 LICENSE

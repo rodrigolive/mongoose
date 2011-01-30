@@ -5,11 +5,8 @@ use MooseX::Role::Parameterized;
 use Mongoose::Meta::AttributeTraits;
 
 parameter '-engine' => ( isa => 'Mongoose::Role::Engine', );
-
 parameter '-collection_name' => ( isa => 'Str', );
-
 parameter '-pk' => ( isa => 'ArrayRef[Str]', );
-
 parameter '-as' => ( isa => 'Str', );
 
 role {
@@ -19,7 +16,7 @@ role {
 
     my $collection_name = $p->{'-collection_name'} || do {
         # sanitize the class name
-        Mongoose->naming->($class_name);
+        Mongoose->naming->("$class_name");
     };
 
     # load the selected engine
