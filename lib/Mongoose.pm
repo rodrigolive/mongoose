@@ -9,10 +9,12 @@ use Carp;
 
 has '_db' => ( is => 'rw', isa => 'HashRef[MongoDB::Database]' );
 
-has 'connection' => (
+has '_connection' => (
     is  => 'rw',
     isa => 'MongoDB::Connection',
 );
+
+has '_args' => ( is => 'rw', isa => 'HashRef', default=>sub{{}} );
 
 # naming templates
 my %naming_template = (
@@ -64,28 +66,39 @@ has 'naming' => (
     default => sub {$naming_template{default} }
 );
 
-
 sub db {
     my $self = shift;
-    my $key  = 'default';
-    if ( scalar(@_) == 1 && defined $_[0] ) {
-        $self->connection( MongoDB::Connection->new );
-        $self->_db( { $key => $self->connection->get_database( $_[0] ) } );
-    }
-    elsif ( scalar(@_) > 2 ) {
-        my %p = @_;
-        $key = delete( $p{class} ) || $key;
-        $self->connection( MongoDB::Connection->new(@_) )
-          unless ref $self->connection;
-        $self->_db(
-            { $key => $self->connection->get_database( $p{db_name} ) } );
-    }
-    return $self->_db->{default};
+    my %p    = @_ == 1 ? (db_name=>shift) : @_;
+    my $now  = delete $p{'-now'};
+    $self->_args( \%p );
+    return $self->connect if $now || defined wantarray;
+}
+
+sub connect {
+    my $self = shift;
+    my %p    = @_ || %{ $self->_args };
+    my $key  = delete( $p{'-class'} ) || 'default';
+    $self->_connection( MongoDB::Connection->new(@_) )
+      unless ref $self->_connection;
+    $self->_db( { $key => $self->_connection->get_database( $p{db_name} ) } );
+    return $self->_db->{$key};
+}
+
+sub disconnect {
+    my $self = shift;
+    $self->_connection and $self->_connection(undef);
+}
+
+sub connection {
+    my $self = shift;
+    $self->_connection and return $self->_connection;
+    $self->connect and return $self->_connection;
 }
 
 sub _db_for_class {
     my ( $self, $class ) = @_;
-    return $self->_db->{$class} || $self->_db->{default};
+    return $self->_db->{$class} || $self->_db->{default} if defined $self->_db;
+    return $self->connect;
 }
 
 sub load_schema {
@@ -163,7 +176,7 @@ Or proceed directly to the L<Mongoose::Cookbook> for many day-to-day recipes.
 
 Sets the current MongoDB connection and/or db name. 
 
-    Mongoose->db( 'myappdb' );
+    Mongoose->db( 'mydb' );
 
 The connection defaults to whatever MongoDB defaults are
 (typically localhost:27017).
@@ -174,11 +187,35 @@ L<MongoDB::Connection>, plus C<db_name>.
     my $db = Mongoose->db(
         host          => 'mongodb://localhost:27017',
         query_timeout => 60,
-        db_name       => 'myapp'
+        db_name       => 'mydb'
     );
 
 This will, in turn, instantiate a L<MongoDB::Connection> instance
 with all given parameters and return a L<MongoDB::Database> object. 
+
+B<Important>: Mongoose will always defer connecting to Mongo
+until the last possible moment. This is done to prevent
+using the MongoDB driver in a forked environment (ie. with a
+prefork appserver like Starman, Hypnotoad or Catalyst's
+HTTP::Prefork).
+
+If you prefer to connect while setting the connection string, 
+use one of these 2 options:
+
+    Mongoose->db( db_name=>'mydb', -now=>1 );  # connect now
+
+    # or by wating for a return value
+
+    my $db = Mongoose->db( 'mydb' );
+
+    # or explicitly:
+
+    Mongoose->db( 'mydb' );
+    Mongoose->connect;
+
+=head2 connect
+
+Connects to Mongo using the connection arguments passed to the C<db> method.
 
 =head2 load_schema
 

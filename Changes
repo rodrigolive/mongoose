@@ -1,3 +1,9 @@
+0.07 Wed Feb  2 22:42:59 CET 2011
+    * Changed Mongoose->db to connect to Mongo only when needed. That 
+      makes it easier to initialize Mongoose in a forked server environment.
+    * Changed Mongoose->load_schema to handle package namespaces
+      in a flexible way. 
+
 0.06 Sat Jan 29 14:17:24 CET 2011
 	* Fixed error in 'expand' method for ArrayRef with Mongoose::EmbeddedDocument (shonorio)
 
