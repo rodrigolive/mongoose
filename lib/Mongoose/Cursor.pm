@@ -13,6 +13,7 @@ around 'next' => sub {
 	my $coll_name = $self->_collection_name; 
 	my $class = $self->_class;
 	#eval "require " . $self->_class;
+    return $doc if $self->_query->{'$explain'};
 	return $class->expand( $doc );
 };
 

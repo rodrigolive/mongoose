@@ -38,11 +38,12 @@ has 'buffer' => ( is => 'rw', isa => 'HashRef', default => sub { {} } );
 # deleting happens at a later moment, meanwhile delete candidates are here
 has 'delete_buffer' => ( is => 'rw', isa => 'HashRef', default => sub { {} } );
 
-use Scalar::Util qw/refaddr/;
+use Scalar::Util qw/refaddr weaken/;
 
 sub add {
     my ( $self, @objs ) = @_;
     for my $obj (@objs) {
+        weaken $obj;
         $self->buffer->{ refaddr $obj } = $obj;
     }
 }
@@ -97,13 +98,17 @@ sub _insert {    #TODO insert and commit
 
 sub _save {
     my ( $self, $parent, @scope ) = @_;
-
     my @objs = @{ delete $self->{children} || [] };
     my $collection_name = $self->with_collection_name;
 
     # load buffers
     my $buffer = delete $self->{buffer};
     my $delete_buffer = delete $self->{delete_buffer};
+
+    # save deleted, couldn't see how to put this in Join::Relational without creating infinte loops
+    for my $deleted ( values %{$delete_buffer}){
+        $deleted->save;
+    }
 
     # save buffered children
     for ( keys %{ $buffer } ) {
@@ -112,6 +117,7 @@ sub _save {
         $obj->save( @scope );
         push @objs, { '$ref' => $collection_name, '$id' => $obj->_id };
     }
+
 
     # adjust
     $self->buffer( $buffer ); # restore the list

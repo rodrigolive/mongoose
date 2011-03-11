@@ -29,8 +29,9 @@ package main;
 {
 	my $homer = Person->new( name => "Homer Simpson" );
 	my $marge = Person->new( name => "Marge Simpson" ); 
-	$homer->spouse($marge);
+	#$homer->spouse($marge);
 	$marge->spouse($homer);
+    $marge->save;
 	my $id = $homer->save;
 	is( ref($id), 'MongoDB::OID', 'xref, id defined' );
 	my $p = Person->find_one({ _id=>$id});
@@ -41,6 +42,17 @@ package main;
 	ok( $p->isa('Person'), 'isa person' );
 	is( $p->name, 'Marge Simpson', 'marge found');
 	is( $p->spouse->name, 'Homer Simpson', 'spouse found');
+}
+{
+    my $p = Person->find_one({ name=>'Homer Simpson' });
+    my $n = $p->update('$set' => { name => 'Homer Jay Simpson'});
+    is( $p->name, 'Homer Jay Simpson' , 'update works');
+    $p->update('$set' => { spouse => Person->find_one({ name=>'Marge Simpson' }) });
+    is( $p->spouse->name, 'Marge Simpson', 'spouse found');
+}
+{
+    my $homer = Person->find_one({spouse => Person->find_one({ name=>'Marge Simpson' }) });
+    is( $homer->name, 'Homer Jay Simpson', 'homer found because of marge');
 }
 {
 	my $cursor = Person->find;

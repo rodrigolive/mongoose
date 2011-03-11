@@ -10,9 +10,7 @@ use Carp;
 use List::Util qw/first/;
 use Mongoose::Cursor; #initializes moose
 
-with 'Mongoose::Role::Collapser';
-with 'Mongoose::Role::Expander';
-with 'Mongoose::Role::Engine';
+with 'Mongoose::Engine::Base::DocumentMethods';
 
 sub collapse {
 	my ($self, @scope )=@_;
@@ -25,22 +23,49 @@ sub collapse {
 		# treat special cases based on Moose attribute defs or traits
 		if( defined $attrib ) {
 			delete $packed->{$key} , next
-				if $attrib->does('Mongoose::Meta::Attribute::Trait::DoNotSerialize');
+              if $attrib->does('Mongoose::Meta::Attribute::Trait::DoNotSerialize');
+
+			delete $packed->{$key} , next
+              unless defined $packed->{$key};
 
 			next if $attrib->does('Mongoose::Meta::Attribute::Trait::Raw');
 
 			if( my $type = $attrib->type_constraint ) {
+                #print "attrib: " . $attrib->name . " constraint: " . $type->name . "\n";
 				if( $type->is_a_type_of('FileHandle') ) {
 					my $grid = $self->db->get_gridfs;
 					my $id = $grid->put( delete $packed->{$key} );
 					$packed->{$key} = { '$ref'=>'FileHandle', '$id'=>$id };
 				}
+                if( ( $type->is_a_type_of('Str') or $type->is_a_type_of('Maybe[Str]') ) and ( !$type->is_a_type_of('Num') and !$type->is_a_type_of('Int') and !$type->is_a_type_of('Maybe[Num]') and !$type->is_a_type_of('Maybe[Int]') ) ){
+                    #This is needed due to http://github.com/yesdave/mongo-perl-driver/commit/0ade3be96c4a2dc8ba36552f426429d50223d07d badly converting string containing numbers to native mongodb numbers, so we have to enforce from the moose-tybe
+                    my $value = '' .  $packed->{$key};
+                    delete $packed->{$key};
+                    $packed->{$key} = $value;
+                }
+                if( ( $type->is_a_type_of('Num') or $type->is_a_type_of('Maybe[Num]') or $type->is_a_type_of('Int') or $type->is_a_type_of('Maybe[Int]') ) and ( !$type->is_a_type_of('Str') and !$type->is_a_type_of('Maybe[Str]') ) ) {
+                    #This is needed due to http://github.com/yesdave/mongo-perl-driver/commit/0ade3be96c4a2dc8ba36552f426429d50223d07d badly converting string containing numbers to native mongodb numbers, so we have to enforce from the moose-tybe
+                    #print "is a number " . $type->name . "\n";
+                    my $value = 1 * $packed->{$key};
+                    delete $packed->{$key};
+                    $packed->{$key} = 1 * $value;
+                }
 			}
+            
 		}
 
 		my $obj = $packed->{$key};
 		if( my $class = blessed $obj ) {
-			#say "checking.... $class....";
+            if($class->isa('Mongoose::Join::Relational')){
+                my $unblessed = $self->_unbless( $obj, $class, @scope );
+                use Data::Dumper;
+                if ( $obj->with_class->meta->get_attribute($obj->reciprocal)->type_constraint =~ m{^Mongoose::Join::Relational} ){
+                    $packed->{$key} = $unblessed;
+                }else{
+                    delete $packed->{$key};
+                    next;
+                }
+            }
 			$packed->{$key} = $self->_unbless( $obj, $class, @scope );
 		}
 		elsif( ref $obj eq 'ARRAY' ) {
@@ -63,10 +88,11 @@ sub collapse {
 		elsif( ref $obj eq 'HASH' ) {
 			my @docs;
 			for my $key ( grep { blessed $obj->{$_} } keys %$obj ) {
-				$obj->{$key} = $self->_unbless( $obj->{$key}, blessed($obj->{$key}), @scope );;
+				$obj->{$key} = $self->_unbless( $obj->{$key}, blessed($obj->{$key}), @scope )  ;
 			}
 		}
 	}
+
 	return $packed;
 }
 
@@ -83,9 +109,8 @@ sub _unbless {
 					$ret = { '$ref' => $class->meta->{mongoose_config}->{collection_name}, '$id'=>$id };
 				}
 				elsif( $class->isa('Mongoose::Join') ) {
-					my @objs = $obj->_save( $self, @scope );
-					$ret = \@objs;
-				}
+					$ret = [ $obj->_save( $self, @scope ) ];
+				} 
 			} else {
 				# non-moose class
 				my $reftype = reftype($obj);
@@ -118,12 +143,14 @@ sub expand {
 
 	for my $attr ( $class_main->meta->get_all_attributes ) {
 		my $name = $attr->name;
-		next unless exists $doc->{$name};
-		my $type = $attr->type_constraint or next;
+        my $type = $attr->type_constraint or next;
 		my $class = $self->_get_blessed_type( $type );
 		$class or next;
 
 		if( defined $attr && $attr->does('Mongoose::Meta::Attribute::Trait::Raw') ) {
+			next;
+		}
+		if( defined $attr && $attr->does('Mongoose::Meta::Attribute::Trait::DoNotSerialize') ) {
 			next;
 		}
 		elsif( $type->is_a_type_of('HashRef') ) {
@@ -200,19 +227,33 @@ sub expand {
 			elsif( $class->isa('Mongoose::Join') ) {
 				my $ref_arr = delete( $doc->{$name} );
 				my $ref_class = $type->type_parameter->class ;
-				$doc->{$name} = bless {
-					class=>$class_main, field=>$name, parent=>$doc->{_id},
-					with_class=>$ref_class, children=>$ref_arr, buffer=>{} } => $class;
+                if( $class eq 'Mongoose::Join::Relational' ){
+                    $doc->{$name} = $class_main->meta->get_attribute($name)->default->($doc);
+
+                }else{
+                    $doc->{$name} = bless {
+                                           class=>$class_main, field=>$name, parent=>$doc->{_id}, with_class=>$ref_class,
+                                           children=>$ref_arr, buffer=>{}
+                                          } => $class;
+                }
 			}
 		}
 		else { #non-moose
 			my $data = delete $doc->{$name};
 			my $data_type =  ref $data;
-
+                    
 			if( !$data_type ) {
 				push @later, { attrib=>$name, value=>$data };
 			} else {
-				$doc->{$name} = bless $data => $class;
+                if( $class eq 'Any' and $data and exists $data->{'$ref'} ){
+                    my $belongs_to_class = $class_main->db->{collection_to_class}->{$data->{'$ref'}};
+                    #print "$name, $class, $data, " , $data->{'$ref'} , " , $belongs_to_class\n";
+                    #We should make this lazy, but I don't know enough magic ...
+                    $doc->{$name} = $belongs_to_class->resultset->single( _id => $data->{'$id'});
+                }else{
+                    $doc->{$name} = bless $data => $class;
+                }
+                
 			}
 		}
 	}
@@ -295,21 +336,12 @@ sub _get_blessed_type {
 	return $parent->name;
 }
 
-# shallow delete
-sub delete {
-	my ($self, $args )=@_;
-	return $self->collection->remove($args) if ref $args;
-	my $id = $self->_id;
-	return $self->collection->remove({ _id => $id }) if ref $id;
-	my $pk = $self->_primary_key_from_hash();
-	return $self->collection->remove($pk) if ref $pk;
-	return undef;
-}
 
 #sub delete_cascade {
 #	my ($self, $args )=@_;
 #	#TODO delete related collections
 #}
+
 
 sub db {
 	my $self=shift;
@@ -359,29 +391,6 @@ sub _primary_key_from_hash {
 sub _collection_name {
 	my $self = shift;
 	return $self->meta->{mongoose_config}->{collection_name} ;
-}
-
-sub find {
-	my ($self,$query,$attrs) = @_;
-	my $cursor = bless $self->collection->find($query,$attrs), 'Mongoose::Cursor';
-	$cursor->_collection_name( $self->meta->{mongoose_config}->{collection_name} );
-	$cursor->_class( ref $self || $self );
-	return $cursor;
-}
-
-sub query {
-	my ($self,$query,$attrs) = @_;
-	my $cursor = bless $self->collection->query($query,$attrs), 'Mongoose::Cursor';
-	$cursor->_collection_name( $self->meta->{mongoose_config}->{collection_name} );
-	$cursor->_class( ref $self || $self );
-	return $cursor;
-}
-
-sub find_one {
-	my ($self,$query,$fields, $scope) = @_;
-	my $doc = $self->collection->find_one( $query, $fields );
-	return undef unless defined $doc;
-	return $self->expand( $doc, $fields, $scope );
 }
 
 =head1 NAME

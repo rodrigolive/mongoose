@@ -3,7 +3,7 @@ use Moose ();
 use Moose::Exporter;
 
 Moose::Exporter->setup_import_methods(
-    with_meta => [ 'has_many', 'belongs_to', 'has_one' ],
+    with_meta => [ 'has_many', 'belongs_to', 'has_one','has_index' ],
     also      => 'Moose',
 );
 
@@ -11,15 +11,35 @@ sub has_many {
     my $meta = shift;
     my $name = shift;
     my %options;
-    if   ( scalar @_ == 1 ) { $options{isa} = shift; }
-    else                    { %options      = @_; }
 
+    my $isa;
+    if   ( scalar @_ % 2 == 1 ) {
+        $isa = shift;
+    }
+    %options      = @_;
+    $options{isa} = $isa if $isa;
+    #$options{weak_ref} = 1 unless defined $options{weak_ref};
+    
     my $isa_original = $options{isa};
-    $options{isa} = 'Mongoose::Join[' . $options{isa} . ']';
-    $options{default} ||=
-      sub { Mongoose::Join->new( with_class => "$isa_original" ) };
+    if( exists $options{foreign} ){
+        my $foreign = delete $options{foreign};
+        $options{isa} = 'Mongoose::Join::Relational[' . $options{isa} . ']';
+        $options{default} ||=
+          sub {
+              my $owner = shift;
+              use Mongoose::Join::Relational;
+              Mongoose::Join::Relational->new( with_class => "$isa_original", owner => $owner, reciprocal => $foreign );
+            };        
+    }else{
+        $options{isa} = 'Mongoose::Join[' . $options{isa} . ']';
+        $options{default} ||= sub { Mongoose::Join->new( with_class => "$isa_original" ) };
+    }
     $options{is} ||= 'ro';
     $meta->add_attribute( $name, %options, );
+
+    #So that belongs_to Any can find us
+    $meta->{package}->db->{collection_to_class}->{ Mongoose->naming->( $meta->{package} ) } = $meta->{package};
+
 }
 
 sub belongs_to {
@@ -31,6 +51,7 @@ sub belongs_to {
         $options{is}  = 'rw';
     }
     else { %options = @_; }
+    #$options{weak_ref} = 1 unless defined $options{weak_ref};
 
     $meta->add_attribute( $name, %options, );
 }
@@ -44,8 +65,16 @@ sub has_one {
         $options{is}  = 'rw';
     }
     else { %options = @_; }
+    #$options{weak_ref} = 1 unless defined $options{weak_ref};
 
     $meta->add_attribute( $name, %options, );
+}
+
+sub has_index {
+    my $meta = shift;
+    my @index;
+    if( scalar @_ && ref($_[0]) ne 'HASH'  ){ @index = ({@_}); }else{@index = @_;}
+    $meta->{package}->collection->ensure_index(@index);
 }
 
 =head1 NAME
