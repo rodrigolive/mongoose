@@ -333,7 +333,7 @@ L<KiokuDB>
 
     Arthur Wolf
     Solli Moreira Honorio (shonorio)
-	Michael Gentili (gentili)
+    Michael Gentili (gentili)
 
 =head1 LICENSE
 
