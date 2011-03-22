@@ -1,130 +1,10 @@
-package Mongoose;
-use MongoDB;
-use MooseX::Singleton;
-use Mongoose::Join;
-use Mongoose::File;
-use Mongoose::Meta::AttributeTraits;
-use Moose::Util::TypeConstraints;
-use Carp;
-
-has '_db' => ( is => 'rw', isa => 'HashRef[MongoDB::Database]' );
-
-has '_connection' => (
-    is  => 'rw',
-    isa => 'MongoDB::Connection',
-);
-
-has '_args' => ( is => 'rw', isa => 'HashRef', default=>sub{{}} );
-
-# naming templates
-my %naming_template = (
-    same       => sub { $_[0] },
-    short      => sub { $_[0] =~ s{^.*\:\:(.*?)$}{$1}g; $_[0] },
-    plural     => sub { $_[0] =~ s{^.*\:\:(.*?)$}{$1}g; lc "$_[0]s" },
-    decamel    => sub { $_[0] =~ s{([a-z])([A-Z])}{$1_$2}g; lc $_[0] },
-    undercolon => sub { $_[0] =~ s{\:\:}{_}g; lc $_[0] },
-    lower      => sub { lc $_[0] },
-    lc         => sub { lc $_[0] },
-    upper      => sub { uc $_[0] },
-    uc         => sub { uc $_[0] },
-    default => sub {
-        $_[0] =~ s{([a-z])([A-Z])}{$1_$2}g;
-        $_[0] =~ s{\:\:}{_}g;
-        lc $_[0];
-    }
-);
-subtype 'Mongoose::CodeRef' => as 'CodeRef';
-coerce 'Mongoose::CodeRef'
-    => from 'Str' => via {
-        my $template = $naming_template{ $_[0] }
-            or die "naming template '$_[0]' not found";
-        return $template;
-    }
-    => from 'ArrayRef' => via {
-        my @filters;
-        for( @{ $_[0] } ) {
-            my $template = $naming_template{ $_ }
-                or die "naming template '$_' not found";
-            # add filter to list
-            push @filters, sub { 
-                my $name = shift;
-                return $template->($name);
-            } 
-        }
-        # now, accumulate all filters
-        return sub {
-            my $name = shift;
-            map { $name = $_->($name) } @filters;
-            return $name;
-        }
-    };
-
-has 'naming' => (
-    is      => 'rw',
-    isa     => 'Mongoose::CodeRef',
-    coerce  => 1,
-    default => sub {$naming_template{default} }
-);
-
-sub db {
-    my $self = shift;
-    my %p    = @_ == 1 ? (db_name=>shift) : @_;
-    my $now  = delete $p{'-now'};
-    $self->_args( \%p );
-    return $self->connect if $now || defined wantarray;
-}
-
-sub connect {
-    my $self = shift;
-    my %p    = @_ || %{ $self->_args };
-    my $key  = delete( $p{'-class'} ) || 'default';
-    $self->_connection( MongoDB::Connection->new(@_) )
-      unless ref $self->_connection;
-    $self->_db( { $key => $self->_connection->get_database( $p{db_name} ) } );
-    return $self->_db->{$key};
-}
-
-sub disconnect {
-    my $self = shift;
-    $self->_connection and $self->_connection(undef);
-}
-
-sub connection {
-    my $self = shift;
-    $self->_connection and return $self->_connection;
-    $self->connect and return $self->_connection;
-}
-
-sub _db_for_class {
-    my ( $self, $class ) = @_;
-    return $self->_db->{$class} || $self->_db->{default} if defined $self->_db;
-    return $self->connect;
-}
-
-sub load_schema {
-    my ( $self, %args ) = @_;
-    require Module::Pluggable;
-    my $shorten = delete $args{shorten};
-    my $search_path = delete $args{search_path};
-    Module::Pluggable->import( search_path => $search_path );
-    for my $module ( $self->plugins ) {
-        eval "require $module";
-        croak $@ if $@;
-        if ( $shorten && $module =~ m/$search_path\:\:(.*?)$/ ) {
-            my $short_name = $1;
-            no strict 'refs';
-            *{ $short_name . "::" } = \*{ $module . "::" };
-            $short_name->meta->{mongoose_config} =
-              $module->meta->{mongoose_config};
-        }
-    }
-}
-
-1;
-
 =head1 NAME
 
 Mongoose - MongoDB document to Moose object mapper
+
+=head1 VERSION
+
+version 0.07
 
 =head1 SYNOPSIS
 
@@ -339,4 +219,3 @@ L<KiokuDB>
 
 This library is free software. You can redistribute it and/or modify it under
 the same terms as Perl itself.
-

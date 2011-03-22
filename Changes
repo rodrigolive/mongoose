@@ -1,3 +1,6 @@
+0.08 Tue Mar 22 17:05:45 CET 2011
+    * DoNotSerialize renamed to DoNotMongoSerialize (gentili)
+
 0.07 Wed Feb  2 22:42:59 CET 2011
     * Changed Mongoose->db to connect to Mongo only when needed. That 
       makes it easier to initialize Mongoose in a forked server environment.
