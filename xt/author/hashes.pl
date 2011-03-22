@@ -23,7 +23,7 @@ sub x::pp { say Dump( @_ ) }
 	has_one 'tt' => 'HashRef[Person]';
     has_one 'arr' => 'ArrayRef[Person]';
     has_one 'arr_int' => 'ArrayRef[Int]';
-	has 'cc' => ( is=>'rw', isa=>'CodeRef', traits=>['DoNotSerialize'] );
+	has 'cc' => ( is=>'rw', isa=>'CodeRef', traits=>['DoNotMongoSerialize'] );
 
 	sub foo { print 'me' }
 
