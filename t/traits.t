@@ -16,7 +16,7 @@ with 'Mongoose::Document';
 
 has 'name' => ( is=>'rw', isa=>'Str', required=>1, traits=>['Binary'], column=>'aaaa' );
 has 'age' => ( is=>'rw', isa=>'Int', default=>40 );
-has 'salary' => ( is=>'rw', isa=>'Int', traits=>['DoNotSerialize'] );
+has 'salary' => ( is=>'rw', isa=>'Int', traits=>['DoNotMongoSerialize'] );
 has 'date' => ( is=>'rw', isa=>'DateTime', default=>sub{$now} );
 has 'date_raw' => ( is=>'rw', isa=>'DateTime', traits=>['Raw'] , default=>sub{$now} );
 }

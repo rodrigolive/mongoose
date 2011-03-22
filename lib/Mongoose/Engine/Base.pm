@@ -25,7 +25,7 @@ sub collapse {
 		# treat special cases based on Moose attribute defs or traits
 		if( defined $attrib ) {
 			delete $packed->{$key} , next
-				if $attrib->does('Mongoose::Meta::Attribute::Trait::DoNotSerialize');
+				if $attrib->does('Mongoose::Meta::Attribute::Trait::DoNotMongoSerialize');
 
 			next if $attrib->does('Mongoose::Meta::Attribute::Trait::Raw');
 

@@ -19,7 +19,7 @@ with 'Document';
 	has 'guitars' => ( is=>'rw', isa=>'ArrayRef', default=>sub{[]} );
 	has 'last_cd' => ( is=>'rw', isa=>'CD', weak_ref=>1 );
 	has 'age' => ( is=>'rw', isa=>'Int', default=>sub{ int rand 100 } );
-	has 'temp' => ( is=>'rw', isa=>'Any', metaclass=>'DoNotSerialize' );
+	has 'temp' => ( is=>'rw', isa=>'Any', metaclass=>'DoNotMongoSerialize' );
 	has 'contact' => ( is=>'rw', isa=>'ContactInfo', default=>sub{ContactInfo->new});
 	sub _pk { 'name' }
 

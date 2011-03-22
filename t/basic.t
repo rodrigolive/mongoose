@@ -14,7 +14,7 @@ $db->run_command({ drop=>'person' });
 	has 'name' => ( is=>'rw', isa=>'Str', required=>1 );
 	has 'age' => ( is=>'rw', isa=>'Int', default=>40 );
 	has 'spouse' => ( is=>'rw', isa=>'Person' );
-	has 'crc' => ( is=>'rw', isa=>'Str', traits=>['DoNotSerialize'], default=>'ABCD' );
+	has 'crc' => ( is=>'rw', isa=>'Str', traits=>['DoNotMongoSerialize'], default=>'ABCD' );
 }
 
 package main;

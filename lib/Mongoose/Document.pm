@@ -28,7 +28,7 @@ role {
 
     # attributes
     has '_id' =>
-      ( is => 'rw', isa => 'MongoDB::OID', traits => ['DoNotSerialize'] );
+      ( is => 'rw', isa => 'MongoDB::OID', traits => ['DoNotMongoSerialize'] );
 
     my $config = {
         pk              => $p->{'-pk'},
