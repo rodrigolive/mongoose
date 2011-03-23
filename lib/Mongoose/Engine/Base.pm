@@ -104,6 +104,9 @@ sub _unbless {
             my @objs = $obj->_save( $self, @scope );
             $ret = \@objs;
         }
+    } elsif( ref $obj eq 'DateTime' ) {
+        # DateTime as raw always
+        $ret = $obj;
     } else {
         # non-moose class
         my $reftype = reftype($obj);
