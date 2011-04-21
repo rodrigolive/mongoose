@@ -54,14 +54,14 @@ Mongoose::Class - sugary Mongoose-oriented replacement for Moose
 
 =head1 SYNOPSIS
 
-	package MySchema::Person;
-	use Mongoose::Class; # uses Moose for you
-	with 'Mongoose::Document';
+    package MySchema::Person;
+    use Mongoose::Class; # uses Moose for you
+    with 'Mongoose::Document';
 
-	has 'name' => ( is=>'rw', isa=>'Str' );
-	has_many 'siblings' => ( is=>'rw', isa=>'Person' );
-	belongs_to 'club' => ( is=>'rw', isa=>'Club' );
-	has_one 'father' => ( is=>'rw', isa=>'Person' );
+    has 'name' => ( is=>'rw', isa=>'Str' );
+    has_many 'siblings' => ( is=>'rw', isa=>'Person' );
+    belongs_to 'club' => ( is=>'rw', isa=>'Club' );
+    has_one 'father' => ( is=>'rw', isa=>'Person' );
 
 =head1 DESCRIPTION
 
@@ -71,9 +71,9 @@ Basically, this module adds some sugar into your Mongoose
 Document class by defining some stand-in replacements for 
 Moose's own C<has>. 
 
-	has_many
-	has_one
-	belongs_to
+    has_many
+    has_one
+    belongs_to
 
 The idea: fewer keystrokes and improved readability
 by self-documenting your class. 
@@ -94,11 +94,11 @@ Wraps the defined relationship with another class using C<Mongoose::Join>.
 
 This:
 
-	has_many 'employees' => ( isa=>'Employee' );
+    has_many 'employees' => ( isa=>'Employee' );
 
-	# or
+    # or
 
-	has_manu 'employees' => 'Employee';
+    has_manu 'employees' => 'Employee';
 
 Becomes this:
 
@@ -107,7 +107,7 @@ Becomes this:
         isa     => 'Mongoose::Join[Employee]',
         default => sub { Mongoose::Join->new( with_class=>'Employee' ) }
     );
-	
+    
 =cut
 
 1;

@@ -18,8 +18,8 @@ has 'lazy_select' => (
 # -----------------------------------------------------------------
 
 {
-	package Moose::Meta::Attribute::Custom::Trait::Binary;
-	sub register_implementation {'Mongoose::Meta::Attribute::Trait::Binary'}
+    package Moose::Meta::Attribute::Custom::Trait::Binary;
+    sub register_implementation {'Mongoose::Meta::Attribute::Trait::Binary'}
 }
 
 # -----------------------------------------------------------------
@@ -42,27 +42,21 @@ has 'lazy_select' => (
 # -----------------------------------------------------------------
 
 {
-	package Moose::Meta::Attribute::Custom::Trait::DoNotMongoSerialize;
-	sub register_implementation {'Mongoose::Meta::Attribute::Trait::DoNotMongoSerialize'}
+    package Moose::Meta::Attribute::Custom::Trait::DoNotMongoSerialize;
+    sub register_implementation {'Mongoose::Meta::Attribute::Trait::DoNotMongoSerialize'}
 }
 
 # -----------------------------------------------------------------
 
 {
-	package Mongoose::Meta::Attribute::Trait::Raw;
-	use strict;
-	use Moose::Role;
+    package Mongoose::Meta::Attribute::Trait::Raw;
+    use strict;
+    use Moose::Role;
 }
 {
-	package Moose::Meta::Attribute::Custom::Trait::Raw;
-	sub register_implementation {'Mongoose::Meta::Attribute::Trait::Raw'}
+    package Moose::Meta::Attribute::Custom::Trait::Raw;
+    sub register_implementation {'Mongoose::Meta::Attribute::Trait::Raw'}
 }
-
-#package Moose::Meta::Attribute::Custom::DoNotMongoSerialize;
-#use Moose::Role;
-
-#package Moose::Meta::Attribute::Custom::Trait::PrimaryKey;
-#use Moose::Role;
 
 =head1 NAME
 

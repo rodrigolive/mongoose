@@ -54,10 +54,10 @@ Mongoose::Document - a Mongo document role
 
 =head1 SYNOPSIS
 
-	package Person;
-	use Moose;
-	with 'Mongoose::Document';
-	has 'name' => ( is=>'rw', isa=>'Str', required=>1 );
+    package Person;
+    use Moose;
+    with 'Mongoose::Document';
+    has 'name' => ( is=>'rw', isa=>'Str', required=>1 );
 
 =head1 SEE ALSO
 
