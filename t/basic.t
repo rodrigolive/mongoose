@@ -33,7 +33,22 @@ package main;
 	$marge->spouse($homer);
 	my $id = $homer->save;
 	is( ref($id), 'MongoDB::OID', 'xref, id defined' );
-	my $p = Person->find_one({ _id=>$id});
+
+	my $count = Person->collection->find->count;
+	is( $count, 2, '2 Simpsons ok');
+        Person->find->each(
+            sub {
+                my $simpson = shift;
+                if ($simpson->name eq "Homer Simpson") {
+                    is($simpson->_id, $homer->_id, "Found Homer (iter)");
+                }
+                else {
+                    is($simpson->_id, $marge->_id, "Found Marge (iter)");
+                }
+            }
+        );
+
+	my $p = Person->find_one({ _id => $id });
 	is( $p->name, 'Homer Simpson', 'homer found');
 }
 {
