@@ -1,10 +1,10 @@
 package Mongoose::Class;
-use Moose ();
-use Moose::Exporter;
+use Any::Moose ();
+use Any::Moose::Exporter;
 
-Moose::Exporter->setup_import_methods(
+Any::Moose::Exporter->setup_import_methods(
     with_meta => [ 'has_many', 'belongs_to', 'has_one' ],
-    also      => 'Moose',
+    also      => 'Any::Moose',
 );
 
 sub has_many {
@@ -50,12 +50,12 @@ sub has_one {
 
 =head1 NAME
 
-Mongoose::Class - sugary Mongoose-oriented replacement for Moose
+Mongoose::Class - sugary Mongoose-oriented replacement for Any::Moose
 
 =head1 SYNOPSIS
 
     package MySchema::Person;
-    use Mongoose::Class; # uses Moose for you
+    use Mongoose::Class; # uses Any::Moose for you
     with 'Mongoose::Document';
 
     has 'name' => ( is=>'rw', isa=>'Str' );
@@ -69,7 +69,7 @@ This is very much a work-in-progress.
 
 Basically, this module adds some sugar into your Mongoose
 Document class by defining some stand-in replacements for 
-Moose's own C<has>. 
+Any::Moose's own C<has>. 
 
     has_many
     has_one

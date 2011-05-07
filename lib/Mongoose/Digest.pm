@@ -1,5 +1,5 @@
 package Mongoose::Digest;
-use Moose;
+use Any::Moose;
 use Digest::SHA;
 
 	sub _modified {

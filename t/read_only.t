@@ -8,7 +8,7 @@ $db->run_command({ drop=>'person_ro' });
 
 {
 	package Person;
-	use Moose;
+	use Any::Moose;
 	with 'Mongoose::Document' => {
 		-collection_name => 'person_ro',
     };

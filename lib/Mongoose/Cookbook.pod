@@ -54,7 +54,7 @@ into C<MyClass> for convenience.
 In case your class has attributes you don't want to store in the database.
 
     package Person;
-    use Moose;
+    use Any::Moose;
     with 'Mongoose::Document';
 
     has 'name' => ( is => 'rw', isa => 'Str', required => 1 );
@@ -67,10 +67,10 @@ This can be accomplished several ways.
 
 =head3 ArrayRef
 
-Use the C<ArrayRef> Moose type.
+Use the C<ArrayRef> Any::Moose type.
 
     package Person;
-    use Moose;
+    use Any::Moose;
     with 'Mongoose::Document';
 
     has 'name' => ( is => 'rw', isa => 'Str', required => 1 );
@@ -80,7 +80,7 @@ Then, define the Account class, either as a document or embedded document,
 depending on how you want it stored.
 
     package Address;
-    use Moose;
+    use Any::Moose;
     with Mongoose::EmbeddedDocument;
 
     has 'amount' => ...;
@@ -97,7 +97,7 @@ Establishing a Mongoose::Join relationship will load relationships
 lazily:
 
     package Person;
-    use Moose; with 'Mongoose::Document';
+    use Any::Moose; with 'Mongoose::Document';
 
     has 'name' => ( is => 'rw', isa => 'Str', required => 1 );
     has 'accounts'  => ( is => 'rw', isa => 'Mongoose::Join[Account]' );
@@ -111,7 +111,7 @@ Then retrieve data with a cursor:
 
 =head2 Sugar for Defining Relationships
 
-Use L<Mongoose::Class> instead of C<Moose>.
+Use L<Mongoose::Class> instead of C<Any::Moose>.
 
     package Article;
     use Mongoose::Class; with 'Mongoose::Document';
@@ -290,8 +290,8 @@ Just use MongoDB's C<query> standard syntax:
 
 =head2 FileHandle
 
-Support for the FileHandle Moose type is done making use
-of L<MooseDB::GridFS>. 
+Support for the FileHandle Any::Moose type is done making use
+of L<Any::MooseDB::GridFS>. 
 
     package Thing;
     use Mongoose::Class; with 'Mongoose::Document';

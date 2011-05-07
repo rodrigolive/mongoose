@@ -4,7 +4,7 @@ use Test::More;
 
 {
 	package Test::Person;
-	use Moose;
+	use Any::Moose;
 	with 'Mongoose::Document' => {
 		-collection_name => 'people',
 		-as              => 'Person',
@@ -67,7 +67,7 @@ $db->run_command({ drop=>'FOOPKG' });
 	Mongoose->naming( sub{ uc(shift) } );
 	{
 		package FooPkg;
-		use Moose;
+		use Any::Moose;
 		with 'Mongoose::Document';
 		has 'name' => ( is=>'rw', isa=>'Str', required=>1 );
 	}

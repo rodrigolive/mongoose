@@ -5,7 +5,7 @@ use Test::More ;
 
 {
 	package BankAccount;
-	use Moose;
+	use Any::Moose;
 	with 'Mongoose::Document' => {
 		-pk    => [qw/ drivers_license /]
 	};

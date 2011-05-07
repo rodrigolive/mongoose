@@ -1,5 +1,5 @@
 package Mongoose::Role::Expander;
-use Moose::Role;
+use Any::Moose::Role;
 
 requires 'expand';
 

@@ -17,12 +17,12 @@ Mongoose::EmbeddedDocument - role for embedded documents
 =head1 SYNOPSIS
 
 	package Address;
-	use Moose;
+	use Any::Moose;
 	with 'Mongoose::EmbeddedDocument';
 	has 'street' => is=>'rw', isa=>'Str';
 
 	package Person;
-	use Moose;
+	use Any::Moose;
 	with 'Mongoose::Document';
 	has 'address' => ( is=>'rw', isa=>'Address' );
 

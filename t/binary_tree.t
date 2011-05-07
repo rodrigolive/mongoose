@@ -11,7 +11,7 @@ $db->run_command({ drop => 'test_binary_tree' });
 
 {
 	package Test::BinaryTree;
-	use Moose;
+	use Any::Moose;
 	with 'Mongoose::Document';
 
 	  has 'node' => ( is => 'rw', isa => 'HashRef' );

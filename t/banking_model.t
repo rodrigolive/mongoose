@@ -5,7 +5,7 @@ use Test::More;
 # -------- define classes
 {
 	package BankAccount;
-	use Moose;
+	use Any::Moose;
 	with 'Mongoose::Document';
 
 	  has 'balance' => ( isa => 'Int', is => 'rw', default => 0 );
@@ -25,7 +25,7 @@ use Test::More;
 }
 {
 	package CheckingAccount;
-	use Moose;
+	use Any::Moose;
 	with 'Mongoose::Document';
 
 	  extends 'BankAccount';

@@ -1,5 +1,5 @@
 package Mongoose::Role::Collapser;
-use Moose::Role;
+use Any::Moose::Role;
 
 requires 'collapse';
 

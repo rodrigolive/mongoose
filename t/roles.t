@@ -4,14 +4,14 @@ use Test::More;
 
 {
 	package Person;
-	use Moose;
+	use Any::Moose;
 	with 'Mongoose::Document';
 	has 'address' => ( is=>'rw', isa=>'Address' );
 }
 
 {
 	package Address;
-	use Moose;
+	use Any::Moose;
 	with 'Mongoose::EmbeddedDocument';
 }
 

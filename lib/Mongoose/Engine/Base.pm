@@ -3,7 +3,7 @@ BEGIN {
   $Mongoose::Engine::Base::VERSION = '0.06';
 }
 
-use Moose::Role;
+use Any::Moose::Role;
 use Params::Coerce;
 use Scalar::Util qw/refaddr reftype/;
 use Carp;
@@ -30,7 +30,7 @@ sub collapse {
     for my $key ( keys %$packed ) {
         my $attrib = $self->meta->get_attribute($key);
 
-        # treat special cases based on Moose attribute defs or traits
+        # treat special cases based on Any::Moose attribute defs or traits
         if( defined $attrib ) {
             delete $packed->{$key} , next
                 if $attrib->does('Mongoose::Meta::Attribute::Trait::DoNotMongoSerialize');

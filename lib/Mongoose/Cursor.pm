@@ -1,5 +1,5 @@
 package Mongoose::Cursor;
-use Moose;
+use Any::Moose;
 use MongoDB;
 extends 'MongoDB::Cursor';
 

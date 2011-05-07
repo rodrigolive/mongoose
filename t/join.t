@@ -20,7 +20,7 @@ $db->run_command({ drop=>'person' });
 }
 {
 	package Employee;
-	use Moose;
+	use Any::Moose;
 	with 'Mongoose::Document';
 	has 'name' => ( is=>'rw', isa=>'Str', required=>1 );
 }

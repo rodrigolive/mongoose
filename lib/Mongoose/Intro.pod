@@ -8,7 +8,7 @@ Mongoose::Intro - an introduction
 =head1 MOTIVATION
 
 This module is an attempt to bring together the full power 
-of Moose into one of the hottest new databases out there: MongoDB.
+of Any::Moose into one of the hottest new databases out there: MongoDB.
 
 Before using this module you should take a little time to 
 read on MongoDB. 
@@ -85,12 +85,12 @@ in case it's not standard (localhost).
     make test
     make install
 
-=head2 Moose classes
+=head2 Any::Moose classes
 
-Create some Moose classes to start using Mongoose;
+Create some Any::Moose classes to start using Mongoose;
 
     package MyClass;
-    use Moose;
+    use Any::Moose;
     with 'Mongoose::Document';
     has 'yada' => ( is=>'rw', isa=>'Str' );
 
@@ -177,13 +177,13 @@ There are only two steps to start using Mongoose in your code:
 MongoDB does not require you to previously create a database, a collection
 or a document schema for your collection. This is done on the fly for you.
 
-To make your Moose classes "Mongoable", all they need is to consume either
+To make your Any::Moose classes "Mongoable", all they need is to consume either
 one of two roles: L<Mongoose::Document> or L<Mongoose::EmbeddedDocument>.
 Read on for details on the difference.
 
 =head2 Turning your classes into Mongo Documents
 
-There are two roles to make your Moose class a Mongoose document:
+There are two roles to make your Any::Moose class a Mongoose document:
 
 * L<Mongoose::Document> 
 
@@ -269,13 +269,13 @@ care of expanding and collapsing objects to and from the Mongo database.
 
 Collapsing is the process of serializing classes. 
 
-Your Moose objects are collapsed by unblessing them until they become
+Your Any::Moose objects are collapsed by unblessing them until they become
 a hash. Relationships are mantained in the process.
 
 =head3 Expanding
 
 Expansion is the process of inflating Mongo documents (plain hashes)
-into Moose objects.
+into Any::Moose objects.
 
 This is done by inspecting the class attribute metadata. The base engine
 tries to do it's best identifying data types. The document is then C<bless>ed 
@@ -289,7 +289,7 @@ using attribute traits, but should be fine for most trivial classes.
 
 =head1 CONFIGURATION
 
-Mongoose roles are L<MooseX::Role::Parameterized|role parameterized>
+Mongoose roles are L<Any::MooseX::Role::Parameterized|role parameterized>
 for greater flexibility.
 
 =head2 Collection naming
@@ -298,7 +298,7 @@ You can control the collection name for an individual
 class this way:
 
     package My::Mumbo::Jumbo::Class;
-    use Moose;
+    use Any::Moose;
     with 'Mongoose::Document' => {
         -collection_name => 'mumbo_jumbo'   
     };
@@ -364,7 +364,7 @@ Now, for a more control over your primary key, use
 the role parameter C<-pk>. 
 
     package BankAccount;
-    use Moose;
+    use Any::Moose;
     with 'Mongoose::Document' => {
         -pk    => [qw/ drivers_license /]
     };
@@ -378,7 +378,7 @@ is checked with the help of the C<upsert> feature of Mongo.
 If you first had a class definition as such:
 
     package Author;
-    use Moose; with 'Mongoose::Document';
+    use Any::Moose; with 'Mongoose::Document';
 
     has 'name' => ( is=>'rw', isa=>'Str' );
 

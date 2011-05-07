@@ -1,7 +1,7 @@
 use Test::More;
 {
 	package Address;
-	use Moose;
+	use Any::Moose;
 	with 'Mongoose::EmbeddedDocument';
 	has 'street' => ( is => 'rw', isa => 'Str' );
 
@@ -10,7 +10,7 @@ use Test::More;
 
 {
 	package Person;
-	use Moose;
+	use Any::Moose;
 	with 'Mongoose::EmbeddedDocument';
 	has 'name' => ( is => 'rw', isa => 'Str' );
 	has 'address' => ( is => 'rw', isa => 'ArrayRef[Address]' );
@@ -19,7 +19,7 @@ use Test::More;
 }
 {
 	package Thing;
-	use Moose;
+	use Any::Moose;
 	with 'Mongoose::Document' => {
 		-pk => ['name'],
 	};

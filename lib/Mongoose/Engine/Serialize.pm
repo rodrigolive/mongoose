@@ -1,6 +1,6 @@
 package Mongoose::Engine::Serialize;
-use Moose::Role;
-use MooseX::Storage;
+use Any::Moose::Role;
+use Any::MooseX::Storage;
 with Storage;
 
 with 'Mongoose::Engine::Base';
@@ -21,7 +21,7 @@ Mongoose::Engine::Serialize
 
 =head1 DESCRIPTION
 
-An alternative, undocumented engine based on L<MooseX::Storage>.
+An alternative, undocumented engine based on L<Any::MooseX::Storage>.
 
 =head1 METHODS
 

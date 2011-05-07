@@ -1,5 +1,5 @@
 package Mongoose::Role::Engine;
-use Moose::Role;
+use Any::Moose::Role;
 
 requires 'save';
 requires 'delete';

@@ -1,5 +1,5 @@
 package Mongoose::File;
-use Moose;
+use Any::Moose;
 
 extends 'MongoDB::GridFS::File';
 

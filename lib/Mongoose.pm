@@ -124,12 +124,12 @@ sub load_schema {
 
 =head1 NAME
 
-Mongoose - MongoDB document to Moose object mapper
+Mongoose - MongoDB document to Any::Moose object mapper
 
 =head1 SYNOPSIS
 
     package Person;
-    use Moose;
+    use Any::Moose;
     with 'Mongoose::Document';
     has 'name' => ( is => 'rw', isa => 'Str' );
 
@@ -153,8 +153,8 @@ Mongoose - MongoDB document to Moose object mapper
 
 =head1 DESCRIPTION
 
-This is a L<MongoDB> to L<Moose> object mapper. This module allows you to use the full
-power of MongoDB within your Moose classes, without sacrificing MongoDB's
+This is a L<MongoDB> to L<Any::Moose> object mapper. This module allows you to use the full
+power of MongoDB within your Any::Moose classes, without sacrificing MongoDB's
 power, flexibility and speed.
 
 It's loosely inspired by Ruby's MongoMapper,

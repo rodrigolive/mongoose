@@ -10,8 +10,8 @@ $db->run_command({ drop=>'request' });
 
 {
 	package Request;
-	use Moose;
-	use Moose::Util::TypeConstraints;
+	use Any::Moose;
+	use Any::Moose::Util::TypeConstraints;
 	with 'Mongoose::Document';
 
 	use HTTP::Headers  ();

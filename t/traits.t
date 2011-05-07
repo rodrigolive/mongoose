@@ -11,7 +11,7 @@ my $now = DateTime->now;
 
 {
 package Person;
-use Moose;
+use Any::Moose;
 with 'Mongoose::Document';
 
 has 'name' => ( is=>'rw', isa=>'Str', required=>1, traits=>['Binary'], column=>'aaaa' );

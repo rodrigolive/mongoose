@@ -1,5 +1,5 @@
 package Mongoose::Join;
-use Moose;
+use Any::Moose;
 use Moose::Util::TypeConstraints;
 use Moose::Meta::TypeConstraint::Parameterizable;
 use Moose::Meta::TypeConstraint::Registry;
@@ -172,7 +172,7 @@ Mongoose::Join - simple class relationship resolver
 =head1 SYNOPSIS
 
     package Author;
-    use Moose; with 'Mongoose::Document';
+    use Any::Moose; with 'Mongoose::Document';
     has 'articles'  => ( is => 'rw', isa => 'Mongoose::Join[Article]' );
 
 =head1 DESCRIPTION

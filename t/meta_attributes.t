@@ -3,7 +3,7 @@ use warnings;
 use Test::More;
 
 package Test::Person;
-use Moose;
+use Any::Moose;
 with 'Mongoose::Document' => {
     -collection_name => 'people',
     -as              => 'Person',
