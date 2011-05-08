@@ -4,22 +4,49 @@ use Moose::Exporter;
 
 Moose::Exporter->setup_import_methods(
     with_meta => [ 'has_many', 'belongs_to', 'has_one' ],
+    as_is     => [ 'resultset' ],
     also      => 'Moose',
 );
+
+sub resultset {
+    my $self = shift;
+    require Mongoose::Resultset;
+    return Mongoose::Resultset->new( _class => ref $self || $self );
+}
 
 sub has_many {
     my $meta = shift;
     my $name = shift;
     my %options;
-    if   ( scalar @_ == 1 ) { $options{isa} = shift; }
-    else                    { %options      = @_; }
 
+    my $isa;
+    if   ( scalar @_ % 2 == 1 ) {
+        $isa = shift;
+    }
+    %options      = @_;
+    $options{isa} = $isa if $isa;
+    #$options{weak_ref} = 1 unless defined $options{weak_ref};
+    
     my $isa_original = $options{isa};
-    $options{isa} = 'Mongoose::Join[' . $options{isa} . ']';
-    $options{default} ||=
-      sub { Mongoose::Join->new( with_class => "$isa_original" ) };
+    if( exists $options{foreign} ){
+        require Mongoose::JoinRelational;
+        my $foreign = delete $options{foreign};
+        $options{isa} = 'Mongoose::JoinRelational[' . $options{isa} . ']';
+        $options{default} ||=
+          sub {
+              my $owner = shift;
+              Mongoose::JoinRelational->new( with_class => "$isa_original", owner => $owner, reciprocal => $foreign );
+            };        
+    } else {
+        $options{isa} = 'Mongoose::Join[' . $options{isa} . ']';
+        $options{default} ||= sub { Mongoose::Join->new( with_class => "$isa_original" ) };
+    }
     $options{is} ||= 'ro';
     $meta->add_attribute( $name, %options, );
+
+    #So that belongs_to Any can find us
+    $meta->{package}->db->{collection_to_class}->{ Mongoose->naming->( $meta->{package} ) } = $meta->{package};
+
 }
 
 sub belongs_to {

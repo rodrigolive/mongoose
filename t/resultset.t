@@ -22,7 +22,6 @@ $db->run_command( { drop => 'person' } );
 
     package Employee;
     use Mongoose::Class;
-    use Mongoose::Helpers;
     with 'Mongoose::Document';
     has 'name' => ( is => 'rw', isa => 'Str', required => 1 );
     has 'salary' => ( isa => 'Int', is => 'rw', default => sub { 0 } );
@@ -45,7 +44,7 @@ package main;
     my $employees = Employee->resultset;
     isa_ok $employees, 'Mongoose::Resultset', 'find return';
     is $employees->count, 15, 'resultset from find has good count';
-    is( Employee->search->count, 15, 'resultset from find from class has good count' );
+    is( Employee->resultset->search->count, 15, 'resultset from find from class has good count' );
 
     my @found = grep { $_ } $employees->find( salary => 0 );
     is scalar @found, 15, 'resultset in array context returns ->all';
@@ -160,14 +159,17 @@ package main;
     is $double->salary, 6, 'same as above';
     ok $employee->_id eq $double->_id, 'is same, not new';
     $double->save;
-    is( Employee->resultset->find( { salary => 6 } )->count, 1, 'still only one employee, has good salary' );
+    is( Employee->resultset->find({ salary => 6 })->count, 1, 'still only one employee, has good salary' );
+    Employee->find->each(sub{
+        warn ">" . shift->name;
+    });
 }
 
 #Find then update, or new
 {
     my $employee = Employee->resultset->update_or_new( { name => 'Bill', salary => 10 }, {}, { key => 'name' } );
     is $employee->salary, 10, 'new employee created';
-    ok !$employee->resultset->in_storage, 'not yet in storage';  #rodrigo: not sure where in_storage goes 
+    #ok !$employee->resultset->in_storage, 'not yet in storage';  #rodrigo: not sure what to do with in_storage
     $employee->save;
 
     #ok $employee->in_storage, 'now in storage'; #not yet working

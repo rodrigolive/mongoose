@@ -35,6 +35,9 @@ sub collapse {
             delete $packed->{$key} , next
                 if $attrib->does('Mongoose::Meta::Attribute::Trait::DoNotMongoSerialize');
 
+            delete $packed->{$key} , next
+              unless defined $packed->{$key};
+            
             next if $attrib->does('Mongoose::Meta::Attribute::Trait::Raw');
 
             if( my $type = $attrib->type_constraint ) {
@@ -42,6 +45,21 @@ sub collapse {
                     my $grid = $self->db->get_gridfs;
                     my $id = $grid->put( delete $packed->{$key} );
                     $packed->{$key} = { '$ref'=>'FileHandle', '$id'=>$id };
+                }
+                elsif( ( $type->is_a_type_of('Str') or $type->is_a_type_of('Maybe[Str]') ) and ( !$type->is_a_type_of('Num') and !$type->is_a_type_of('Int') and !$type->is_a_type_of('Maybe[Num]') and !$type->is_a_type_of('Maybe[Int]') ) ){
+                    #This is needed due to http://github.com/yesdave/mongo-perl-driver/commit/0ade3be96c4a2dc8ba36552f426429d50223d07d
+                    #   badly converting string containing numbers to native mongodb numbers, so we have to enforce from the moose-tybe
+                    my $value = '' .  $packed->{$key};
+                    delete $packed->{$key};
+                    $packed->{$key} = $value;
+                }
+                elsif( ( $type->is_a_type_of('Num') or $type->is_a_type_of('Maybe[Num]') or $type->is_a_type_of('Int') or $type->is_a_type_of('Maybe[Int]') ) and ( !$type->is_a_type_of('Str') and !$type->is_a_type_of('Maybe[Str]') ) ) {
+                    #This is needed due to http://github.com/yesdave/mongo-perl-driver/commit/0ade3be96c4a2dc8ba36552f426429d50223d07d
+                    #    badly converting string containing numbers to native mongodb numbers, so we have to enforce from the moose-tybe
+                    #print "is a number " . $type->name . "\n";
+                    my $value = 1 * $packed->{$key};
+                    delete $packed->{$key};
+                    $packed->{$key} = 1 * $value;
                 }
                 #elsif( $type->is_a_type_of('Num') ) {
                     # numify
@@ -53,7 +71,17 @@ sub collapse {
         my $obj = $packed->{$key};
         if( my $class = blessed $obj ) {
             #say "checking.... $class.... $self: " . $self->_id;
-            if( ref $obj eq 'HASH' && defined ( my $ref_id = $obj->{_id} ) ) {
+            if ( $class->isa( 'Mongoose::Join::Relational' ) ) {
+                my $unblessed = $self->_unbless( $obj, $class, @scope );
+                if ( $obj->with_class->meta->get_attribute( $obj->reciprocal )->type_constraint =~ m{^Mongoose::Join::Relational} ) {
+                    $packed->{ $key } = $unblessed;
+                }
+                else {
+                    delete $packed->{ $key };
+                    next;
+                }
+            }
+            elsif( ref $obj eq 'HASH' && defined ( my $ref_id = $obj->{_id} ) ) {
                 # it has an id, so join ref it
                 $packed->{$key} = { '$ref' => $class->meta->{mongoose_config}->{collection_name}, '$id'=>$ref_id };
             } else {
@@ -103,6 +131,12 @@ sub _unbless {
         elsif( $class->isa('Mongoose::Join') ) {
             my @objs = $obj->_save( $self, @scope );
             $ret = \@objs;
+        }
+        elsif ( $class->isa( 'Mongoose::Join::Relational' ) ) {
+            #we only save if we are in a many-to-may relationship, otherwise bad things happen
+            if ( $obj->with_class->meta->get_attribute( $obj->reciprocal )->type_constraint =~ m{^Mongoose::Join::Relational} ) {
+                $ret = [ $obj->_save( $self, @scope ) ];
+            }
         }
     } elsif( ref $obj eq 'DateTime' ) {
         # DateTime as raw always
