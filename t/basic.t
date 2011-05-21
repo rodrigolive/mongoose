@@ -33,7 +33,6 @@ package main;
 	$marge->spouse($homer);
 	my $id = $homer->save;
 	is( ref($id), 'MongoDB::OID', 'xref, id defined' );
-
 	my $count = Person->collection->find->count;
 	is( $count, 2, '2 Simpsons ok');
         Person->find->each(
@@ -50,6 +49,9 @@ package main;
 
 	my $p = Person->find_one({ _id => $id });
 	is( $p->name, 'Homer Simpson', 'homer found');
+    # new find_one( SCALAR )
+	my $p2 = Person->find_one("$id");
+	#is( $p2->{name}, 'Homer Simpson', 'find_one SCALAR homer found');
 }
 {
 	my $p = Person->find_one({ name=>'Marge Simpson' });

@@ -366,4 +366,23 @@ useful for testing, to compare if some set of query results
 returned by Mongoose are identical to the straight MongoDB
 driver's results. 
 
+=head2 Finding by string _id
+
+If you're passing around the C<_id> attribute from your
+objects in, ie, a webapp, you're probably 
+turning it into a string.
+
+The MongoDB way of retrieving an C<_id> from a string 
+is a little annoying to type:
+
+    $author_id = "4dd77f4ebf4342d711000000";
+    $author = Author->find_one({ _id=>MongoDB::OID->new( value=>$author_id ) });
+
+So, now there is a shorthand variation of C<find_one> to this for you:
+
+    $author = Author->find_one( '4dd77f4ebf4342d711000000' );
+
+Will automatically search by C<_id> on the given value by first
+turning it into a C<MongoDB::OID>.
+
 =cut

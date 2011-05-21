@@ -415,19 +415,24 @@ sub query {
 }
 
 sub find_one {
-    my ($self,$query,$fields, $scope) = @_;
-    my $doc = $self->collection->find_one( $query, $fields );
-    return undef unless defined $doc;
-    return $self->expand( $doc, $fields, $scope );
+    my $self = shift;
+    my $doc;
+    if( @_ == 1 && ! ref $_[0] ) {
+        $doc = $self->collection->find_one({ _id=>MongoDB::OID->new( value=>$_[0] ) });
+        return undef unless defined $doc;
+        return $self->expand( $doc );
+    } 
+    else {
+        my ($query,$fields, $scope) = @_;
+        $doc = $self->collection->find_one( $query, $fields );
+        return undef unless defined $doc;
+        return $self->expand( $doc, $fields, $scope );
+    }
 }
 
 =head1 NAME
 
 Mongoose::Engine::Base - heavy lifting done here
-
-=head1 VERSION
-
-version 0.03
 
 =head1 DESCRIPTION
 
@@ -440,6 +445,17 @@ Replace it with your engine if you want.
 
 Just like L<MongoDB::Collection/find_one>, but blesses the hash document
 into your class package.
+
+Also has a handy mode which allows
+retrieving an C<_id> directly from an string:
+
+   my $author = Author->find_one( '4dd77f4ebf4342d711000000' ); 
+
+Which expands onto:
+
+   my $author = Author->find_one({
+       _id=>MongoDB::OID->new( value=>'4dd77f4ebf4342d711000000' )
+   }); 
 
 =head2 find
 

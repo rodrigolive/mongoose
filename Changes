@@ -1,3 +1,9 @@
+0.10 Sat May 21 12:15:34 CEST 2011
+    [ ENHANCEMENTS ]
+
+    * find_one now takes a single SCALAR arg and turns it into 
+      a MongoDB::OID. No breakage expected. 
+
 0.09 Thu Apr 21 21:34:00 CEST 2011
 	[ BUGS ]
     * new circularity errors fixed (gugod)
