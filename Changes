@@ -1,3 +1,7 @@
+0.11
+    [ ENHANCEMENTS ]
+    * has_one now accepts more parameters on simplyfied mode
+
 0.10 Sat May 21 12:15:34 CEST 2011
     [ ENHANCEMENTS ]
 

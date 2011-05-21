@@ -39,11 +39,18 @@ sub has_one {
     my $meta = shift;
     my $name = shift;
     my %options;
-    if ( scalar @_ == 1 ) {
+    if ( @_ > 0 && @_ % 2 ) {
         $options{isa} = shift;
         $options{is}  = 'rw';
+        if( @_ > 1 ) {  # allow: has_one 'att' => 'Str', required=>1;
+            %options = ( %options, @_ );
+        }
     }
-    else { %options = @_; }
+    else {
+        %options = @_;
+        $options{isa} ||= 'Any';
+        $options{is}  ||= 'rw';
+    }
 
     $meta->add_attribute( $name, %options, );
 }
@@ -62,6 +69,8 @@ Mongoose::Class - sugary Mongoose-oriented replacement for Moose
     has_many 'siblings' => ( is=>'rw', isa=>'Person' );
     belongs_to 'club' => ( is=>'rw', isa=>'Club' );
     has_one 'father' => ( is=>'rw', isa=>'Person' );
+    has_one 'father' => 'Str';
+    has_one 'father' => 'Str', required => 1;
 
 =head1 DESCRIPTION
 
@@ -98,7 +107,7 @@ This:
 
     # or
 
-    has_manu 'employees' => 'Employee';
+    has_many 'employees' => 'Employee';
 
 Becomes this:
 
