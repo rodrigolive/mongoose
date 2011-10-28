@@ -26,13 +26,12 @@ sub belongs_to {
     my $meta = shift;
     my $name = shift;
     my %options;
-    if ( scalar @_ == 1 ) {
-        $options{isa} = shift;
-        $options{is}  = 'rw';
-    }
-    else { %options = @_; }
+    if   ( scalar @_ == 1 ) { $options{isa} = shift; }
+    else                    { %options      = @_; }
+    $options{is}  ||= 'rw';
+    %options = ( %options, @_ ) if @_;
 
-    $meta->add_attribute( $name, %options, );
+    $meta->add_attribute( $name, %options );
 }
 
 sub has_one {
@@ -65,12 +64,10 @@ Mongoose::Class - sugary Mongoose-oriented replacement for Moose
     use Mongoose::Class; # uses Moose for you
     with 'Mongoose::Document';
 
-    has 'name' => ( is=>'rw', isa=>'Str' );
-    has_many 'siblings' => ( is=>'rw', isa=>'Person' );
-    belongs_to 'club' => ( is=>'rw', isa=>'Club' );
-    has_one 'father' => ( is=>'rw', isa=>'Person' );
-    has_one 'father' => 'Str';
-    has_one 'father' => 'Str', required => 1;
+    has 'name'          => ( is => 'rw', isa => 'Str' );
+    has_many 'siblings' => ( is => 'rw', isa => 'Person' );
+    belongs_to 'club'   => ( is => 'rw', isa => 'Club' );
+    has_one 'father'    => ( is => 'rw', isa => 'Person' );
 
 =head1 DESCRIPTION
 
@@ -91,11 +88,17 @@ by self-documenting your class.
 
 =head2 has_one
 
-Does nothing. It's the same as using C<has>.
+Wrapper around Moose's own C<has>, but allows
+for a shorter syntax:
+
+    has_one 'name';            # isa=>'Any', is=>'rw' added
+    has_one 'age' => 'Num';    # is=>'rw' added
+    has_one 'age' => 'Num', default=>99;
 
 =head2 belongs_to
 
-Does nothing. It's the same as using C<has>.
+It's the same as using C<has_one> from above. 
+It exists to improve your code expressiveness.
 
 =head2 has_many
 

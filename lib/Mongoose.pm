@@ -329,6 +329,7 @@ L<KiokuDB>
     Solli Moreira Honorio (shonorio)
     Michael Gentili (gentili)
     Kang-min Liu (gugod)
+    Allan Whiteford (allanwhiteford)
 
 =head1 LICENSE
 
