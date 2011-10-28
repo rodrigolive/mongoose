@@ -78,7 +78,7 @@ sub connect {
     my $self = shift;
     my %p    = @_ || %{ $self->_args };
     my $key  = delete( $p{'-class'} ) || 'default';
-    $self->_connection( MongoDB::Connection->new(@_) )
+    $self->_connection( MongoDB::Connection->new(%p) )
       unless ref $self->_connection;
     $self->_db( { $key => $self->_connection->get_database( $p{db_name} ) } );
     return $self->_db->{$key};
