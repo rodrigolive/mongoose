@@ -1,13 +1,10 @@
-0.12 Fri Oct 28 15:46:57 CEST 2011
-    [ ENHANCEMENTS ]
-    * documentation on Mongoose::Class and belongs_to sweetness
-
 0.11 Fri Oct 28 15:36:50 CEST 2011
 	[ BUGS ]
     * Problem with calling db method without hostname (allanwhiteford)
 
     [ ENHANCEMENTS ]
     * has_one now accepts more parameters on simplyfied mode
+    * documentation on Mongoose::Class and belongs_to sweetness
 
 0.10 Sat May 21 12:15:34 CEST 2011
     [ ENHANCEMENTS ]
