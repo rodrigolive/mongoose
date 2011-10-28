@@ -1,4 +1,7 @@
-0.11
+0.11 Fri Oct 28 15:36:50 CEST 2011
+	[ BUGS ]
+    * Problem with calling db method without hostname (allanwhiteford)
+
     [ ENHANCEMENTS ]
     * has_one now accepts more parameters on simplyfied mode
 
