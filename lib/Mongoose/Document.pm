@@ -84,7 +84,7 @@ Mongoose::Document - a Mongo document role
 
 =head1 SEE ALSO
 
-Read the Mongoose L<Mongoose::Intro|intro> or L<Mongoose::Cookbook|cookbook>.
+Read the Mongoose L<intro|Mongoose::Intro> or L<cookbook|Mongoose::Cookbook>.
 
 =cut
 

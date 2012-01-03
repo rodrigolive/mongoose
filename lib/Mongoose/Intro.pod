@@ -192,7 +192,7 @@ There are two roles to make your Moose class a Mongoose document:
 The difference between these roles lies in the way objects
 of different classes will be joined and stored (collapsed) into the DB. 
 
-Read the L<http://www.mongodb.org/display/DOCS/Schema+Design#SchemaDesign-Embedvs.Reference|MongoDB docs>
+Read the L<MongoDB docs|http://http://www.mongodb.org/display/DOCS/Schema+Design#SchemaDesign-EmbeddingandLinking>
 if you don't understand the difference. 
 
 =head3 Document
@@ -289,7 +289,7 @@ using attribute traits, but should be fine for most trivial classes.
 
 =head1 CONFIGURATION
 
-Mongoose roles are L<MooseX::Role::Parameterized|role parameterized>
+Mongoose roles are L<role parameterized|MooseX::Role::Parameterized>
 for greater flexibility.
 
 =head2 Collection naming
