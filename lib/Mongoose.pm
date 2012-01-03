@@ -330,6 +330,7 @@ L<KiokuDB>
     Michael Gentili (gentili)
     Kang-min Liu (gugod)
     Allan Whiteford (allanwhiteford)
+    Kartik Thakore (kthakore)
 
 =head1 LICENSE
 

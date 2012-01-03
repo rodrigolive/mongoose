@@ -172,19 +172,32 @@ Mongoose::Join - simple class relationship resolver
 =head1 SYNOPSIS
 
     package Author;
-    use Moose; with 'Mongoose::Document';
-    has 'articles'  => ( is => 'rw', isa => 'Mongoose::Join[Article]' );
+    use Moose;
+    with 'Mongoose::Document';
+    has 'articles' => (
+        is      => 'rw',
+        isa     => 'Mongoose::Join[Article]',
+        default => sub { Mongoose::Join->new( with_class => 'Article' ) }
+    );
 
 =head1 DESCRIPTION
 
-This module can be used to parameterize relationships 
+This module can be used to establish relationships 
 between two C<Mongoose::Document> classes. It should not
-be used for C<Mongoose::EmbeddedDocument> classes.  
+be used with C<Mongoose::EmbeddedDocument> classes.  
 
 All object relationships are stored as reference C<$id> arrays
-in the parent object, which translates into a performance hit
+into the parent object. This translates into a slight performance hit
 when loading the parent class, but not as much as loading all 
 objects at one as when using an C<ArrayRef>. 
+
+B<Attention>: the relationship attribute needs to be initialized to 
+an instance of C<Mongoose::Join> before it can be used. 
+
+=head2 Mongoose::Class
+
+Take a look at L<Mongoose::Class>, it has nice syntatic sugar
+that does most of the initialization behind the scenes for you. 
 
 =head1 METHODS
 
