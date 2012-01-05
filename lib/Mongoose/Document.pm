@@ -15,24 +15,24 @@ role {
     my $class_name;
     if ($args{consumer}->isa('Moose::Meta::Class'))
     {
-    	$class_name=$args{consumer}->name;
+        $class_name=$args{consumer}->name;
     }
     else
     {
-    	my $i=1;
-	while ( my @caller = do { package DB; caller( $i++ ) } )
-	{
-		if ($caller[3] eq "MooseX::Role::Parameterized::Meta::Role::Parameterizable::generate_role")
-		{
-			my @args = @DB::args;
-			my %args=@args[1..$#args];
-			if ($args{'consumer'}->isa('Moose::Meta::Class'))
-			{
-				$class_name=$args{'consumer'}->name;
-				last;
-			}
-		}
-	}
+        my $i=1;
+        while ( my @caller = do { package DB; caller( $i++ ) } )
+        {
+            if ($caller[3] eq "MooseX::Role::Parameterized::Meta::Role::Parameterizable::generate_role")
+            {
+                my @args = @DB::args;
+                my %args=@args[1..$#args];
+                if ($args{'consumer'}->isa('Moose::Meta::Class'))
+                {
+                    $class_name=$args{'consumer'}->name;
+                    last;
+                }
+            }
+        }
     }
 
     die("Cannot find a class name to use") unless($class_name);

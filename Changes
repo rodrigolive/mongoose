@@ -7,11 +7,11 @@
     [ ENHANCEMENTS ]
     * #16 Mongoose::Document can now be consumed by an intermediate rol (allanwhiteford)
     
-	[ BUGS ]
+    [ BUGS ]
     * #14 after save now is triggered only once for every save (gugod)
     
 0.11 Fri Oct 28 15:36:50 CEST 2011
-	[ BUGS ]
+    [ BUGS ]
     * Problem with calling db method without hostname (allanwhiteford)
 
     [ ENHANCEMENTS ]
@@ -25,20 +25,20 @@
       a MongoDB::OID. No breakage expected. 
 
 0.09 Thu Apr 21 21:34:00 CEST 2011
-	[ BUGS ]
+    [ BUGS ]
     * new circularity errors fixed (gugod)
 
 0.08 Tue Mar 22 17:05:45 CET 2011
-	[ BUGS ]
+    [ BUGS ]
 
     * DoNotSerialize renamed to DoNotMongoSerialize to avoid clashing with
-	  MooseX::Storage own (gentili)
-	* Circularity errors fixed.
+      MooseX::Storage own (gentili)
+    * Circularity errors fixed.
 
-	[ API CHANGES ]
+    [ API CHANGES ]
 
-	* DateTime always stored as a raw type - the MongoDB driver handles
-      it on its own.	
+    * DateTime always stored as a raw type - the MongoDB driver handles
+      it on its own.    
 
 0.07 Wed Feb  2 22:42:59 CET 2011
     * Changed Mongoose->db to connect to Mongo only when needed. That 
@@ -47,40 +47,40 @@
       in a flexible way. 
 
 0.06 Sat Jan 29 14:17:24 CET 2011
-	* Fixed error in 'expand' method for ArrayRef with Mongoose::EmbeddedDocument (shonorio)
+    * Fixed error in 'expand' method for ArrayRef with Mongoose::EmbeddedDocument (shonorio)
 
 0.05 Fri Jan 14 09:43:54 CET 2011
-	* Fixed crash with attributes 'read-only' (shonorio)
+    * Fixed crash with attributes 'read-only' (shonorio)
 
 0.04 Tue Sep  7 00:46:45 CEST 2010
-	* Fixed incorrect serialization of objects stored within hashes
-	* New Mongoose::Join::fix_integrity method to check for
-	  invalid foreign keys.
+    * Fixed incorrect serialization of objects stored within hashes
+    * New Mongoose::Join::fix_integrity method to check for
+      invalid foreign keys.
 
 0.03 Thu Aug 26 09:42:31 CEST 2010
-	* Fixed has_many with belongs_to circularity error (arthur)
-	* Fixed live join object errors
-	* New FileHandler with GridFS support
+    * Fixed has_many with belongs_to circularity error (arthur)
+    * Fixed live join object errors
+    * New FileHandler with GridFS support
 
 0.02 Wed Aug 25 14:08:07 CEST 2010
-	* New Raw trait for storing without processing
-	* Raw DateTime recipe
+    * New Raw trait for storing without processing
+    * Raw DateTime recipe
 
 0.01 Tue Aug 24 10:39:39 CEST 2010
-	* more tests 
+    * more tests 
 
 0.01_04 Mon Aug 23 15:11:19 CEST 2010
-	* cookbook clarifications
+    * cookbook clarifications
 
 0.01_03 Mon Aug 23 10:15:17 CEST 2010
-	* fixed more broken depndencies on tests
-	* load_schema method implemented
+    * fixed more broken depndencies on tests
+    * load_schema method implemented
 
 0.01_02 Mon Aug 23 00:45:39 CEST 2010
     * Fixed docs, better cookbook
     * Skip tests when no MongoDB installed
-	* Joining with Mongoose::Join
-	* New Mongoose::Class sugar: has_many, has_one, belongs_to
+    * Joining with Mongoose::Join
+    * New Mongoose::Class sugar: has_many, has_one, belongs_to
 
 0.01_01 2010-08-16 00:10:37 
     * Initial release
