@@ -19,7 +19,15 @@ role {
     }
     else
     {
-    	my $i=1;
+    	# If we get into this block of code, it means that Mongoose was consumed
+	# not by a class but by another (intermediate) role. Mongoose needs to 
+	# know the original class for various reasons (naming the collection
+	# name being the most obvious one but not the only one).
+	# What follows is an ugly hack to climb back up the consumption hierarchy
+	# to find out the name of the class which was originally used. If anyone
+	# can do it differently than it has to be better than the below!
+	#                                              -- Allan Whiteford
+	my $i=1;
 	while ( my @caller = do { package DB; caller( $i++ ) } )
 	{
 		if ($caller[3] eq "MooseX::Role::Parameterized::Meta::Role::Parameterizable::generate_role")
