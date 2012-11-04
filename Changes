@@ -1,3 +1,14 @@
+0.20 Sun Nov  4 13:05:21 CET 2012
+    [ BUGS ]
+    * Nested joins save error fixed ("not an ARRAY ref")
+    * EmbeddedDocument incorrect -pk and -engine parameters (allanwhiteford)
+
+    [ ENHANCEMENTS ]
+    * hash_on and hash_array Join and Cursor methods. 
+    * some doc fixes and clarifications.
+    * allow Mongoose to disconnect from Mongo (allanwhiteford)
+    * use Mongoose Documents in intermediate roles (allanwhiteford)
+
 0.13 Mon Jan  2 23:10:08 BRST 2012
     [ DOCS ]
     * #15 fixed Mongoose::Join docs, missing initialization info,

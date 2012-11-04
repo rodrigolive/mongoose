@@ -4,7 +4,7 @@ Mongoose - MongoDB document to Moose object mapper
 
 =head1 VERSION
 
-version 0.13
+version 0.20
 
 =head1 SYNOPSIS
 
