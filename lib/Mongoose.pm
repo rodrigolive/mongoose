@@ -4,14 +4,16 @@ use MooseX::Singleton;
 use Mongoose::Join;
 use Mongoose::File;
 use Mongoose::Meta::AttributeTraits;
+use MongoDB::Connection;
 use Moose::Util::TypeConstraints;
+class_type 'MongoDB::Connection';
 use Carp;
 
 has '_db' => ( is => 'rw', isa => 'HashRef[MongoDB::Database]' );
 
 has '_connection' => (
     is  => 'rw',
-    isa => 'MongoDB::Connection',
+    isa => 'MongoDB::Connection | Undef',
 );
 
 has '_args' => ( is => 'rw', isa => 'HashRef', default=>sub{{}} );
