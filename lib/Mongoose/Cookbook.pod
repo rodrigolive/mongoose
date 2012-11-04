@@ -114,11 +114,12 @@ Then retrieve data with a cursor:
 Use L<Mongoose::Class> instead of C<Moose>.
 
     package Article;
-    use Mongoose::Class; with 'Mongoose::Document';
-    has 'title' => ( is=>'rw', isa=>'Str', required=>1 );
-    has_one 'author' => 'Author'; 
-    has_many 'comments' => 'Comment'; 
-    belongs_to => 'Account';
+    use Mongoose::Class;
+    with 'Mongoose::Document';
+    has        title     => ( is => 'rw', isa => 'Str', required => 1 );
+    has_one    author    => 'Author';
+    has_many   comments  => 'Comment';
+    belongs_to acc       => 'Account';
 
 =head2 Normalizing a Relationship
 

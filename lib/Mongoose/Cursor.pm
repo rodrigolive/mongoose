@@ -7,33 +7,53 @@ has '_class' => ( is=>'rw', isa=>'Str', required=>1 );
 has '_collection_name' => ( is=>'rw', isa=>'Str', required=>1 );
 
 around 'next' => sub {
-	my ($orig,$self, @args)=@_;
-	my $doc = $self->$orig(@args);
-	return unless defined $doc;
-	my $coll_name = $self->_collection_name; 
-	my $class = $self->_class;
-	#eval "require " . $self->_class;
-	return $class->expand( $doc );
+    my ($orig,$self, @args)=@_;
+    my $doc = $self->$orig(@args);
+    return unless defined $doc;
+    my $coll_name = $self->_collection_name; 
+    my $class = $self->_class;
+    #eval "require " . $self->_class;
+    return $class->expand( $doc );
 };
 
 around 'all' => sub {
-	my ($orig,$self, @args)=@_;
-	my @docs = $self->$orig(@args);
+    my ($orig,$self, @args)=@_;
+    my @docs = $self->$orig(@args);
 
-	return unless scalar @docs > 0;
+    return unless scalar @docs > 0;
 
-	my $coll_name = $self->_collection_name; 
-	my $class = $self->_class;
+    my $coll_name = $self->_collection_name; 
+    my $class = $self->_class;
 
-	return map { $class->expand( $_ ) } @docs;
+    return map { $class->expand( $_ ) } @docs;
 };
 
 sub each(&) {
-	my $self = shift;
-	my $func = shift;
-	while( my $r = $self->next ) {
-		last unless defined $func->( $r ) 
-	}
+    my $self = shift;
+    my $func = shift;
+    while( my $r = $self->next ) {
+        last unless defined $func->( $r ) 
+    }
+}
+
+sub hash_on {
+    my $self = shift;
+    my $key = shift;
+    my %hash;
+    while( my $r = $self->next ) {
+        $hash{ $r->{$key} } = $r unless exists $hash{ $r->{$key} };
+    }
+    return %hash;
+}
+
+sub hash_array {
+    my $self = shift;
+    my $key = shift;
+    my %hash;
+    while( my $r = $self->next ) {
+        push @{ $hash{ $r->{$key} } }, $r;
+    }
+    return %hash;
 }
 
 =head1 NAME
@@ -55,14 +75,32 @@ For your convenience:
 
 Iterates over a cursor, calling your sub.
 
-	Person->find->each( sub {
-		my $obj = shift;
+    Person->find->each( sub {
+        my $obj = shift;
 
-		# do stuff
+        # do stuff
 
-		# return undef to break out
-		return undef if $done;
-	});
+        # return undef to break out
+        return undef if $done;
+    });
+
+=head2 all
+
+Wrapper around MongoDB's C<all>. 
+
+=head2 hash_on
+
+Returns all data as a HASH indexed by the key sent as first argument. 
+Rows with duplicate keys are ignored.
+
+    %tracks = $cd->tracks->find->hash_on('track_name');
+
+=head2 hash_array
+
+Returns all data as a HASH indexed by the key sent as first argument. 
+Hash values are ARRAYREFs with 1 or more rows.
+
+    %tracks = $cd->tracks->find->hash_array('track_name');
 
 =cut 
 

@@ -22,18 +22,6 @@ sub has_many {
     $meta->add_attribute( $name, %options, );
 }
 
-sub belongs_to {
-    my $meta = shift;
-    my $name = shift;
-    my %options;
-    if   ( scalar @_ == 1 ) { $options{isa} = shift; }
-    else                    { %options      = @_; }
-    $options{is}  ||= 'rw';
-    %options = ( %options, @_ ) if @_;
-
-    $meta->add_attribute( $name, %options );
-}
-
 sub has_one {
     my $meta = shift;
     my $name = shift;
@@ -53,6 +41,8 @@ sub has_one {
 
     $meta->add_attribute( $name, %options, );
 }
+
+sub belongs_to { goto &has_one }
 
 =head1 NAME
 

@@ -98,7 +98,13 @@ sub _insert {    #TODO insert and commit
 sub _save {
     my ( $self, $parent, @scope ) = @_;
 
-    my @objs = @{ delete $self->{children} || [] };
+    my $children = delete $self->{children};
+    if( ref $children eq 'Mongoose::Join' ) {
+        $children = $children->children;
+    }
+    my @objs = @{ $children || [] };
+    
+    #my @objs = @{ delete $self->{children} || [] };
     my $collection_name = $self->with_collection_name;
 
     # load buffers
@@ -125,19 +131,24 @@ sub _save {
 }
 
 sub _children_refs {
-	my ($self)=@_;
-	my @found;
-	$self->find->each( sub{
-		push @found, { '$id' => $_[0]->{_id}, '$ref' => $_[0]->_collection_name };
-	});
-	return @found;
+    my ($self)=@_;
+    my @found;
+    $self->find->each( sub{
+        push @found, { '$id' => $_[0]->{_id}, '$ref' => $_[0]->_collection_name };
+    });
+    return @found;
 }
 
 sub find {
     my ( $self, $opts, @scope ) = @_;
     my $class = $self->with_class;
     $opts ||= {};
-    my @children = map { $_->{'$id'} } @{ $self->children || [] };
+    my $children = $self->children;
+    if( ref $children eq 'Mongoose::Join' ) {
+        $children = $children->children;
+    }
+    my @children = map { $_->{'$id'} } @{ $children || [] };
+
     $opts->{_id} = { '$in' => \@children };
     return $class->find( $opts, @scope );
 }
@@ -149,6 +160,11 @@ sub find_one {
     my @children = map { $_->{'$id'} } @{ $self->children || [] };
     $opts->{_id} = { '$in' => \@children };
     return $class->find_one( $opts, @scope );
+}
+
+sub first {
+    my $self = shift;
+    return $self->find_one;
 }
 
 sub query {
@@ -163,6 +179,26 @@ sub query {
 sub all {
     my $self = shift;
     return $self->find(@_)->all;
+}
+
+sub hash_on {
+    my $self = shift;
+    my $key = shift;
+    my %hash;
+    map {
+        $hash{ $_->{$key} } = $_ unless exists $hash{ $_->{$key} };
+    } $self->find(@_)->all;
+    return %hash;
+}
+
+sub hash_array {
+    my $self = shift;
+    my $key = shift;
+    my %hash;
+    map {
+        push @{ $hash{ $_->{$key} } }, $_;
+    } $self->find(@_)->all;
+    return %hash;
 }
 
 =head1 NAME
@@ -233,12 +269,44 @@ Returns a L<Mongoose::Cursor>.
 
 =head2 find_one
 
-Just like find, but with a C<find_one> twist. 
+Just like find, but returns the first row found. 
+
+=head2 first
+
+Alias to C<find_one>
+
+    $first_cd = $artist->cds->first;
 
 =head2 all
 
 Same as C<find>, but returns an ARRAY with all the results, instead 
 of a cursor. 
+
+    my @cds = $artist->cds->all;
+
+=head2 hash_on
+
+Same as C<all>, but returns a HASH instead of an ARRAY.
+The hash will be indexed by the key name sent as the first parameter. 
+The hash value contains exactly one object. In case duplicate rows 
+with the same key value are found, the resulting hash will contain 
+the first one found.
+
+    # ie. returns $cds{'111888888292adf0000003'} = <CD Object>;
+    my %cds = $artist->cds->hash_on( '_id' => { artist=>'Joe' });
+
+    # ie. returns $joe_cds{'Title1'} = <CD Object>;
+    my %joe_cds = $artist->cds->hash_on( 'title' => { artist=>qr/Joe/ });
+
+=head2 hash_array
+
+Similar to C<hash_on>, but returns a hash with ALL rows found, grouped
+by the key. 
+
+    # ie. returns $cds{'Title1'} = [ <CD1 Object>, <CD2 Object>, ... ];
+    my %cds = $artist->cds->hash_array( 'title' => { artist=>'Joe' });
+
+Hash values are ARRAYREFs with 1 or more rows.
 
 =head2 query
 
