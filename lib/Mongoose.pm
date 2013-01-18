@@ -1,5 +1,6 @@
 package Mongoose;
 use MongoDB;
+use Class::MOP;
 use MooseX::Singleton;
 use Mongoose::Join;
 use Mongoose::File;
@@ -116,8 +117,8 @@ sub load_schema {
             my $short_name = $1;
             no strict 'refs';
             *{ $short_name . "::" } = \*{ $module . "::" };
-            $short_name->meta->{mongoose_config} =
-              $module->meta->{mongoose_config};
+            Class::MOP::store_metaclass_by_name( $short_name, $module->meta );
+            Class::MOP::weaken_metaclass( $short_name );
         }
     }
 }
