@@ -23,8 +23,6 @@ has 'bars' => (is => 'rw', isa => 'Mongoose::Join[Bar]' );
 1;
 
 package main;
-use Mongoose;
-Mongoose->db( db_name => 'bar_foo_test' );
 
 my $b = Bar->new( stuff => 'foo has bars' );
 $b->save();
