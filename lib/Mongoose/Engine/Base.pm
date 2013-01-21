@@ -1,7 +1,4 @@
 package Mongoose::Engine::Base;
-BEGIN {
-  $Mongoose::Engine::Base::VERSION = '0.06';
-}
 
 use Moose::Role;
 use Params::Coerce;
@@ -26,7 +23,6 @@ sub collapse {
         return { '$ref' => $class->meta->{mongoose_config}->{collection_name}, '$id'=>$ref_id };
     }
     my $packed = { %$self }; # cheesely clone the data
-
     for my $key ( keys %$packed ) {
         my $attrib = $self->meta->get_attribute($key);
 
@@ -43,48 +39,59 @@ sub collapse {
                     my $id = $grid->put( delete $packed->{$key} );
                     $packed->{$key} = { '$ref'=>'FileHandle', '$id'=>$id };
                 }
-                #elsif( $type->is_a_type_of('Num') ) {
-                    # numify
-                #    $packed->{$key} = +$packed->{$key};
-                #}
             }
         }
-
-        my $obj = $packed->{$key};
-        if( my $class = blessed $obj ) {
-            #say "checking.... $class.... $self: " . $self->_id;
-            if( ref $obj eq 'HASH' && defined ( my $ref_id = $obj->{_id} ) ) {
-                # it has an id, so join ref it
-                $packed->{$key} = { '$ref' => $class->meta->{mongoose_config}->{collection_name}, '$id'=>$ref_id };
-            } else {
-                $packed->{$key} = $self->_unbless( $obj, $class, @scope );
-            }
-        }
-        elsif( ref $obj eq 'ARRAY' ) {
-            my @docs;
-            my $aryclass;
-            for( @$obj ) {
-                $aryclass ||= blessed( $_ );
-                if( $aryclass && $aryclass->does('Mongoose::EmbeddedDocument') ) {
-                    push @docs, $_->collapse(@scope, $self);
-                } elsif( $aryclass && $aryclass->does('Mongoose::Document') ) {
-                    $_->_save( @scope, $self );
-                    my $id = $_->_id;
-                    push @docs, { '$ref' => $aryclass->meta->{mongoose_config}->{collection_name}, '$id'=>$id };
-                } else {
-                    push @docs, $_;
-                }
-            }
-            $packed->{$key} = \@docs;
-        }
-        elsif( ref $obj eq 'HASH' ) {
-            my @docs;
-            for my $key ( grep { blessed $obj->{$_} } keys %$obj ) {
-                $obj->{$key} = $self->_unbless( $obj->{$key}, blessed($obj->{$key}), @scope );;
-            }
-        }
+        $packed->{$key} = $self->_collapse( $packed->{$key}, @scope );
     }
     return $packed;
+}
+
+sub _collapse {
+    my ($self, $value, @scope ) = @_;
+    if( my $class = blessed $value ) {
+        #say "checking.... $class.... $self: " . $self->_id;
+        if( ref $value eq 'HASH' && defined ( my $ref_id = $value->{_id} ) ) {
+            # it has an id, so join ref it
+            return { '$ref' => $class->meta->{mongoose_config}->{collection_name}, '$id'=>$ref_id };
+        } else {
+            return $self->_unbless( $value, $class, @scope );
+        }
+    }
+    elsif( ref $value eq 'ARRAY' ) {
+        my @docs;
+        my $aryclass;
+        for my $item ( @$value ) {
+            $aryclass ||= blessed( $item );
+            if( $aryclass && $aryclass->does('Mongoose::EmbeddedDocument') ) {
+                push @docs, $item->collapse(@scope, $self);
+            } elsif( $aryclass && $aryclass->does('Mongoose::Document') ) {
+                $item->_save( @scope, $self );
+                my $id = $item->_id;
+                push @docs, { '$ref' => $aryclass->meta->{mongoose_config}->{collection_name}, '$id'=>$id };
+            } else {
+                push @docs, $item;
+            }
+        }
+        return \@docs;
+    }
+    elsif( ref $value eq 'HASH' ) {
+        my $ret = {};
+        my @docs;
+        for my $key ( keys %$value ) {
+            if( blessed $value->{$key} ) {
+                $ret->{$key} = $self->_unbless( $value->{$key}, blessed($value->{$key}), @scope );;
+            } elsif( ref $value->{$key} eq 'ARRAY' ) {
+                $ret->{$key} = [ map {
+                    $self->_collapse( $_, @scope ) 
+                  } @{ $value->{$key} } ];
+            } else {
+                $ret->{$key} = $value->{$key};
+            }
+        }
+        return $ret;
+    } else {
+        return $value;
+    }
 }
 
 sub _unbless {
