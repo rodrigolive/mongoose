@@ -1,3 +1,10 @@
+0.21 Mon Jan 21 16:14:38 CET 2013
+    [ BUGS ]
+    * RT#81725 - save HashRef[ArrayRef[Class]] now works; loading does not (yet).
+    * GH#24 - Support for both MongoDB::Connection (deprecated) && MongoDB::MongoClient (MongoDB 0.503)
+    * Deprecation warnings removed from tests 
+        - get_collection now required, no more implicit $db-><collecion>() method calling 
+
 0.20 Sun Nov  4 13:05:21 CET 2012
     [ BUGS ]
     * Nested joins save error fixed ("not an ARRAY ref")
