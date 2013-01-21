@@ -299,9 +299,10 @@ Fork me on github: L<http://github.com/rodrigolive/mongoose>
 
 =head1 BUGS
 
-This is a WIP, barely *beta* quality software. 
+This is a WIP, now *beta* quality software. 
 
-Report bugs via RT. Send me test cases.
+Report bugs via Github Issue reporting L<https://github.com/rodrigolive/mongoose/issues>.
+Test cases highly desired and appreciated.
 
 =head1 TODO
 
