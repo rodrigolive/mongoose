@@ -1,16 +1,18 @@
 package Mongoose;
 use MongoDB;
-our $_mongodb_client_class;
-BEGIN {
-    $_mongodb_client_class = $INC{'MongoDB/MongoClient.pm'}
-        ? 'MongoDB::MongoClient'
-        : 'MongoDB::Connection';
-}
 use MooseX::Singleton;
 use Mongoose::Join;
 use Mongoose::File;
 use Mongoose::Meta::AttributeTraits;
 use Moose::Util::TypeConstraints;
+
+# determine if we are on MongoDB 0.503.1
+require version;
+our $_mongodb_client_class = 
+    version::qv( $MongoDB::VERSION ) >= v0.502.0
+        ? 'MongoDB::MongoClient'
+        : 'MongoDB::Connection';
+
 class_type $_mongodb_client_class;
 use Carp;
 
