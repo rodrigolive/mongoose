@@ -1,6 +1,7 @@
 0.21 Mon Jan 21 16:14:38 CET 2013
     [ BUGS ]
     * RT#81725 - save HashRef[ArrayRef[Class]] now works; loading does not (yet).
+    * GH#22 - load_schema with shorten MOP issue fixed (dagolden)
     * GH#24 - Support for both MongoDB::Connection (deprecated) && MongoDB::MongoClient (MongoDB 0.503)
     * Deprecation warnings removed from tests 
         - get_collection now required, no more implicit $db-><collecion>() method calling 
