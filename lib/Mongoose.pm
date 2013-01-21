@@ -1,19 +1,25 @@
 package Mongoose;
 use MongoDB;
+our $_mongodb_client_class;
+BEGIN {
+    require Module::Loaded;
+    $_mongodb_client_class = Module::Loaded::is_loaded('MongoDB::MongoClient')
+        ? 'MongoDB::MongoClient'
+        : 'MongoDB::Connection';
+}
 use MooseX::Singleton;
 use Mongoose::Join;
 use Mongoose::File;
 use Mongoose::Meta::AttributeTraits;
-use MongoDB::Connection;
 use Moose::Util::TypeConstraints;
-class_type 'MongoDB::Connection';
+class_type $_mongodb_client_class;
 use Carp;
 
 has '_db' => ( is => 'rw', isa => 'HashRef[MongoDB::Database]' );
 
 has '_connection' => (
     is  => 'rw',
-    isa => 'MongoDB::Connection | Undef',
+    isa => $_mongodb_client_class . ' | Undef',
 );
 
 has '_args' => ( is => 'rw', isa => 'HashRef', default=>sub{{}} );
@@ -80,7 +86,7 @@ sub connect {
     my $self = shift;
     my %p    = @_ || %{ $self->_args };
     my $key  = delete( $p{'-class'} ) || 'default';
-    $self->_connection( MongoDB::Connection->new(%p) )
+    $self->_connection( $_mongodb_client_class->new(%p) )
       unless ref $self->_connection;
     $self->_db( { $key => $self->_connection->get_database( $p{db_name} ) } );
     return $self->_db->{$key};
@@ -178,7 +184,7 @@ The connection defaults to whatever MongoDB defaults are
 (typically localhost:27017).
 
 For more control over the connection, C<db> takes the same parameters as
-L<MongoDB::Connection>, plus C<db_name>. 
+L<MongoDB::MongoClient>, plus C<db_name>. 
 
     my $db = Mongoose->db(
         host          => 'mongodb://localhost:27017',
@@ -186,7 +192,7 @@ L<MongoDB::Connection>, plus C<db_name>.
         db_name       => 'mydb'
     );
 
-This will, in turn, instantiate a L<MongoDB::Connection> instance
+This will, in turn, instantiate a L<MongoDB::MongoClient> instance
 with all given parameters and return a L<MongoDB::Database> object. 
 
 B<Important>: Mongoose will always defer connecting to Mongo
@@ -285,7 +291,7 @@ in Mongo, as it won't complain about colons in the collection name.
 
 =head2 connection
 
-Sets/returns the current connection object, of class L<MongoDB::Connection>.
+Sets/returns the current connection object, of class L<MongoDB::MongoClient>.
 
 Defaults to whatever MongoDB defaults.
 
