@@ -2,8 +2,7 @@ package Mongoose;
 use MongoDB;
 our $_mongodb_client_class;
 BEGIN {
-    require Module::Loaded;
-    $_mongodb_client_class = Module::Loaded::is_loaded('MongoDB::MongoClient')
+    $_mongodb_client_class = $INC{'MongoDB/MongoClient.pm'}
         ? 'MongoDB::MongoClient'
         : 'MongoDB::Connection';
 }
