@@ -72,10 +72,10 @@ $db->run_command({ drop=>'FOOPKG' });
 		has 'name' => ( is=>'rw', isa=>'Str', required=>1 );
 	}
 
-	$db->FOOPKG->drop;
+	$db->get_collection('FOOPKG')->drop;
 	my $f = FooPkg->new( name=>'Yoyo' );
 	$f->save;
-	my @all = $db->FOOPKG->find->all;
+	my @all = $db->get_collection('FOOPKG')->find->all;
 	is( scalar(@all) , 1, 'naming strategy changed' );
 }
 

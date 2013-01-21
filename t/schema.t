@@ -7,7 +7,7 @@ use lib 't/lib';
 use MongooseT; # connects to the db for me
 
 my $db = db;
-$db->author->drop;
+$db->get_collection('author')->drop;
 
 Mongoose->load_schema( search_path=>'MyTestApp::Schema', shorten=>1 );
 
