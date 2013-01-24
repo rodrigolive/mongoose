@@ -2,6 +2,7 @@ use strict;
 use warnings;
 
 use Test::More ;
+use Test::Fatal;
 
 {
 	package BankAccount;
@@ -19,6 +20,7 @@ use MongooseT; # this connects to the db for me
 my $db = db;
 
 $db->run_command({ drop=>'bank_account' }); 
+BankAccount->collection->ensure_index( { "drivers_license" => 1 }, { unique => 1 } );
 
 {
 	my $ba1 = BankAccount->new( name=>'Jordi', drivers_license=>'112233' ); 
@@ -31,12 +33,14 @@ $db->run_command({ drop=>'bank_account' });
 }
 {
 	my $ba1 = BankAccount->new( name=>'Donna', drivers_license=>'112233' ); 
-	$ba1->save;
-	my $r = BankAccount->find_one({ name=>'Jordi' });
-	ok( !defined $r, 'overwritten' );
+	like(
+	    exception { $ba1->save },
+	    qr/duplicate key/,
+	    "saving a duplicate PK fails"
+	);
 
 	my $r2 = BankAccount->find_one({ drivers_license=>'112233' });
-	is( $r2->name, 'Donna', 'replaced yup' );
+	is( $r2->name, 'Jordi', 'original record still correct' );
 
 	my $k=0;
 	BankAccount->find->each(sub{ $k++ });
