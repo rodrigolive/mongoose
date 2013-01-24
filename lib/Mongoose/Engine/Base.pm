@@ -305,12 +305,13 @@ sub _save {
         return $id;
     } else {
         if( ref $self->meta->{mongoose_config}->{pk} ) {
-            ## upsert using a primary key
-            my $pk = $self->_primary_key_from_hash($doc);
-            my $ret = $coll->update( $pk, $doc, { upsert=>1 } );
-            my $id = $coll->find_one( $pk, { _id=>1 } );
-            $self->_id( $id->{_id} );
-            return $id->{_id};
+            # if we have a pk and no _id, we must have a new
+            # document, so we insert to allow the pk constraint
+            # to ensure uniqueness; the 'safe' parameter ensures
+            # an exception is thrown on a duplicate
+            my $id = $coll->insert( $doc, { safe => 1 } );
+            $self->_id( $id );
+            return $id;
         } else {
             # save without pk
             my $id = $coll->save( $doc );
