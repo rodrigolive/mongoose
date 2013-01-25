@@ -6,6 +6,9 @@
     * Deprecation warnings removed from tests 
         - get_collection now required, no more implicit $db-><collecion>() method calling 
 
+    [ ENHANCEMENTS ]
+    * GH#21 - use insert() if PK defined and no _id in doc (dagolden)
+
 0.20 Sun Nov  4 13:05:21 CET 2012
     [ BUGS ]
     * Nested joins save error fixed ("not an ARRAY ref")
