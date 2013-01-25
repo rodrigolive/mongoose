@@ -212,6 +212,7 @@ L<KiokuDB>
     Kang-min Liu (gugod)
     Allan Whiteford (allanwhiteford)
     Kartik Thakore (kthakore)
+    David Golden (dagolden)
 
 =head1 LICENSE
 
