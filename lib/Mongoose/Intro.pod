@@ -370,8 +370,9 @@ the role parameter C<-pk>.
     };
     has 'drivers_license' => (is=>'rw', isa=>'Int' );
 
-That way, with every insert or update, the C<drivers_license> field
-is checked with the help of the C<upsert> feature of Mongo.
+That way, updates use the C<drivers_license> field and
+inserts will fail if the primary key exists.  (But be sure
+to set a unique index on your primary key.)
 
 =head2 Schema Changes
 
