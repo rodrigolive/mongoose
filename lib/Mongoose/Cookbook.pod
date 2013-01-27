@@ -30,8 +30,14 @@ connections and databases are also supported.
 
 This is a work in progress. Right now this syntax is supported:
 
+    # No class, this will be default db
+    Mongoose->db( db_name=>'mydbone', ... );
+
+    # A db for one class
     Mongoose->db( class=>'Person', db_name=>'mydbone', ... );
-    Mongoose->db( class=>'Address', db_name=>'mydbtwo', ... );
+
+    # A db/host for several classes
+    Mongoose->db( class=>['Address', 'Telephone'], db_name=>'mydbtwo', host=>'mongodb://host:27017' );
 
 This is quite rudimentary, and will probably change in the future.
 

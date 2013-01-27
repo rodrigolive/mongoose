@@ -17,14 +17,25 @@ our $_mongodb_client_class =
 class_type $_mongodb_client_class;
 use Carp;
 
-has '_db' => ( is => 'rw', isa => 'HashRef[MongoDB::Database]' );
-
-has '_connection' => (
-    is  => 'rw',
-    isa => $_mongodb_client_class . ' | Undef',
+has '_db' => ( 
+    is      => 'rw', 
+    isa     => 'HashRef',
+    default => sub {{}},
 );
 
-has '_args' => ( is => 'rw', isa => 'HashRef', default=>sub{{}} );
+has '_client' => (
+    is      => 'rw',
+    isa     => "HashRef",
+    lazy    => 1,
+    default => sub {{}},
+    clearer => 'disconnect'
+);
+
+has '_args' => ( 
+    is      => 'rw', 
+    isa     => 'HashRef', 
+    default => sub{{}} 
+);
 
 # naming templates
 my %naming_template = (
@@ -80,35 +91,55 @@ sub db {
     my $self = shift;
     my %p    = @_ == 1 ? (db_name=>shift) : @_;
     my $now  = delete $p{'-now'};
-    $self->_args( \%p );
-    return $self->connect if $now || defined wantarray;
+    my $name = $self->_add_args( \%p );
+
+    return $self->connect($name) if $now || defined wantarray;
+}
+
+# setup db config and class to db mapping if class exists.
+sub _add_args {
+    my ( $self, $args ) = @_;
+    my $name = 'default';
+    if ( my $class = delete $args->{class} ) {
+        $class = [$class] unless ref $class eq 'ARRAY';
+        $name  = join "-", @$class;
+        $self->_args->{class}{$_} = $name for @$class;
+    }
+    $self->_args->{db}{$name} = $args;
+    $name;
+}
+
+# Connection/db name for a given class
+sub _name_for_class {
+    my ( $self, $class ) = @_;
+    return 'default' unless $class;
+    $self->_args->{class}{$class} || 'default';
+}
+
+# Go thru class-db mapping and ensure to get a connected db.
+sub _db_for_class {
+    my ( $self, $class ) = @_;
+    my $name = $self->_name_for_class($class);
+    $self->_db->{$name} || $self->connect($name);
 }
 
 sub connect {
-    my $self = shift;
-    my %p    = @_ || %{ $self->_args };
-    my $key  = delete( $p{'-class'} ) || 'default';
-    $self->_connection( $_mongodb_client_class->new(%p) )
-      unless ref $self->_connection;
-    $self->_db( { $key => $self->_connection->get_database( $p{db_name} ) } );
-    return $self->_db->{$key};
-}
+    my ( $self, $name ) = @_;
+    $name ||= 'default';
+    my %p   = %{ $self->_args->{db}{$name} };
+    my $db_name = delete $p{db_name};
 
-sub disconnect {
-    my $self = shift;
-    $self->_connection and $self->_connection(undef);
+    $self->_client->{$name} = $_mongodb_client_class->new(%p)
+      unless ref $self->_client->{$name};
+
+    $self->_db->{$name} = $self->_client->{$name}->get_database( $db_name );
 }
 
 sub connection {
-    my $self = shift;
-    $self->_connection and return $self->_connection;
-    $self->connect and return $self->_connection;
-}
-
-sub _db_for_class {
-    my ( $self, $class ) = @_;
-    return $self->_db->{$class} || $self->_db->{default} if defined $self->_db;
-    return $self->connect;
+    my ( $self, $name ) = @_;
+    $name ||= 'default';
+    $self->_client->{$name} and return $self->_client->{$name};
+    $self->connect($name) and return $self->_client->{$name};
 }
 
 sub load_schema {
@@ -204,7 +235,7 @@ prefork appserver like Starman, Hypnotoad or Catalyst's
 HTTP::Prefork).
 
 If you prefer to connect while setting the connection string, 
-use one of these 2 options:
+use one of these options:
 
     Mongoose->db( db_name=>'mydb', -now=>1 );  # connect now
 
@@ -216,6 +247,22 @@ use one of these 2 options:
 
     Mongoose->db( 'mydb' );
     Mongoose->connect;
+
+You can separate your classes storage on multiple hosts/databases 
+by calling db() several times:
+
+    # Default host/database (connect now!)
+    my $db = Mongoose->db( 'mydb' );
+    
+    # Other database for some class (defer connection)
+    Mongoose->db( db_name => 'my_other_db', class => 'Log' );
+
+    # Other database on other host for several classes
+    Mongoose->db( 
+        db_name => 'my_remote_db', 
+        host    => 'mongodb://192.168.1.23:27017',
+        class   => [qw/ Author Post /]
+    );
 
 =head2 connect
 
