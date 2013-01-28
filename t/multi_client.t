@@ -1,9 +1,8 @@
 use strict;
 use warnings;
 use Test::More;
+use Mongoose;
 use lib 't/lib';
-
-use_ok('Mongoose');
 
 my $db = [];
 eval {
