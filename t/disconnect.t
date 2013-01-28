@@ -5,7 +5,7 @@ use lib 't/lib';
 use MongooseT;
 
 Mongoose->disconnect;
-is (Mongoose->_connection,undef, 'Disconnect from Mongo');
+is_deeply (Mongoose->_client,{}, 'Disconnect from Mongo');
 
 done_testing;
 
