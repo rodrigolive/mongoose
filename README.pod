@@ -4,7 +4,7 @@ Mongoose - MongoDB document to Moose object mapper
 
 =head1 VERSION
 
-version 0.22
+version 0.23
 
 =head1 SYNOPSIS
 
@@ -74,7 +74,7 @@ prefork appserver like Starman, Hypnotoad or Catalyst's
 HTTP::Prefork).
 
 If you prefer to connect while setting the connection string, 
-use one of these 2 options:
+use one of these options:
 
     Mongoose->db( db_name=>'mydb', -now=>1 );  # connect now
 
@@ -86,6 +86,22 @@ use one of these 2 options:
 
     Mongoose->db( 'mydb' );
     Mongoose->connect;
+
+You can separate your classes storage on multiple hosts/databases 
+by calling db() several times:
+
+    # Default host/database (connect now!)
+    my $db = Mongoose->db( 'mydb' );
+    
+    # Other database for some class (defer connection)
+    Mongoose->db( db_name => 'my_other_db', class => 'Log' );
+
+    # Other database on other host for several classes
+    Mongoose->db( 
+        db_name => 'my_remote_db', 
+        host    => 'mongodb://192.168.1.23:27017',
+        class   => [qw/ Author Post /]
+    );
 
 =head2 connect
 
@@ -213,6 +229,7 @@ L<KiokuDB>
     Allan Whiteford (allanwhiteford)
     Kartik Thakore (kthakore)
     David Golden (dagolden)
+    Diego Kuperman (diegok)
 
 =head1 LICENSE
 

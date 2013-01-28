@@ -1,3 +1,7 @@
+0.23 Mon Jan 28 19:28:58 CET 2013
+    [ ENHANCEMENTS ]
+    * GH#26 - multiple hosts/dbs for different classes (diegok)
+
 0.22 Mon Jan 21 16:14:38 CET 2013
     [ BUGS ]
     * RT#81725 - save HashRef[ArrayRef[Class]] now works; loading does not (yet).

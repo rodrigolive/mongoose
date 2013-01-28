@@ -390,6 +390,7 @@ L<KiokuDB>
     Allan Whiteford (allanwhiteford)
     Kartik Thakore (kthakore)
     David Golden (dagolden)
+    Diego Kuperman (diegok)
 
 =head1 LICENSE
 
