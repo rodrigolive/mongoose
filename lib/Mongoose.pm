@@ -127,7 +127,7 @@ sub connect {
     my ( $self, $name ) = @_;
     $name ||= 'default';
     my %p   = %{ $self->_args->{db}{$name} };
-    my $db_name = delete $p{db_name};
+    my $db_name = $p{db_name};
 
     $self->_client->{$name} = $_mongodb_client_class->new(%p)
       unless ref $self->_client->{$name};
