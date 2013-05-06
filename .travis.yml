@@ -4,3 +4,4 @@ perl:
   - "5.14"
   - "5.12"
 services: mongodb
+before_script: cpanm -n Dist::Zilla && dzil authordeps && dzil build && cd ./Mongoose*
