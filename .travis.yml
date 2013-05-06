@@ -6,6 +6,6 @@ perl:
 services: mongodb
 before_install: 
    - cpanm -n Dist::Zilla 
-   - dzil authordeps 
+   - dzil authordeps | cpanm -n
    - dzil build 
    - cd ./Mongoose*
