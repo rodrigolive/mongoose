@@ -24,10 +24,10 @@ has val => (isa=>'Int', is=>'ro' );
 
 package main;
 
-my $x = Bar->new( y => { xx => [ Foo->new( val => 1234 ) ] } );
+my $x = Bar->new( y => { 'x.x' => [ Foo->new( val => 1234 ) ] } );
 $x->save;
 my $raw = $x->collection->find_one();
-is $raw->{y}{xx}[0]{val}, 1234, 'raw save ok';
+is $raw->{y}{'x.x'}[0]{val}, 1234, 'raw save ok';
 
 #my $d = Bar->find_one();
 #is $d->y->{xx}->[0]->{val}, 1234, 'storage ok';
