@@ -3,6 +3,7 @@ use strict;
 use Mongoose;
 use MooseX::Role::Parameterized;
 use Mongoose::Meta::AttributeTraits;
+use Class::Load;
 
 parameter '-engine' => ( isa => 'Mongoose::Role::Engine', );
 parameter '-collection_name' => ( isa => 'Str', );
@@ -52,7 +53,7 @@ role {
 
     # load the selected engine
     my $engine = $p->{'-engine'} || 'Mongoose::Engine::Base';
-    Class::MOP::load_class($engine);
+    Class::Load::load_class($engine);
 
     # import the engine role into this class
     with $engine;
