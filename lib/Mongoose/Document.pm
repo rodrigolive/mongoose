@@ -20,7 +20,7 @@ role {
     else
     {
         # If we get into this block of code, it means that Mongoose was consumed
-        # not by a class but by another (intermediate) role. Mongoose needs to 
+        # not by a class but by another (intermediate) role. Mongoose needs to
         # know the original class for various reasons (naming the collection
         # name being the most obvious one but not the only one).
         # What follows is an ugly hack to climb back up the consumption hierarchy
@@ -52,7 +52,7 @@ role {
 
     # load the selected engine
     my $engine = $p->{'-engine'} || 'Mongoose::Engine::Base';
-    Class::MOP::load_class($engine);
+    Class::Load::load_class($engine);
 
     # import the engine role into this class
     with $engine;
