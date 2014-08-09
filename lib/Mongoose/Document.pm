@@ -31,7 +31,8 @@ role {
         my $i=1;
         while ( my @caller = do { package DB; caller( $i++ ) } )
         {
-            if ($caller[3] eq "MooseX::Role::Parameterized::Meta::Role::Parameterizable::generate_role")
+            if ($caller[3] eq "MooseX::Role::Parameterized::Meta::Trait::Parameterizable::generate_role"
+            ||  $caller[3] eq "MooseX::Role::Parameterized::Meta::Role::Parameterizable::generate_role") #old
             {
                 my @args = @DB::args;
                 my %args=@args[1..$#args];
