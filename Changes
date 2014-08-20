@@ -1,3 +1,7 @@
+0.24 Wed Aug 20 09:12:41 PDT 2014
+    [ BUGS ]
+    * GH#35 - Hack to prevent engine from creating self-references 
+    
 0.23 Mon Jan 28 19:28:58 CET 2013
     [ ENHANCEMENTS ]
     * GH#26 - multiple hosts/dbs for different classes (diegok)
