@@ -20,6 +20,7 @@ sub collapse {
         my $class = blessed $duplicate;
         my $ref_id = $duplicate->_id;
         return undef unless defined $class && $ref_id;
+        return undef if $self->_id && $self->_id eq $ref_id; # prevent self references?
         return { '$ref' => $class->meta->{mongoose_config}->{collection_name}, '$id'=>$ref_id };
     }
     my $packed = { %$self }; # cheesely clone the data
