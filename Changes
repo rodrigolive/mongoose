@@ -1,3 +1,7 @@
+0.25 Thu Aug 21 16:53:40 PDT 2014
+    [ CLEANUP ]
+    * .24 inadvertently brought local-libs into dist
+
 0.24 Wed Aug 20 09:12:41 PDT 2014
     [ BUGS ]
     * GH#35 - Hack to prevent engine from creating self-references 

@@ -1,10 +1,12 @@
+=pod
+
 =head1 NAME
 
 Mongoose - MongoDB document to Moose object mapper
 
 =head1 VERSION
 
-version 0.24
+version 0.25
 
 =head1 SYNOPSIS
 
@@ -235,3 +237,5 @@ L<KiokuDB>
 
 This library is free software. You can redistribute it and/or modify it under
 the same terms as Perl itself.
+
+=cut
