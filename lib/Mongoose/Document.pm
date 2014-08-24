@@ -29,7 +29,8 @@ role {
         # can do it differently than it has to be better than the below!
         #                                              -- Allan Whiteford
         my $i=1;
-        while ( my @caller = do { package DB; caller( $i++ ) } )
+        while ( my @caller = do { package 
+                DB; caller( $i++ ) } )
         {
             if ($caller[3] eq "MooseX::Role::Parameterized::Meta::Trait::Parameterizable::generate_role"
             ||  $caller[3] eq "MooseX::Role::Parameterized::Meta::Role::Parameterizable::generate_role") #old

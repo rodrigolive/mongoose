@@ -1,3 +1,7 @@
+0.26 Sun Aug 24 11:18:25 PDT 2014
+    [ CLEANUP ]
+    * GH#36 - "package DB" gets $VERSION added by dzil auto-versioning plugin
+
 0.25 Thu Aug 21 16:53:40 PDT 2014
     [ CLEANUP ]
     * .24 inadvertently brought local-libs into dist
