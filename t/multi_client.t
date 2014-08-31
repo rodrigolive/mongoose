@@ -8,8 +8,17 @@ my $db = [];
 eval {
     my $ts = join('_', $$, time);
     diag( "Building clients for test-stamp: $ts" );
-    my $default_db = Mongoose->db( "multi_1_$ts");
-    my $other_db   = Mongoose->db( db_name => "multi_2_$ts", class => 'Post' );
+
+    # use params from MONGOOSEDB if available but w/ unique db_names
+    my (%p1,%p2);
+    %p1 = split( /,/, $ENV{MONGOOSEDB}) if $ENV{MONGOOSEDB} ;
+    %p2 = %p1;
+    $p1{db_name}="multi_1_$ts";
+    $p2{db_name}="multi_2_$ts";
+    $p2{class}='Post';
+
+    my $default_db = Mongoose->db( %p1 );
+    my $other_db   = Mongoose->db( %p2 );
     $db = [ $default_db, $other_db ];
 
     Mongoose->load_schema( search_path=>'MyTestApp::Schema', shorten=>1 );
