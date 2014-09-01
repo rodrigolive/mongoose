@@ -219,16 +219,23 @@ The connection defaults to whatever MongoDB defaults are
 (typically localhost:27017).
 
 For more control over the connection, C<db> takes the same parameters as
-L<MongoDB::MongoClient>, plus C<db_name>. 
+L<MongoDB::MongoClient>, plus C<auth_db_name>. 
 
     my $db = Mongoose->db(
-        host          => 'mongodb://localhost:27017',
+        host          => 'mongodb://somehost:27017',
         query_timeout => 60,
-        db_name       => 'mydb'
+        db_name       => 'mydb',
+        auth_db_name  => 'admin',
+        username      => 'myuser',
+        password      => 'mypass',
     );
 
-This will, in turn, instantiate a L<MongoDB::MongoClient> instance
-with all given parameters and return a L<MongoDB::Database> object. 
+This will, in turn, instantiate a L<MongoDB::MongoClient> instance after
+authenticating user vs C<admin> with all given parameters, and return
+a L<MongoDB::Database> object for C<mydb>.
+
+C<auth_db_name> defaults to the value of C<db_name>, which is then used for
+both authentication (when required by server) and object data. 
 
 B<Important>: Mongoose will always defer connecting to Mongo
 until the last possible moment. This is done to prevent
