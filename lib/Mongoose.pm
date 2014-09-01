@@ -127,12 +127,14 @@ sub connect {
     my ( $self, $name ) = @_;
     $name ||= 'default';
     my %p   = %{ $self->_args->{db}{$name} };
-    my $db_name = $p{db_name};
+    my $data_db_name = $p{db_name};
+    my $auth_db_name = delete $p{auth_db_name} || $data_db_name;
+    $p{db_name} = $auth_db_name;    # in MongoDB::Client db_name is auth db, not necessarily data db
 
     $self->_client->{$name} = $_mongodb_client_class->new(%p)
       unless ref $self->_client->{$name};
 
-    $self->_db->{$name} = $self->_client->{$name}->get_database( $db_name );
+    $self->_db->{$name} = $self->_client->{$name}->get_database( $data_db_name );
 }
 
 sub connection {
