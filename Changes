@@ -1,3 +1,8 @@
+0.27 Mon Sep  1 19:25:23 CEST 2014
+    [ ENHANCEMENTS ]
+    * add optional auth_db_name param for auth against other dbs (gmorten1)
+    * testing against remote dbs (gmorten1)
+    
 0.26 Sun Aug 24 11:18:25 PDT 2014
     [ CLEANUP ]
     * GH#36 - "package DB" gets $VERSION added by dzil auto-versioning plugin
