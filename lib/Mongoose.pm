@@ -234,8 +234,7 @@ This will, in turn, instantiate a L<MongoDB::MongoClient> instance after
 authenticating user vs C<admin> with all given parameters, and return
 a L<MongoDB::Database> object for C<mydb>.
 
-C<auth_db_name> defaults to the value of C<db_name>, which is then used for
-both authentication (when required by server) and object data. 
+C<auth_db_name> defaults to the value of C<db_name>.
 
 B<Important>: Mongoose will always defer connecting to Mongo
 until the last possible moment. This is done to prevent
