@@ -1,0 +1,2 @@
+# when running tests via prove always use local lib/
+-Ilib
