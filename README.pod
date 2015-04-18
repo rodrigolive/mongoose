@@ -6,7 +6,7 @@ Mongoose - MongoDB document to Moose object mapper
 
 =head1 VERSION
 
-version 0.27
+version 0.28
 
 =head1 SYNOPSIS
 
@@ -212,7 +212,7 @@ Test cases highly desired and appreciated.
 
 * Finish-up multiple database support
 
-* Allow query->fields to control which fields get expanded into the object. 
+* Allow query->fields to control which fields get expanded into the object.
 
 * Cleanup internals.
 
@@ -228,6 +228,10 @@ L<KiokuDB>
 
     Rodrigo de Oliveira (rodrigolive), C<rodrigolive@gmail.com>
 
+=head1 MAINTAINER
+
+    Diego Kuperman (diegok)
+
 =head1 CONTRIBUTORS
 
     Arthur Wolf
@@ -237,7 +241,6 @@ L<KiokuDB>
     Allan Whiteford (allanwhiteford)
     Kartik Thakore (kthakore)
     David Golden (dagolden)
-    Diego Kuperman (diegok)
 
 =head1 LICENSE
 

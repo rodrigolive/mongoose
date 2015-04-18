@@ -6,6 +6,7 @@ use Scalar::Util qw/refaddr reftype/;
 use Carp;
 use List::Util qw/first/;
 use Mongoose::Cursor; #initializes moose
+use Tie::IxHash;
 
 with 'Mongoose::Role::Collapser';
 with 'Mongoose::Role::Expander';
@@ -21,7 +22,7 @@ sub collapse {
         my $ref_id = $duplicate->_id;
         return undef unless defined $class && $ref_id;
         return undef if $self->_id && $self->_id eq $ref_id; # prevent self references?
-        return { '$ref' => $class->meta->{mongoose_config}->{collection_name}, '$id'=>$ref_id };
+        return Tie::IxHash->new( '$ref' => $class->meta->{mongoose_config}->{collection_name}, '$id'=>$ref_id );
     }
     my $packed = { %$self }; # cheesely clone the data
     for my $key ( keys %$packed ) {
@@ -53,7 +54,7 @@ sub _collapse {
         #say "checking.... $class.... $self: " . $self->_id;
         if( ref $value eq 'HASH' && defined ( my $ref_id = $value->{_id} ) ) {
             # it has an id, so join ref it
-            return { '$ref' => $class->meta->{mongoose_config}->{collection_name}, '$id'=>$ref_id };
+            return Tie::IxHash->new( '$ref' => $class->meta->{mongoose_config}->{collection_name}, '$id'=>$ref_id );
         } else {
             return $self->_unbless( $value, $class, @scope );
         }
@@ -68,7 +69,7 @@ sub _collapse {
             } elsif( $aryclass && $aryclass->does('Mongoose::Document') ) {
                 $item->_save( @scope, $self );
                 my $id = $item->_id;
-                push @docs, { '$ref' => $aryclass->meta->{mongoose_config}->{collection_name}, '$id'=>$id };
+                push @docs, Tie::IxHash->new( '$ref' => $aryclass->meta->{mongoose_config}->{collection_name}, '$id'=>$id );
             } else {
                 push @docs, $item;
             }
@@ -108,7 +109,7 @@ sub _unbless {
             $obj->_save( @scope, $self );
             my $id = $obj->_id;
 
-            $ret = { '$ref' => $class->meta->{mongoose_config}->{collection_name}, '$id'=>$id };
+            $ret = Tie::IxHash->new( '$ref' => $class->meta->{mongoose_config}->{collection_name}, '$id'=>$id );
         }
         elsif( $class->isa('Mongoose::Join') ) {
             my @objs = $obj->_save( $self, @scope );
@@ -206,7 +207,7 @@ sub expand {
             }
         }
         elsif( $type->is_a_type_of('FileHandle') ) {
-            my $file = $self->db->get_gridfs->find_one({ _id=>$doc->{$name}->{'$id'} });
+            my $file = $self->db->get_gridfs->find_one({ _id=> $doc->{$name}->{'$id'} });
             delete $doc->{$name}, next unless defined $file;
             $doc->{$name} = bless $file, 'Mongoose::File';
             next;
@@ -367,7 +368,7 @@ sub delete {
 sub db {
     my $self=shift;
     return Mongoose->_db_for_class( ref $self || $self )
-        or croak 'MongoDB not set. Set Mongoose->db("name") first';
+        || croak 'MongoDB not set. Set Mongoose->db("name") first';
 }
 
 sub collection {
@@ -437,7 +438,7 @@ sub find_one {
         $doc = $self->collection->find_one({ _id=>MongoDB::OID->new( value=>$_[0] ) });
         return undef unless defined $doc;
         return $self->expand( $doc );
-    } 
+    }
     else {
         my ($query,$fields, $scope) = @_;
         $doc = $self->collection->find_one( $query, $fields );

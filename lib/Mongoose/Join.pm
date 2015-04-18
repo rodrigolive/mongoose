@@ -3,6 +3,7 @@ use Moose;
 use Moose::Util::TypeConstraints;
 use Moose::Meta::TypeConstraint::Parameterizable;
 use Moose::Meta::TypeConstraint::Registry;
+use Tie::IxHash;
 
 my $REGISTRY = Moose::Meta::TypeConstraint::Registry->new;
 $REGISTRY->add_type_constraint(
@@ -64,7 +65,7 @@ sub remove {
             my $id = $obj->{_id};
             next unless defined $id; 
             $self->children([
-                grep { $_->{'$id'} ne $id } @{ $children } 
+                grep { $_->FETCH('$id') ne $id } _tie_refs( @{$children} )
             ]);
         }
     }
@@ -102,9 +103,8 @@ sub _save {
     if( ref $children eq 'Mongoose::Join' ) {
         $children = $children->children;
     }
-    my @objs = @{ $children || [] };
-    
-    #my @objs = @{ delete $self->{children} || [] };
+    my @objs = _tie_refs( @{$children ||[]} );
+
     my $collection_name = $self->with_collection_name;
 
     # load buffers
@@ -116,7 +116,7 @@ sub _save {
         my $obj = delete $buffer->{$_};
         next if exists $delete_buffer->{ refaddr $obj };
         $obj->save( @scope );
-        push @objs, { '$ref' => $collection_name, '$id' => $obj->_id };
+        push @objs, Tie::IxHash->new( '$ref' => $collection_name, '$id' => $obj->_id );
     }
 
     # adjust
@@ -124,7 +124,7 @@ sub _save {
     $self->delete_buffer({});
 
     # make sure unique children is saved
-    my %unique = map { $_->{'$id'} => $_ } @objs;
+    my %unique = map { $_->FETCH('$id') => $_ } @objs;
     @objs = values %unique;
     $self->children( \@objs );
     return @objs;
@@ -134,7 +134,7 @@ sub _children_refs {
     my ($self)=@_;
     my @found;
     $self->find->each( sub{
-        push @found, { '$id' => $_[0]->{_id}, '$ref' => $_[0]->_collection_name };
+        push @found, Tie::IxHash->new( '$ref' => $_[0]->_collection_name, '$id' => $_[0]->{_id} );
     });
     return @found;
 }
@@ -147,7 +147,7 @@ sub find {
     if( ref $children eq 'Mongoose::Join' ) {
         $children = $children->children;
     }
-    my @children = map { $_->{'$id'} } @{ $children || [] };
+    my @children = map { $_->FETCH('$id') } _tie_refs( @{$children ||[]} );
 
     $opts->{_id} = { '$in' => \@children };
     return $class->find( $opts, @scope );
@@ -157,7 +157,7 @@ sub find_one {
     my ( $self, $opts, @scope ) = @_;
     my $class = $self->with_class;
     $opts ||= {};
-    my @children = map { $_->{'$id'} } @{ $self->children || [] };
+    my @children = map { $_->FETCH('$id') } _tie_refs( @{$self->children ||[]} );
     $opts->{_id} = { '$in' => \@children };
     return $class->find_one( $opts, @scope );
 }
@@ -199,6 +199,16 @@ sub hash_array {
         push @{ $hash{ $_->{$key} } }, $_;
     } $self->find(@_)->all;
     return %hash;
+}
+
+# make sure all refs are sorted hashes
+sub _tie_refs {
+    for (@_) {
+        $_ = Tie::IxHash->new( '$ref'=>$_->{'$ref'}, '$id'=>$_->{'$id'})
+            unless ref $_ eq 'Tie::IxHash';
+    }
+
+    @_;
 }
 
 =head1 NAME

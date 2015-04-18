@@ -1,8 +1,12 @@
+0.28 Sat Apr 18 16:51:40 CEST 2014
+    [ BUGS ]
+    * ensure all DBRef's are sorted hashes to make it work with mongodb v2.6.x (diegok)
+
 0.27 Mon Sep  1 19:25:23 CEST 2014
     [ ENHANCEMENTS ]
     * add optional auth_db_name param for auth against other dbs (gmorten1)
     * testing against remote dbs (gmorten1)
-    
+
 0.26 Sun Aug 24 11:18:25 PDT 2014
     [ CLEANUP ]
     * GH#36 - "package DB" gets $VERSION added by dzil auto-versioning plugin
@@ -13,8 +17,8 @@
 
 0.24 Wed Aug 20 09:12:41 PDT 2014
     [ BUGS ]
-    * GH#35 - Hack to prevent engine from creating self-references 
-    
+    * GH#35 - Hack to prevent engine from creating self-references
+
 0.23 Mon Jan 28 19:28:58 CET 2013
     [ ENHANCEMENTS ]
     * GH#26 - multiple hosts/dbs for different classes (diegok)
