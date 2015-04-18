@@ -9,7 +9,7 @@ use Moose::Util::TypeConstraints;
 
 # determine if we are on MongoDB 0.503.1
 require version;
-our $_mongodb_client_class = 
+our $_mongodb_client_class =
     version::qv( $MongoDB::VERSION ) >= v0.502.0
         ? 'MongoDB::MongoClient'
         : 'MongoDB::Connection';
@@ -17,8 +17,8 @@ our $_mongodb_client_class =
 class_type $_mongodb_client_class;
 use Carp;
 
-has '_db' => ( 
-    is      => 'rw', 
+has '_db' => (
+    is      => 'rw',
     isa     => 'HashRef',
     default => sub {{}},
 );
@@ -31,10 +31,10 @@ has '_client' => (
     clearer => 'disconnect'
 );
 
-has '_args' => ( 
-    is      => 'rw', 
-    isa     => 'HashRef', 
-    default => sub{{}} 
+has '_args' => (
+    is      => 'rw',
+    isa     => 'HashRef',
+    default => sub{{}}
 );
 
 # naming templates
@@ -373,7 +373,7 @@ Test cases highly desired and appreciated.
 
 * Finish-up multiple database support
 
-* Allow query->fields to control which fields get expanded into the object. 
+* Allow query->fields to control which fields get expanded into the object.
 
 * Cleanup internals.
 
@@ -389,6 +389,10 @@ L<KiokuDB>
 
     Rodrigo de Oliveira (rodrigolive), C<rodrigolive@gmail.com>
 
+=head1 MAINTAINER
+
+    Diego Kuperman (diegok)
+
 =head1 CONTRIBUTORS
 
     Arthur Wolf
@@ -398,7 +402,6 @@ L<KiokuDB>
     Allan Whiteford (allanwhiteford)
     Kartik Thakore (kthakore)
     David Golden (dagolden)
-    Diego Kuperman (diegok)
 
 =head1 LICENSE
 
