@@ -52,32 +52,35 @@ $db->run_command({ drop => 'test_binary_tree' });
 }
 
 {
-	my $bt = new Test::BinaryTree( node=>{ name=>'Jack', candidate=>15 } );
-	my $bt2 = new Test::BinaryTree( node=>{ name=>'Sawyer', candidate=>8 } );
-	my $bt3 = new Test::BinaryTree( node=>{ name=>'Kate', candidate=>4 } );
+	ok( my $bt  = new Test::BinaryTree( node=>{ name=>'Jack', candidate=>15 } ), 'Create first node' );
+	ok( my $bt2 = new Test::BinaryTree( node=>{ name=>'Sawyer', candidate=>8 } ), 'Create second node' );
+	ok( my $bt3 = new Test::BinaryTree( node=>{ name=>'Kate', candidate=>4 } ), 'Create third node' );
 	$bt->left( $bt2 );
 	$bt->right( $bt3 );
-	#print $bt->dump;
+    #print $bt->dump;
 	$bt->save;
 }
+
 {
-	my $btc = Test::BinaryTree->collection->find_one({ node=>{ name=>'Jack', candidate=>15 } });
-	ok( ref $btc eq 'HASH', 'hashref real coll' );
-	my $bt = Test::BinaryTree->find_one({ node=>{ name=>'Jack', candidate=>15 } });
+	ok( my $btc = Test::BinaryTree->collection->find_one({ 'node.name'=>'Jack', 'node.candidate'=>15 }), 'Get first from real collection' );
+	ok( ref $btc eq 'HASH', 'hashref real collection' );
+	ok( my $bt = Test::BinaryTree->find_one({ 'node.name'=>'Jack', 'node.candidate'=>15 }), 'Get it from schema' );
 	ok( ref $bt->node eq 'HASH', 'hashref node inflated' ); 
-	#print $bt->dump;
+    #print $bt->dump;
 	is( $bt->{node}->{name}, $btc->{node}->{name}, 'data matches' );
 	is( $bt->right->{node}->{name}, 'Kate', 'right node ok' );
 	$bt->left->{node}->{name} = 'Hurley';
 	$bt->save;
 }
+
 {
-	my $bt = Test::BinaryTree->find_one({ node=>{ name=>'Jack', candidate=>15 } });
+	ok( my $bt = Test::BinaryTree->find_one({ 'node.name'=>'Jack', 'node.candidate'=>15 }), 'Retrieve node' );
 	is( $bt->left->{node}->{name}, 'Hurley', 'left node ok' );
 }
+
 {
-	my $bt = Test::BinaryTree->query({ node=>{ name=>'Hurley', candidate=>8 } })->next;
-	is( $bt->parent->node->{name}, 'Jack', 'parent retrieved' );	
+	ok( my $bt = Test::BinaryTree->query({ 'node.name'=>'Hurley', 'node.candidate'=>8 })->next, 'Retrive parent node querying schema' );
+	is( $bt->parent->node->{name}, 'Jack', 'parent retrieved' );
 }
 
 done_testing;
