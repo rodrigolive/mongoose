@@ -17,7 +17,6 @@ sub collapse {
 
     # circularity ?
     if( my $duplicate = first { refaddr($self) == refaddr($_) } @scope ) { 
-        #say "----CIRC=$duplicate";
         my $class = blessed $duplicate;
         my $ref_id = $duplicate->_id;
         return undef unless defined $class && $ref_id;
@@ -30,8 +29,8 @@ sub collapse {
 
         # treat special cases based on Moose attribute defs or traits
         if( defined $attrib ) {
-            delete $packed->{$key} , next
-                if $attrib->does('Mongoose::Meta::Attribute::Trait::DoNotMongoSerialize');
+            delete $packed->{$key},
+                next if $attrib->does('Mongoose::Meta::Attribute::Trait::DoNotMongoSerialize');
 
             next if $attrib->does('Mongoose::Meta::Attribute::Trait::Raw');
 
@@ -50,27 +49,29 @@ sub collapse {
 
 sub _collapse {
     my ($self, $value, @scope ) = @_;
-    if( my $class = blessed $value ) {
-        #say "checking.... $class.... $self: " . $self->_id;
-        if( ref $value eq 'HASH' && defined ( my $ref_id = $value->{_id} ) ) {
+    if ( my $class = blessed $value ) {
+        if ( ref $value eq 'HASH' && defined ( my $ref_id = $value->{_id} ) ) {
             # it has an id, so join ref it
-            return Tie::IxHash->new( '$ref' => $class->meta->{mongoose_config}->{collection_name}, '$id'=>$ref_id );
-        } else {
+            return Tie::IxHash->new( '$ref' => $class->meta->{mongoose_config}{collection_name}, '$id'=>$ref_id );
+        }
+        else {
             return $self->_unbless( $value, $class, @scope );
         }
     }
-    elsif( ref $value eq 'ARRAY' ) {
+    elsif ( ref $value eq 'ARRAY' ) {
         my @docs;
         my $aryclass;
         for my $item ( @$value ) {
             $aryclass ||= blessed( $item );
-            if( $aryclass && $aryclass->does('Mongoose::EmbeddedDocument') ) {
+            if ( $aryclass && $aryclass->does('Mongoose::EmbeddedDocument') ) {
                 push @docs, $item->collapse(@scope, $self);
-            } elsif( $aryclass && $aryclass->does('Mongoose::Document') ) {
+            }
+            elsif ( $aryclass && $aryclass->does('Mongoose::Document') ) {
                 $item->_save( @scope, $self );
                 my $id = $item->_id;
-                push @docs, Tie::IxHash->new( '$ref' => $aryclass->meta->{mongoose_config}->{collection_name}, '$id'=>$id );
-            } else {
+                push @docs, Tie::IxHash->new( '$ref' => $aryclass->meta->{mongoose_config}{collection_name}, '$id'=>$id );
+            }
+            else {
                 push @docs, $item;
             }
         }

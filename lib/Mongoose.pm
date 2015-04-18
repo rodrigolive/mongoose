@@ -1,4 +1,5 @@
 package Mongoose;
+
 use MongoDB;
 use Class::MOP;
 use MooseX::Singleton;
@@ -6,15 +7,6 @@ use Mongoose::Join;
 use Mongoose::File;
 use Mongoose::Meta::AttributeTraits;
 use Moose::Util::TypeConstraints;
-
-# determine if we are on MongoDB 0.503.1
-require version;
-our $_mongodb_client_class =
-    version::qv( $MongoDB::VERSION ) >= v0.502.0
-        ? 'MongoDB::MongoClient'
-        : 'MongoDB::Connection';
-
-class_type $_mongodb_client_class;
 use Carp;
 
 has '_db' => (
@@ -131,7 +123,7 @@ sub connect {
     my $auth_db_name = delete $p{auth_db_name} || $data_db_name;
     $p{db_name} = $auth_db_name;    # in MongoDB::Client db_name is auth db, not necessarily data db
 
-    $self->_client->{$name} = $_mongodb_client_class->new(%p)
+    $self->_client->{$name} = MongoDB::MongoClient->new(%p)
       unless ref $self->_client->{$name};
 
     $self->_db->{$name} = $self->_client->{$name}->get_database( $data_db_name );

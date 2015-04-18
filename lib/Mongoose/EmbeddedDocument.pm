@@ -1,4 +1,5 @@
 package Mongoose::EmbeddedDocument;
+
 use MooseX::Role::Parameterized;
 use Mongoose::Meta::AttributeTraits;
 

@@ -1,4 +1,5 @@
 package Mongoose::Join;
+
 use Moose;
 use Moose::Util::TypeConstraints;
 use Moose::Meta::TypeConstraint::Parameterizable;
@@ -14,9 +15,7 @@ $REGISTRY->add_type_constraint(
         constraint           => sub { die 'constrained' },
         constraint_generator => sub {
             my $type_parameter = shift;
-
-            #print "constraint_generator...@_\n";
-            return sub { return {} };
+            sub { return {} };
         }
     )
 );

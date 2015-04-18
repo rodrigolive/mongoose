@@ -1,6 +1,7 @@
 package Mongoose::Meta::AttributeTraits;
 
 package Mongoose::Meta::Attribute::Trait::Binary;
+
 use strict;
 use Moose::Role;
 
@@ -19,12 +20,14 @@ has 'lazy_select' => (
 
 {
     package Moose::Meta::Attribute::Custom::Trait::Binary;
+
     sub register_implementation {'Mongoose::Meta::Attribute::Trait::Binary'}
 }
 
 # -----------------------------------------------------------------
 
 package Mongoose::Meta::Attribute::Trait::DoNotMongoSerialize;
+
 use strict;
 use Moose::Role;
 
@@ -43,6 +46,7 @@ has 'lazy_select' => (
 
 {
     package Moose::Meta::Attribute::Custom::Trait::DoNotMongoSerialize;
+
     sub register_implementation {'Mongoose::Meta::Attribute::Trait::DoNotMongoSerialize'}
 }
 
@@ -50,11 +54,13 @@ has 'lazy_select' => (
 
 {
     package Mongoose::Meta::Attribute::Trait::Raw;
+
     use strict;
     use Moose::Role;
 }
 {
     package Moose::Meta::Attribute::Custom::Trait::Raw;
+
     sub register_implementation {'Mongoose::Meta::Attribute::Trait::Raw'}
 }
 
@@ -77,7 +83,3 @@ Skips unblessing of an attribute when saving an object.
 =cut
 
 1;
-
-
-
-

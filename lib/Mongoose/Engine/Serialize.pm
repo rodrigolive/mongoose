@@ -1,4 +1,5 @@
 package Mongoose::Engine::Serialize;
+
 use Moose::Role;
 use MooseX::Storage;
 with Storage;
@@ -33,6 +34,6 @@ Collapses an object using pack.
 
 Expands an object using unpack.
 
-=cut 
+=cut
 
 1;

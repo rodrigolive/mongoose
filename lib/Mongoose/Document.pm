@@ -1,4 +1,5 @@
 package Mongoose::Document;
+
 use strict;
 use Mongoose;
 use MooseX::Role::Parameterized;
@@ -11,15 +12,13 @@ parameter '-pk' => ( isa => 'ArrayRef[Str]', );
 parameter '-as' => ( isa => 'Str', );
 
 role {
-    my $p          = shift;
-    my %args       = @_;
+    my $p    = shift;
+    my %args = @_;
     my $class_name;
-    if ($args{consumer}->isa('Moose::Meta::Class'))
-    {
-        $class_name=$args{consumer}->name;
+    if ($args{consumer}->isa('Moose::Meta::Class')) {
+        $class_name = $args{consumer}->name;
     }
-    else
-    {
+    else {
         # If we get into this block of code, it means that Mongoose was consumed
         # not by a class but by another (intermediate) role. Mongoose needs to 
         # know the original class for various reasons (naming the collection
@@ -29,12 +28,10 @@ role {
         # can do it differently than it has to be better than the below!
         #                                              -- Allan Whiteford
         my $i=1;
-        while ( my @caller = do { package 
+        while ( my @caller = do { package
                 DB; caller( $i++ ) } )
         {
-            if ($caller[3] eq "MooseX::Role::Parameterized::Meta::Trait::Parameterizable::generate_role"
-            ||  $caller[3] eq "MooseX::Role::Parameterized::Meta::Role::Parameterizable::generate_role") #old
-            {
+            if ($caller[3] eq "MooseX::Role::Parameterized::Meta::Trait::Parameterizable::generate_role") {
                 my @args = @DB::args;
                 my %args=@args[1..$#args];
                 if ($args{'consumer'}->isa('Moose::Meta::Class'))
@@ -61,8 +58,7 @@ role {
     with $engine;
 
     # attributes
-    has '_id' =>
-      ( is => 'rw', isa => 'MongoDB::OID', traits => ['DoNotMongoSerialize'] );
+    has '_id' => ( is => 'rw', isa => 'MongoDB::OID', traits => ['DoNotMongoSerialize'] );
 
     my $config = {
         pk              => $p->{'-pk'},

@@ -1,4 +1,5 @@
 package Mongoose::Class;
+
 use Moose ();
 use Moose::Exporter;
 
