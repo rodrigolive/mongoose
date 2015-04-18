@@ -1,4 +1,8 @@
-0.28 Sat Apr 18 16:51:40 CEST 2014
+0.29 Sat Apr 18 23:56:30 CEST 2015
+    [ BUGS ]
+    * Fixed test that was failing randombly on mongodb v2.6.x (diegok)
+
+0.28 Sat Apr 18 16:51:40 CEST 2015
     [ BUGS ]
     * ensure all DBRef's are sorted hashes to make it work with mongodb v2.6.x (diegok)
 
