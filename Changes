@@ -1,4 +1,6 @@
-{{NEXT}}
+{{$NEXT}}
+
+0.30 Sun Apr 19 2:56:00 CEST 2015
     [ ENHANCEMENTS ]
     * find_one() now accepts a MongoDB::OID object
 
