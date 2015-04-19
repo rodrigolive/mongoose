@@ -19,16 +19,17 @@ $db->run_command({ drop=>'person' });
 
 package main;
 {
-	my $homer = Person->new( name => "Homer Simpson" );
-	my $id = $homer->save;
-	is( ref($id), 'MongoDB::OID', 'created, id defined' );
-	$homer->delete;
-	my $count = Person->collection->find->count;
-	is( $count, 0, 'delete ok');
+	ok( my $homer = Person->new( name => "Homer Simpson" ), 'Create homer person' );
+	ok( my $id = $homer->save, 'save it' );
+	is( ref($id), 'MongoDB::OID', 'save() returns OID' );
+	is( Person->collection->count, 1, 'collection has one doc');
+	ok( $homer->delete, 'Delete it' );
+	is( Person->collection->count, 0, 'collection is empty now');
 }
+
 {
-	my $homer = Person->new( name => "Homer Simpson" );
-	my $marge = Person->new( name => "Marge Simpson" ); 
+	ok( my $homer = Person->new( name => "Homer Simpson" ), 'Create homer' );
+	ok( my $marge = Person->new( name => "Marge Simpson" ), 'Create marge' );
 	$homer->spouse($marge);
 	$marge->spouse($homer);
 	my $id = $homer->save;
@@ -49,12 +50,16 @@ package main;
         }
     });
 
-	my $p = Person->find_one({ _id => $id });
+	ok( my $p = Person->find_one({ _id => $id }), 'find_one(HASH)' );
 	is( $p->name, 'Homer Simpson', 'homer found');
-    # new find_one( SCALAR )
-	my $p2 = Person->find_one("$id");
-	is( $p2->name, 'Homer Simpson', 'find_one SCALAR homer found');
+
+	ok( $p = Person->find_one("$id"), 'find_one(STRING)' );
+	is( $p->name, 'Homer Simpson', 'homer found');
+
+	ok( $p = Person->find_one($id), 'find_one(MongoDB::OID)' );
+	is( $p->name, 'Homer Simpson', 'homer found');
 }
+
 {
 	my $p = Person->find_one({ name=>'Marge Simpson' });
 	ok( $p->isa('Person'), 'isa person' );

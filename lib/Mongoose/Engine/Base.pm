@@ -16,7 +16,7 @@ sub collapse {
     my ( $self, @scope )=@_;
 
     # circularity ?
-    if( my $duplicate = first { refaddr($self) == refaddr($_) } @scope ) { 
+    if( my $duplicate = first { refaddr($self) == refaddr($_) } @scope ) {
         my $class = blessed $duplicate;
         my $ref_id = $duplicate->_id;
         return undef unless defined $class && $ref_id;
@@ -434,18 +434,21 @@ sub query {
 
 sub find_one {
     my $self = shift;
-    my $doc;
-    if( @_ == 1 && ! ref $_[0] ) {
-        $doc = $self->collection->find_one({ _id=>MongoDB::OID->new( value=>$_[0] ) });
-        return undef unless defined $doc;
-        return $self->expand( $doc );
+
+    if( @_ == 1 && ( !ref($_[0]) || ref($_[0]) eq 'MongoDB::OID' ) ) {
+        my $query = { _id=> ref $_[0] ? $_[0] : MongoDB::OID->new( value=>$_[0] ) };
+        if ( my $doc = $self->collection->find_one($query) ) {
+            return $self->expand( $doc );
+        }
     }
     else {
         my ($query,$fields, $scope) = @_;
-        $doc = $self->collection->find_one( $query, $fields );
-        return undef unless defined $doc;
-        return $self->expand( $doc, $fields, $scope );
+        if ( my $doc = $self->collection->find_one( $query, $fields ) ) {
+            return $self->expand( $doc, $fields, $scope );
+        }
     }
+
+    undef;
 }
 
 =head1 NAME
@@ -465,15 +468,15 @@ Just like L<MongoDB::Collection/find_one>, but blesses the hash document
 into your class package.
 
 Also has a handy mode which allows
-retrieving an C<_id> directly from an string:
+retrieving an C<_id> directly from a MongoDB::OID or just a string:
 
-   my $author = Author->find_one( '4dd77f4ebf4342d711000000' ); 
+   my $author = Author->find_one( '4dd77f4ebf4342d711000000' );
 
 Which expands onto:
 
    my $author = Author->find_one({
        _id=>MongoDB::OID->new( value=>'4dd77f4ebf4342d711000000' )
-   }); 
+   });
 
 =head2 find
 
