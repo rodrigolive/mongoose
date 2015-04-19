@@ -1,4 +1,6 @@
 {{$NEXT}}
+    [ CLEANUP ]
+    * Changes file fixed after last release problems
 
 0.30 Sun Apr 19 2:56:00 CEST 2015
     [ ENHANCEMENTS ]
