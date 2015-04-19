@@ -4,10 +4,6 @@
 
 Mongoose - MongoDB document to Moose object mapper
 
-=head1 VERSION
-
-version 0.29
-
 =head1 SYNOPSIS
 
     package Person;

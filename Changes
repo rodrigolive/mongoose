@@ -1,3 +1,11 @@
+{{NEXT}}
+    [ ENHANCEMENTS ]
+    * find_one() now accepts a MongoDB::OID object
+
+    [ CLEANUP ]
+    * Removed unused class Mongoose::Digest
+    * Bumped dependency versions and removed back-compat code
+
 0.29 Sat Apr 18 23:56:30 CEST 2015
     [ BUGS ]
     * Fixed test that was failing randombly on mongodb v2.6.x (diegok)
@@ -32,8 +40,8 @@
     * RT#81725 - save HashRef[ArrayRef[Class]] now works; loading does not (yet).
     * GH#22 - load_schema with shorten MOP issue fixed (dagolden)
     * GH#24 - Support for both MongoDB::Connection (deprecated) && MongoDB::MongoClient (MongoDB 0.503)
-    * Deprecation warnings removed from tests 
-        - get_collection now required, no more implicit $db-><collecion>() method calling 
+    * Deprecation warnings removed from tests
+        - get_collection now required, no more implicit $db-><collecion>() method calling
 
     [ ENHANCEMENTS ]
     * GH#21 - use insert() if PK defined and no _id in doc (dagolden)
@@ -44,7 +52,7 @@
     * EmbeddedDocument incorrect -pk and -engine parameters (allanwhiteford)
 
     [ ENHANCEMENTS ]
-    * hash_on and hash_array Join and Cursor methods. 
+    * hash_on and hash_array Join and Cursor methods.
     * some doc fixes and clarifications.
     * allow Mongoose to disconnect from Mongo (allanwhiteford)
     * use Mongoose Documents in intermediate roles (allanwhiteford)
@@ -53,14 +61,14 @@
     [ DOCS ]
     * #15 fixed Mongoose::Join docs, missing initialization info,
             added test case (kthakore)
-    
+
 0.12 Wed Dec 28 12:30:19 BRST 2011
     [ ENHANCEMENTS ]
     * #16 Mongoose::Document can now be consumed by an intermediate rol (allanwhiteford)
-    
+
     [ BUGS ]
     * #14 after save now is triggered only once for every save (gugod)
-    
+
 0.11 Fri Oct 28 15:36:50 CEST 2011
     [ BUGS ]
     * Problem with calling db method without hostname (allanwhiteford)
@@ -72,8 +80,8 @@
 0.10 Sat May 21 12:15:34 CEST 2011
     [ ENHANCEMENTS ]
 
-    * find_one now takes a single SCALAR arg and turns it into 
-      a MongoDB::OID. No breakage expected. 
+    * find_one now takes a single SCALAR arg and turns it into
+      a MongoDB::OID. No breakage expected.
 
 0.09 Thu Apr 21 21:34:00 CEST 2011
     [ BUGS ]
@@ -89,13 +97,13 @@
     [ API CHANGES ]
 
     * DateTime always stored as a raw type - the MongoDB driver handles
-      it on its own.    
+      it on its own.
 
 0.07 Wed Feb  2 22:42:59 CET 2011
     * Changed Mongoose->db to connect to Mongo only when needed. That 
       makes it easier to initialize Mongoose in a forked server environment.
     * Changed Mongoose->load_schema to handle package namespaces
-      in a flexible way. 
+      in a flexible way.
 
 0.06 Sat Jan 29 14:17:24 CET 2011
     * Fixed error in 'expand' method for ArrayRef with Mongoose::EmbeddedDocument (shonorio)
@@ -118,7 +126,7 @@
     * Raw DateTime recipe
 
 0.01 Tue Aug 24 10:39:39 CEST 2010
-    * more tests 
+    * more tests
 
 0.01_04 Mon Aug 23 15:11:19 CEST 2010
     * cookbook clarifications
