@@ -1,4 +1,11 @@
 {{$NEXT}}
+    [ ENHANCEMENTS ]
+    * Skip unblessing for DateTime::Tiny the same way as for DateTime objects.
+
+    [ DOCS ]
+    * GH#31 - Remove cookbook recomendation to use Raw trait on DateTime fields.
+
+0.31      2015-04-19 03:00:50+02:00 Europe/Madrid
     [ CLEANUP ]
     * Changes file fixed after last release problems
 

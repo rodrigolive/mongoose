@@ -99,38 +99,32 @@ sub _collapse {
 
 sub _unbless {
     my ($self, $obj, $class, @scope ) = @_;
+
     my $ret = $obj;
-    if( $class->can('meta') ) { # only mooses from here on
-        if( $class->does('Mongoose::EmbeddedDocument') ) {
+    if ( $class->can('meta') ) { # only mooses from here on
+        if ( $class->does('Mongoose::EmbeddedDocument') ) {
             $ret = $obj->collapse( @scope, $self ) or next;
         }
-        elsif( $class->does('Mongoose::Document') ) {
-            #say 'saving...: ', join',',$self,$obj,$class,'.',@scope;
-
+        elsif ( $class->does('Mongoose::Document') ) {
             $obj->_save( @scope, $self );
-            my $id = $obj->_id;
-
-            $ret = Tie::IxHash->new( '$ref' => $class->meta->{mongoose_config}->{collection_name}, '$id'=>$id );
+            $ret = Tie::IxHash->new( '$ref' => $class->meta->{mongoose_config}->{collection_name}, '$id' => $obj->_id );
         }
-        elsif( $class->isa('Mongoose::Join') ) {
+        elsif ( $class->isa('Mongoose::Join') ) {
             my @objs = $obj->_save( $self, @scope );
             $ret = \@objs;
         }
-    } elsif( ref $obj eq 'DateTime' ) {
-        # DateTime as raw always
-        $ret = $obj;
-    } else {
-        # non-moose class
-        my $reftype = reftype($obj);
-        if( $reftype eq 'ARRAY' ) {
-            $ret = [ @$obj ];
-        } elsif( $reftype eq 'SCALAR' ) {
-            $ret = $$obj;
-        } elsif( $reftype eq 'HASH' ) {
-            $ret = { %{$obj} };
-        }
     }
-    return $ret;
+    elsif ( ref($obj) =~ /^DateTime(?:\:\:Tiny)?$/ ) { # DateTime as raw always
+        $ret = $obj;
+    }
+    else { # non-moose class
+        my $reftype = reftype($obj);
+        if    ( $reftype eq 'ARRAY' )  { $ret = [@$obj] }
+        elsif ( $reftype eq 'SCALAR' ) { $ret = $$obj }
+        elsif ( $reftype eq 'HASH' )   { $ret = {%$obj} }
+    }
+
+    $ret;
 }
 
 sub expand {

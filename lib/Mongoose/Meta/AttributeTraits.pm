@@ -78,7 +78,7 @@ Makes Mongoose skip collapsing or expanding the attribute.
 
 =head2 Raw
 
-Skips unblessing of an attribute when saving an object. 
+Skips unblessing of an attribute when saving an object.
 
 =cut
 
