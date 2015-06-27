@@ -21,80 +21,95 @@ sub collapse {
         my $ref_id = $duplicate->_id;
         return undef unless defined $class && $ref_id;
         return undef if $self->_id && $self->_id eq $ref_id; # prevent self references?
-        return Tie::IxHash->new( '$ref' => $class->meta->{mongoose_config}->{collection_name}, '$id'=>$ref_id );
+        return Tie::IxHash->new(
+            '$ref' => $class->meta->{mongoose_config}->{collection_name},
+            '$id'  => $ref_id
+        );
     }
+
     my $packed = { %$self }; # cheesely clone the data
     for my $key ( keys %$packed ) {
-        my $attrib = $self->meta->get_attribute($key);
-
         # treat special cases based on Moose attribute defs or traits
-        if( defined $attrib ) {
+        if ( my $attr = $self->meta->get_attribute($key) ) {
             delete $packed->{$key},
-                next if $attrib->does('Mongoose::Meta::Attribute::Trait::DoNotMongoSerialize');
+              next if $attr->does('Mongoose::Meta::Attribute::Trait::DoNotMongoSerialize');
 
-            next if $attrib->does('Mongoose::Meta::Attribute::Trait::Raw');
+            next if $attr->does('Mongoose::Meta::Attribute::Trait::Raw');
 
-            if( my $type = $attrib->type_constraint ) {
-                if( $type->is_a_type_of('FileHandle') ) {
-                    my $grid = $self->db->get_gridfs;
-                    my $id = $grid->put( delete $packed->{$key} );
-                    $packed->{$key} = { '$ref'=>'FileHandle', '$id'=>$id };
+            if ( my $type = $attr->type_constraint ) {
+                if ( $type->is_a_type_of('FileHandle') ) {
+                    $packed->{$key} = {
+                        '$ref' => 'FileHandle',
+                        '$id'  => $self->db->get_gridfs->put( delete $packed->{$key} )
+                    };
+                    next;
                 }
             }
         }
+
         $packed->{$key} = $self->_collapse( $packed->{$key}, @scope );
     }
-    return $packed;
+
+    $packed;
 }
 
 sub _collapse {
     my ($self, $value, @scope ) = @_;
+
     if ( my $class = blessed $value ) {
         if ( ref $value eq 'HASH' && defined ( my $ref_id = $value->{_id} ) ) {
             # it has an id, so join ref it
-            return Tie::IxHash->new( '$ref' => $class->meta->{mongoose_config}{collection_name}, '$id'=>$ref_id );
+            return Tie::IxHash->new(
+                '$ref' => $class->meta->{mongoose_config}{collection_name},
+                '$id'  => $ref_id
+            );
+        }
+        elsif ( ref($value) =~ /^DateTime(?:\:\:Tiny)?$/ ) {
+            # DateTime as raw always
+            return $value;
         }
         else {
             return $self->_unbless( $value, $class, @scope );
         }
     }
     elsif ( ref $value eq 'ARRAY' ) {
-        my @docs;
-        my $aryclass;
+        my ( @arr, $aryclass );
         for my $item ( @$value ) {
             $aryclass ||= blessed( $item );
             if ( $aryclass && $aryclass->does('Mongoose::EmbeddedDocument') ) {
-                push @docs, $item->collapse(@scope, $self);
+                push @arr, $item->collapse(@scope, $self);
             }
             elsif ( $aryclass && $aryclass->does('Mongoose::Document') ) {
                 $item->_save( @scope, $self );
-                my $id = $item->_id;
-                push @docs, Tie::IxHash->new( '$ref' => $aryclass->meta->{mongoose_config}{collection_name}, '$id'=>$id );
+                push @arr, Tie::IxHash->new(
+                    '$ref' => $aryclass->meta->{mongoose_config}{collection_name},
+                    '$id'  => $item->_id
+                );
             }
             else {
-                push @docs, $item;
+                push @arr, $item;
             }
         }
-        return \@docs;
+        return \@arr;
     }
-    elsif( ref $value eq 'HASH' ) {
+    elsif ( ref $value eq 'HASH' ) {
         my $ret = {};
         my @docs;
         for my $key ( keys %$value ) {
-            if( blessed $value->{$key} ) {
+            if ( blessed $value->{$key} ) {
                 $ret->{$key} = $self->_unbless( $value->{$key}, blessed($value->{$key}), @scope );;
-            } elsif( ref $value->{$key} eq 'ARRAY' ) {
-                $ret->{$key} = [ map {
-                    $self->_collapse( $_, @scope ) 
-                  } @{ $value->{$key} } ];
-            } else {
+            }
+            elsif ( ref $value->{$key} eq 'ARRAY' ) {
+                $ret->{$key} = [ map { $self->_collapse( $_, @scope ) } @{ $value->{$key} } ];
+            }
+            else {
                 $ret->{$key} = $value->{$key};
             }
         }
         return $ret;
-    } else {
-        return $value;
     }
+
+    $value;
 }
 
 sub _unbless {
@@ -107,15 +122,15 @@ sub _unbless {
         }
         elsif ( $class->does('Mongoose::Document') ) {
             $obj->_save( @scope, $self );
-            $ret = Tie::IxHash->new( '$ref' => $class->meta->{mongoose_config}->{collection_name}, '$id' => $obj->_id );
+            $ret = Tie::IxHash->new(
+                '$ref' => $class->meta->{mongoose_config}->{collection_name},
+                '$id'  => $obj->_id
+            );
         }
         elsif ( $class->isa('Mongoose::Join') ) {
             my @objs = $obj->_save( $self, @scope );
             $ret = \@objs;
         }
-    }
-    elsif ( ref($obj) =~ /^DateTime(?:\:\:Tiny)?$/ ) { # DateTime as raw always
-        $ret = $obj;
     }
     else { # non-moose class
         my $reftype = reftype($obj);
@@ -130,52 +145,47 @@ sub _unbless {
 sub expand {
     my ($self,$doc,$fields,$scope)=@_;
     my @later;
-    my $config = $self->meta->{mongoose_config};
-    my $coll_name = $config->{collection_name};
+    my $config     = $self->meta->{mongoose_config};
+    my $coll_name  = $config->{collection_name};
     my $class_main = ref $self || $self;
 
     $scope = {} unless ref $scope eq 'HASH';
 
     # check if it's an straight ref
-    if( defined $doc->{'$id'} ) {
+    if ( defined $doc->{'$id'} ) {
         my $ref_id = $doc->{'$id'};
         defined $scope->{$ref_id} and return $scope->{$ref_id};
-        return $class_main->find_one({ _id=>$doc->{'$id'} });
+        return $class_main->find_one({ _id => $doc->{'$id'} });
     }
 
     for my $attr ( $class_main->meta->get_all_attributes ) {
         my $name = $attr->name;
-        next unless exists $doc->{$name};
-        my $type = $attr->type_constraint or next;
-        my $class = $self->_get_blessed_type( $type );
-        $class or next;
 
-        if( defined $attr && $attr->does('Mongoose::Meta::Attribute::Trait::Raw') ) {
-            next;
-        }
-        elsif( $type->is_a_type_of('HashRef') ) {
+        next unless exists $doc->{$name};
+        next if $attr->does('Mongoose::Meta::Attribute::Trait::Raw');
+
+        my $type  = $attr->type_constraint            or next;
+        my $class = $self->_get_blessed_type( $type ) or next;
+
+        if ( $type->is_a_type_of('HashRef') ) {
+            # HashRef[ parameter ]
             if( defined $type->{type_parameter} ) {
-                # HashRef[ parameter ]
                 my $param = $type->{type_parameter};
                 if( my $param_class = $param->{class} ) {
                     for my $key ( keys %{ $doc->{$name} || {} } ) {
                         $doc->{$name}->{$key} = $param_class->expand( $doc->{$name}->{$key}, undef, $scope );
                     }
-                    next;
-                } else {
-                    next;
                 }
-            } else {
-                # nothing to do on pure HASH
-                next;
             }
+
+            next;
         }
-        elsif( $type->is_a_type_of('ArrayRef') ) {
-            if( defined $type->{type_parameter} ) {
+        elsif ( $type->is_a_type_of('ArrayRef') ) {
+            if ( defined $type->{type_parameter} ) {
                 # ArrayRef[ parameter ]
-                my @objs;
                 my $param = $type->{type_parameter};
                 if( my $param_class = $param->{class} ) {
+                    my @objs;
                     for my $item ( @{ $doc->{$name} || [] } ) {
                         if ( $param_class->does('Mongoose::EmbeddedDocument') ) {
                             push @objs, $param_class->expand($item);
@@ -184,22 +194,21 @@ sub expand {
                             my $_id = delete $item->{'$id'};
                             if( my $circ_doc = $scope->{ $_id } ) {
                                 push @objs, bless( $circ_doc , $param_class );
-                            } else {
-                                #$scope->{ $_id } = $doc->{
+                            }
+                            else {
                                 my $ary_obj = $param_class->find_one({ _id=>$_id }, undef, $scope );
                                 push @objs, $ary_obj if defined $ary_obj;
                             }
                         }
                     }
-                } else {
-                    @objs = @{ $doc->{$name} || [] };
+                    $doc->{$name} = \@objs;
                 }
-                $doc->{$name} = \@objs;
-                next;
-            } else {
-                # ARRAY
-                next;
+                else {
+                    $doc->{$name} ||= [];
+                }
             }
+
+            next;
         }
         elsif( $type->is_a_type_of('FileHandle') ) {
             my $file = $self->db->get_gridfs->find_one({ _id=> $doc->{$name}->{'$id'} });
@@ -234,30 +243,30 @@ sub expand {
         }
         else { #non-moose
             my $data = delete $doc->{$name};
-            my $data_type =  ref $data;
-
-            if( !$data_type ) {
-                push @later, { attrib=>$name, value=>$data };
-            } else {
+            if ( ref $data ) {
                 $doc->{$name} = bless $data => $class;
+            }
+            else {
+                push @later, { attrib => $name, value => $data };
             }
         }
     }
 
     return undef unless defined $doc;
-    my $obj = bless $doc => $class_main;
-    for( @later )  {
+    bless $doc => $class_main;
+    for ( @later )  {
         my $attr = $class_main->meta->get_attribute($_->{attrib});
         if( defined $attr ) {
             # works for read-only values
-            $attr->set_value($obj, $_->{value});
+            $attr->set_value($doc, $_->{value});
         } else {
             # sometimes get_attribute is undef, old method instead:
             my $meth = $_->{attrib};
-            $obj->$meth($_->{value});
+            $doc->$meth($_->{value});
         }
     }
-    return $obj;
+
+    $doc;
 }
 
 sub _joint_fields {

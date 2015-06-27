@@ -4,7 +4,7 @@ use Test::More;
 use lib 't/lib';
 use MongooseT; # this connects to the db for me
 my $db = db;
-$db->run_command({ drop=>'person' }); 
+$db->run_command({ drop=>'person' });
 
 {
 	package Person;
@@ -82,7 +82,7 @@ package main;
 
 	my @objs = Person->find->all;
 	is( scalar(@objs), 2, 'all objs cnt ok' );
-	is( ref($objs[1]), 'Person', 'blessed yup' ); 
+	is( ref($objs[1]), 'Person', 'blessed yup' );
 }
 {
 	my $doc = Person->collection->find->next;
@@ -109,10 +109,8 @@ package main;
 	$cur->each(sub{$cnt++});
 	is $cnt,2,'each count';
 
-	# this is failing due to a problem in mongo with sort_by
-	#my $cur = Person->query({}, { sort_by=>{ name=>1 }, limit=>2, skip=>2 });
-	#is $cur->count(), 4, 'cursor total';
+	$cur = Person->query({}, { sort_by=>{ name=>1 }, limit=>2, skip=>2 });
+	is $cur->count(), 4, 'cursor total';
 }
-
 
 done_testing;
