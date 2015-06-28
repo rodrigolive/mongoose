@@ -22,9 +22,9 @@ package main;
 	ok( my $homer = Person->new( name => "Homer Simpson" ), 'Create homer person' );
 	ok( my $id = $homer->save, 'save it' );
 	is( ref($id), 'MongoDB::OID', 'save() returns OID' );
-	is( Person->collection->count, 1, 'collection has one doc');
+	is( Person->count, 1, 'collection has one doc');
 	ok( $homer->delete, 'Delete it' );
-	is( Person->collection->count, 0, 'collection is empty now');
+	is( Person->count, 0, 'collection is empty now');
 }
 
 {
@@ -35,7 +35,7 @@ package main;
 	my $id = $homer->save;
 	is( ref($id), 'MongoDB::OID', 'xref, id defined' );
 
-	is( Person->collection->find->count, 2, '2 Simpsons ok' );
+	is( Person->count, 2, '2 Simpsons ok' );
 
     Person->find->each( sub {
         my $simpson = shift;
@@ -85,7 +85,7 @@ package main;
 	is( ref($objs[1]), 'Person', 'blessed yup' );
 }
 {
-	my $doc = Person->collection->find->next;
+	my $doc = Person->collection->find_one;
 	ok( !defined($doc->{crc}), 'do not serialize' );
 }
 {
@@ -100,7 +100,7 @@ package main;
 	my $limited = join ',',
 		map{ $_->name } Person->query({}, { sort_by=>{ name=>1 }, limit=>2, skip=>2 })->all;
 	is $limited, 'cc,dd', 'limited ok';
-	is(Person->collection->count(), 4, 'count totals');
+	is(Person->count(), 4, 'count totals');
 
 	my $cur = Person->query({}, { limit=>2, skip=>2 });
 	is $cur->count(), 4, 'cursor total';
