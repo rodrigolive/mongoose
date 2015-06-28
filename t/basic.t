@@ -113,4 +113,11 @@ package main;
 	is $cur->count(), 4, 'cursor total';
 }
 
+{
+	is( Person->count, 4, 'Count is ok before deleting' );
+    ok( my $p = Person->new( name => 'Ambar' ), 'Build object' );
+    ok( !$p->delete, 'Delete object before saving it does nothing' );
+	is( Person->count, 4, 'Count is still ok' );
+}
+
 done_testing;

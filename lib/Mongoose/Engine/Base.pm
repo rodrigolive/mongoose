@@ -355,12 +355,15 @@ sub _get_blessed_type {
 
 # shallow delete
 sub delete {
-    my ($self, $args )=@_;
-    return $self->collection->remove($args) if ref $args;
-    my $id = $self->_id;
-    return $self->collection->remove({ _id => $id }) if ref $id;
-    my $pk = $self->_primary_key_from_hash();
-    return $self->collection->remove($pk) if ref $pk;
+    my ( $self, $args ) = @_;
+
+    if ( ref $args ) {
+        return $self->collection->remove($args);
+    }
+    elsif ( my $pk = $self->_primary_key_query ) {
+        return $self->collection->remove($pk);
+    }
+
     return undef;
 }
 
@@ -408,10 +411,12 @@ sub collection {
     }
 }
 
-sub _primary_key_from_hash {
-    my ($self,$hash)=@_;
-    my @keys = @{ $self->meta->{mongoose_config}->{pk} || [] };
-    return { map { $_ => $self->{$_} } @keys };
+sub _primary_key_query {
+    my ( $self, $hash ) = @_;
+    my @keys  = @{ $self->meta->{mongoose_config}->{pk} || ['_id'] };
+    my @pairs = map { $_ => $self->{$_} } grep { $self->{$_} } @keys;
+    # Query need to have all pk's
+    return {@pairs} if @pairs == @keys * 2;
 }
 
 sub _collection_name {
@@ -454,6 +459,8 @@ sub find_one {
     undef;
 }
 
+sub count { shift->collection->count(@_) }
+
 =head1 NAME
 
 Mongoose::Engine::Base - heavy lifting done here
@@ -492,6 +499,10 @@ your package.
 Just like L<MongoDB::Collection/query>, but returns
 a L<Mongoose::Cursor> of documents blessed into
 your package.
+
+=head2 count
+
+Just like L<MongoDB::Collection/count>.
 
 =head2 delete
 
