@@ -1,6 +1,14 @@
 {{$NEXT}}
+    [ BUGS ]
+    * GH#40 - Prevent unsaved objects from removing all docs when calling delete().
+
     [ ENHANCEMENTS ]
     * Skip unblessing for DateTime::Tiny the same way as for DateTime objects.
+    * GH#32 - Ensure numbers are stored as numbers for Num based types.
+
+    [ CLEANUP ]
+    * Cursor wrapper cleanup
+    * Engine collapse/expand small refactor
 
     [ DOCS ]
     * GH#31 - Remove cookbook recomendation to use Raw trait on DateTime fields.
