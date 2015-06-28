@@ -37,7 +37,11 @@ sub collapse {
             next if $attr->does('Mongoose::Meta::Attribute::Trait::Raw');
 
             if ( my $type = $attr->type_constraint ) {
-                if ( $type->is_a_type_of('FileHandle') ) {
+                if ( $type->is_a_type_of('Num') ) {
+                    $packed->{$key} += 0; # Ensure it's saved as a number
+                    next;
+                }
+                elsif ( $type->is_a_type_of('FileHandle') ) {
                     $packed->{$key} = {
                         '$ref' => 'FileHandle',
                         '$id'  => $self->db->get_gridfs->put( delete $packed->{$key} )
