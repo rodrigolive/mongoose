@@ -1,4 +1,6 @@
 {{$NEXT}}
+
+0.32      2015-06-28 17:04:24+02:00 Europe/Madrid
     [ BUGS ]
     * GH#40 - Prevent unsaved objects from removing all docs when calling delete().
 
