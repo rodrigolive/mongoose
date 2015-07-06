@@ -98,7 +98,6 @@ sub _collapse {
     }
     elsif ( ref $value eq 'HASH' ) {
         my $ret = {};
-        my @docs;
         for my $key ( keys %$value ) {
             if ( blessed $value->{$key} ) {
                 $ret->{$key} = $self->_unbless( $value->{$key}, blessed($value->{$key}), @scope );;
