@@ -59,10 +59,10 @@ coerce 'Mongoose::CodeRef'
             my $template = $naming_template{ $_ }
                 or die "naming template '$_' not found";
             # add filter to list
-            push @filters, sub { 
+            push @filters, sub {
                 my $name = shift;
                 return $template->($name);
-            } 
+            }
         }
         # now, accumulate all filters
         return sub {

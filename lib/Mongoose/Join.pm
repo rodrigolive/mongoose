@@ -62,7 +62,7 @@ sub remove {
     if( defined ( my $children = $self->children ) ) {
         for my $obj (@objs) {
             my $id = $obj->{_id};
-            next unless defined $id; 
+            next unless defined $id;
             $self->children([
                 grep { $_->FETCH('$id') ne $id } _tie_refs( @{$children} )
             ]);

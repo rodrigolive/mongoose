@@ -7,7 +7,7 @@ extends 'MongoDB::GridFS::File';
 sub delete {
     my $self = shift;
     my $id = $self->info->{ _id };
-    return $self->_grid->delete( $id ); 
+    return $self->_grid->delete( $id );
 }
 
 *drop = \&delete;
