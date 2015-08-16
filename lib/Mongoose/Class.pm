@@ -9,18 +9,15 @@ Moose::Exporter->setup_import_methods(
 );
 
 sub has_many {
-    my $meta = shift;
-    my $name = shift;
-    my %options;
-    if   ( scalar @_ == 1 ) { $options{isa} = shift; }
-    else                    { %options      = @_; }
+    my ( $meta, $name ) = ( shift, shift );
+    my %options         = @_ == 1 ? ( isa => shift ) : @_;
+    my $isa_original    = $options{isa};
 
-    my $isa_original = $options{isa};
-    $options{isa} = 'Mongoose::Join[' . $options{isa} . ']';
-    $options{default} ||=
-      sub { Mongoose::Join->new( with_class => "$isa_original" ) };
-    $options{is} ||= 'ro';
-    $meta->add_attribute( $name, %options, );
+    $options{isa}       = 'Mongoose::Join[' . $options{isa} . ']';
+    $options{default} ||= sub{ Mongoose::Join->new( with_class => "$isa_original" ) };
+    $options{is}      ||= 'ro';
+
+    $meta->add_attribute( $name, %options );
 }
 
 sub has_one {

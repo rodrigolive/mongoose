@@ -6,7 +6,6 @@ use Scalar::Util qw/refaddr reftype/;
 use Carp;
 use List::Util qw/first/;
 use Mongoose::Cursor; #initializes moose
-use Tie::IxHash;
 
 with 'Mongoose::Role::Collapser';
 with 'Mongoose::Role::Expander';
@@ -21,9 +20,9 @@ sub collapse {
         my $ref_id = $duplicate->_id;
         return undef unless defined $class && $ref_id;
         return undef if $self->_id && $self->_id eq $ref_id; # prevent self references?
-        return Tie::IxHash->new(
-            '$ref' => $class->meta->{mongoose_config}->{collection_name},
-            '$id'  => $ref_id
+        return MongoDB::DBRef->new(
+            ref => $class->meta->{mongoose_config}{collection_name},
+            id  => $ref_id
         );
     }
 
@@ -63,9 +62,9 @@ sub _collapse {
     if ( my $class = blessed $value ) {
         if ( ref $value eq 'HASH' && defined ( my $ref_id = $value->{_id} ) ) {
             # it has an id, so join ref it
-            return Tie::IxHash->new(
-                '$ref' => $class->meta->{mongoose_config}{collection_name},
-                '$id'  => $ref_id
+            return MongoDB::DBRef->new(
+                ref => $class->meta->{mongoose_config}{collection_name},
+                id  => $ref_id
             );
         }
         elsif ( ref($value) =~ /^DateTime(?:\:\:Tiny)?$/ ) {
@@ -85,9 +84,9 @@ sub _collapse {
             }
             elsif ( $aryclass && $aryclass->does('Mongoose::Document') ) {
                 $item->_save( @scope, $self );
-                push @arr, Tie::IxHash->new(
-                    '$ref' => $aryclass->meta->{mongoose_config}{collection_name},
-                    '$id'  => $item->_id
+                push @arr, MongoDB::DBRef->new(
+                    ref => $aryclass->meta->{mongoose_config}{collection_name},
+                    id  => $item->_id
                 );
             }
             else {
@@ -126,9 +125,9 @@ sub _unbless {
         }
         elsif ( $class->does('Mongoose::Document') ) {
             $obj->_save( @scope, $self );
-            $ret = Tie::IxHash->new(
-                '$ref' => $class->meta->{mongoose_config}->{collection_name},
-                '$id'  => $obj->_id
+            $ret = MongoDB::DBRef->new(
+                ref => $class->meta->{mongoose_config}->{collection_name},
+                id  => $obj->_id
             );
         }
         elsif ( $class->isa('Mongoose::Join') ) {
@@ -156,10 +155,10 @@ sub expand {
     $scope = {} unless ref $scope eq 'HASH';
 
     # check if it's an straight ref
-    if ( defined $doc->{'$id'} ) {
-        my $ref_id = $doc->{'$id'};
-        defined $scope->{$ref_id} and return $scope->{$ref_id};
-        return $class_main->find_one({ _id => $doc->{'$id'} });
+    if ( ref $doc eq 'MongoDB::DBRef' ) {
+        return $scope->{$doc->id} if defined $scope->{$doc->id};
+        return $class_main->find_one({ _id => $doc->id });
+        #TODO: set at $scope?
     }
 
     for my $attr ( $class_main->meta->get_all_attributes ) {
@@ -177,7 +176,7 @@ sub expand {
                 my $param = $type->{type_parameter};
                 if( my $param_class = $param->{class} ) {
                     for my $key ( keys %{ $doc->{$name} || {} } ) {
-                        $doc->{$name}->{$key} = $param_class->expand( $doc->{$name}->{$key}, undef, $scope );
+                        $doc->{$name}{$key} = $param_class->expand( $doc->{$name}{$key}, undef, $scope );
                     }
                 }
             }
@@ -191,17 +190,19 @@ sub expand {
                 if( my $param_class = $param->{class} ) {
                     my @objs;
                     for my $item ( @{ $doc->{$name} || [] } ) {
+                        #TODO: why not to call myself always like:
+                        #push @obj, $param_class->expand( $item, undef, $scope );
                         if ( $param_class->does('Mongoose::EmbeddedDocument') ) {
                             push @objs, $param_class->expand($item);
                         }
                         elsif ( $param_class->does('Mongoose::Document') ) {
-                            my $_id = delete $item->{'$id'};
-                            if( my $circ_doc = $scope->{ $_id } ) {
+                            if( my $circ_doc = $scope->{ $item->id } ) {
                                 push @objs, bless( $circ_doc , $param_class );
                             }
                             else {
-                                my $ary_obj = $param_class->find_one({ _id=>$_id }, undef, $scope );
-                                push @objs, $ary_obj if defined $ary_obj;
+                                if ( my $obj = $param_class->find_one({ _id => $item->id }, undef, $scope ) ) {
+                                    push @objs, $obj;
+                                }
                             }
                         }
                     }
@@ -223,15 +224,17 @@ sub expand {
 
         if( $class->can('meta') ) { # moose subobject
 
-            if( $class->does('Mongoose::EmbeddedDocument') ) {
+            if ( $class->does('Mongoose::EmbeddedDocument') ) {
                 $doc->{$name} = bless $doc->{$name}, $class;
             }
-            elsif( $class->does('Mongoose::Document') ) {
-                if( my $_id = delete $doc->{$name}->{'$id'} ) {
-                    if( my $circ_doc = $scope->{"$_id"} ) {
+            elsif ( $class->does('Mongoose::Document') ) {
+                if ( ref $doc->{$name} eq 'MongoDB::DBRef' ) {
+                    my $_id = $doc->{$name}->id;
+                    if ( my $circ_doc = $scope->{"$_id"} ) {
                         $doc->{$name} = bless( $circ_doc , $class );
                         $scope->{ "$circ_doc->{_id}" } = $doc->{$name};
-                    } else {
+                    }
+                    else {
                         $scope->{ "$doc->{_id}" } = $doc;
                         $doc->{$name} = $class->find_one({ _id=>$_id }, undef, $scope );
                     }

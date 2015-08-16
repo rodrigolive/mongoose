@@ -1,13 +1,12 @@
 package Mongoose::File;
-
 use Moose;
-
 extends 'MongoDB::GridFS::File';
 
 sub delete {
     my $self = shift;
-    my $id = $self->info->{ _id };
-    return $self->_grid->delete( $id ); 
+    my $id = $self->info->{_id};
+    $self->_grid->delete($id); # This will die on error
+    $id;
 }
 
 *drop = \&delete;
@@ -22,7 +21,7 @@ This module is automatically used when your class
 has C<FileHandle> type attributes.
 
 It extends L<MongoDB::GridFS::File> and adds a
-few convenience methods to it. 
+few convenience methods to it.
 
 =head1 METHODS
 

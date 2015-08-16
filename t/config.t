@@ -21,11 +21,9 @@ my $db = db;
 
 my $homer = Test::Person->new( name => "Homer" );
 
-$db->run_command({ drop=>'people' }); 
-$db->run_command({ drop=>'person' }); 
-$db->run_command({ drop=>'simpsons' }); 
-$db->run_command({ drop=>'FOOBAR' }); 
-$db->run_command({ drop=>'FOOPKG' }); 
+for my $coll (qw/ people person simpsons FOOBAR FOOPKG /) {
+    eval{ $db->run_command({ drop => $coll }) };
+}
 
 {
 	$homer->save;

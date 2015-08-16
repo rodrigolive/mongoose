@@ -3,13 +3,12 @@ use warnings;
 use Test::More;
 
 use lib 't/lib';
-use MongooseT; 
+use MongooseT;
 my $db = db;
 
-$db->run_command({ drop=>'artist' }); 
-$db->run_command({ drop=>'cd' }); 
-$db->run_command({ drop=>'track' }); 
-$db->run_command({ drop=>'musician' }); 
+for my $coll (qw/ artist cd track musician /) {
+    eval{ $db->run_command({ drop => $coll }) };
+}
 
 package Artist;
 use Mongoose::Class; with 'Mongoose::Document';

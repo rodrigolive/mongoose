@@ -6,7 +6,7 @@ use DateTime;
 use lib 't/lib';
 use MongooseT; # this connects to the db for me
 my $db = db;
-$db->run_command({ drop=>'person' });
+eval{ $db->run_command({ drop=>'person' }) };
 
 {
     package Person;

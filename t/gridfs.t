@@ -6,7 +6,7 @@ use MongooseT; # this connects to the db for me
 use MongoDB::GridFS;
 
 my $db = db;
-$db->run_command({ drop=>'thing' }); 
+eval{ $db->run_command({ drop => 'thing' }) };
 
 {
     package Thing;

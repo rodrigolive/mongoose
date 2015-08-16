@@ -3,11 +3,12 @@ use warnings;
 use Test::More;
 
 use lib 't/lib';
-use MongooseT; 
+use MongooseT;
 my $db = db;
 
-$db->run_command({ drop=>'bar' }); 
-$db->run_command({ drop=>'foo' }); 
+for my $coll (qw/ bar foo /) {
+    eval{ $db->run_command({ drop => $coll }) };
+}
 
 # from RT Bug #81725
 package Bar;

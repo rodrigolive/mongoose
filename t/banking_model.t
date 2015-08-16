@@ -47,8 +47,9 @@ use lib 't/lib';
 use MongooseT; # connects to the db for me
 
 my $db = db;
-$db->run_command({  'drop' => 'bank_account'  }); 
-$db->run_command({  'drop' => 'checking_account'  }); 
+for my $coll (qw/ bank_account checking_account /) {
+    eval{ $db->run_command({ drop => $coll }) };
+}
 
 {
 	my $savings_account = BankAccount->new( balance => 250 );
@@ -75,10 +76,10 @@ $db->run_command({  'drop' => 'checking_account'  });
 }
 {
 	my $coll = CheckingAccount->collection;
-	my $account = $coll->find->next;
-	my $ba = $account->{overdraft_account};
-	is( ref($ba->{'$id'}), 'MongoDB::OID', 'foreign key stored' );
-	ok( $ba->{'$ref'}, 'make sure its foreign' );
+	ok( my $account = $coll->find->next, 'Get from collection' );
+	isa_ok( my $ba = $account->{overdraft_account}, 'MongoDB::DBRef' );
+	is( ref($ba->id), 'MongoDB::OID', 'foreign key stored' );
+	is( $ba->ref, 'bank_account', 'make sure its foreign' );
 }
 
 done_testing;

@@ -3,11 +3,11 @@ use warnings;
 use Test::More;
 
 use lib 't/lib';
-use MongooseT; 
+use MongooseT;
 my $db = db;
 
-$db->run_command({ drop=>'bar' }); 
-$db->run_command({ drop=>'foo' }); 
+eval { $db->run_command({ drop=>'bar' }) };
+eval { $db->run_command({ drop=>'foo' }) };
 
 package Bar;
 use Moose;

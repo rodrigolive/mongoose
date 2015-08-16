@@ -119,9 +119,10 @@ sub connect {
     my ( $self, $name ) = @_;
     $name ||= 'default';
     my %p   = %{ $self->_args->{db}{$name} };
-    my $data_db_name = $p{db_name};
-    my $auth_db_name = delete $p{auth_db_name} || $data_db_name;
-    $p{db_name} = $auth_db_name;    # in MongoDB::Client db_name is auth db, not necessarily data db
+    my $data_db_name = delete $p{db_name};
+    my $auth_db_name = delete $p{auth_db_name};
+    # in MongoDB::Client db_name is auth db, not necessarily data db
+    #$p{db_name} = $auth_db_name;
 
     $self->_client->{$name} = MongoDB::MongoClient->new(%p)
       unless ref $self->_client->{$name};

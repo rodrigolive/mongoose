@@ -6,9 +6,9 @@ use lib 't/lib';
 use MongooseT; # this connects to the db for me
 my $db = db;
 
-$db->run_command({ drop=>'employee' }); 
-$db->run_command({ drop=>'department' }); 
-$db->run_command({ drop=>'person' }); 
+for my $coll (qw/ employee department person /) {
+    eval{ $db->run_command({ drop => $coll }) };
+}
 
 {
 	package Department;
@@ -16,7 +16,7 @@ $db->run_command({ drop=>'person' });
 	with 'Mongoose::Document';
     has 'code' => ( is=>'rw', isa=>'Str');
     #has 'locs' => ( is=>'rw', isa=>'ArrayRef', metaclass=>'Array', default=>sub{[]} );
-    has_many 'employees' => ( is=>'rw', isa=>'Employee',  );
+    has_many 'employees' => ( is=>'rw', isa=>'Employee' );
 }
 {
 	package Employee;
@@ -152,18 +152,17 @@ package main;
 	use Mongoose::Class;
 	with 'Mongoose::Document';
 	belongs_to cat => 'Cat'; # funky circularity
-
 }
 {
 	package Mouse;
 	use Mongoose::Class;
 	with 'Mongoose::Document';
-
 }
 {
 	Cat->collection->drop;
 	Mouse->collection->drop;
 	Ball->collection->drop;
+    diag('ok');
 
 	my $cat = Cat->new();
 	$cat->save;

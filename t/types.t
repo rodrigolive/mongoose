@@ -10,21 +10,21 @@ use Test::More;
 	package Thing;
 	use Mongoose::Class;
 	with 'Mongoose::Document' => { -pk => ['name'] };
-	has_one 'name'  => 'Str';
-	has_one 'age'   => 'Int';
-	has_one 'alive' => 'Bool';
+	has_one 'name'       => 'Str';
+	has_one 'age'        => 'Int';
+	has_one 'alive'      => 'Bool';
 	has_one 'alive_more' => 'ArrayRef';
-	has_one 'hh'  => 'HashRef[ArrayRef]';
-	has_one 'tt'  => 'HashRef[Person]';
-    has_one 'arr' => 'ArrayRef[Person]';
-    has_one 'arr_int' => 'ArrayRef[Int]';
+	has_one 'hh'         => 'HashRef[ArrayRef]';
+	has_one 'tt'         => 'HashRef[Person]';
+    has_one 'arr'        => 'ArrayRef[Person]';
+    has_one 'arr_int'    => 'ArrayRef[Int]';
 	has 'cc' => ( is=>'rw', isa=>'CodeRef', traits=>['DoNotMongoSerialize'] );
 
     use Data::Dump qw/pp/;
 	around 'collapse' => sub {
 		my ($orig, $self, @args ) = @_;
 		my $ret = $orig->( $self, @args );
-        #print(pp $ret);
+        #        print(pp $ret);
 		return $ret;
 	};
 }
@@ -37,8 +37,8 @@ use Test::More;
 	Thing->collection->drop;
 	my $t = Thing->new(
         alive_more=>[55],
-        tt=>{ aa=>Person->new(name=>'Bobby') },
-		hh=>{ aa=>[11,22,33] },
+        tt=>{ aa=> Person->new(name=>'Bobby') },
+		hh=>{ aa=> [11,22,33] },
         arr => [ Person->new(name=>'Karen' ) ],
         arr_int => [ 10, 11, 23 ],
         name    => 'Jack',

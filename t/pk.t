@@ -17,7 +17,7 @@ use lib 't/lib';
 use MongooseT; # this connects to the db for me
 my $db = db;
 
-$db->run_command({ drop=>'bank_account' });
+eval{ $db->run_command({ drop=>'bank_account' }) };
 BankAccount->collection->ensure_index( { "drivers_license" => 1 }, { unique => 1 } );
 
 {

@@ -17,8 +17,8 @@ my $db = db;
 
 my $homer = Test::Person->new( name => "Homer" );
 
-$db->run_command({ drop=>'people' }); 
-$db->run_command({ drop=>'simpsons' }); 
+eval { $db->run_command({ drop=>'people' }) };
+eval { $db->run_command({ drop=>'simpsons' }) };
 
 #Mongoose->naming( sub{ uc(shift) } );
 {
