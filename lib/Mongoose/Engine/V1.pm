@@ -1,10 +1,10 @@
-package Mongoose::Engine::Base;
-
+package Mongoose::Engine::V1;
 use Moose::Role;
-use Params::Coerce;
-use Scalar::Util qw/refaddr reftype/;
+
 use Carp;
+use Scalar::Util qw/refaddr reftype/;
 use List::Util qw/first/;
+
 use Mongoose::Cursor; #initializes moose
 
 with 'Mongoose::Role::Collapser';
@@ -470,7 +470,7 @@ sub count { shift->collection->count(@_) }
 
 =head1 NAME
 
-Mongoose::Engine::Base - heavy lifting done here
+Mongoose::Engine::V1 - serialization for MongoDBv1 driver
 
 =head1 DESCRIPTION
 

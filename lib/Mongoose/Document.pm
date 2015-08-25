@@ -51,7 +51,7 @@ role {
     };
 
     # load the selected engine
-    my $engine = $p->{'-engine'} || 'Mongoose::Engine::Base';
+    my $engine = $p->{'-engine'} || 'Mongoose::Engine::V1';
     Class::Load::load_class($engine);
 
     # import the engine role into this class
@@ -66,7 +66,6 @@ role {
         collection_name => $collection_name,
     };
 
-    #method "_mxm_config" => sub{ $config };
     $class_name->meta->{mongoose_config} = $config;
 
     # aliasing

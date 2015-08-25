@@ -15,9 +15,9 @@ Mongoose::Role::Engine
 
 =head1 DESCRIPTION
 
-The engine role. No moving parts. Required by any engine wannabees. 
+The engine role. No moving parts. Required by any engine wannabees.
 
-=cut 
+=cut
 
 1;
 

@@ -1,13 +1,13 @@
 package Mongoose;
 
 use MongoDB;
-use Class::MOP;
 use MooseX::Singleton;
 use Mongoose::Join;
 use Mongoose::File;
 use Mongoose::Meta::AttributeTraits;
-use Moose::Util::TypeConstraints;
 use Carp;
+
+with 'Mongoose::Role::Naming';
 
 has '_db' => (
     is      => 'rw',
@@ -27,56 +27,6 @@ has '_args' => (
     is      => 'rw',
     isa     => 'HashRef',
     default => sub{{}}
-);
-
-# naming templates
-my %naming_template = (
-    same       => sub { $_[0] },
-    short      => sub { $_[0] =~ s{^.*\:\:(.*?)$}{$1}g; $_[0] },
-    plural     => sub { $_[0] =~ s{^.*\:\:(.*?)$}{$1}g; lc "$_[0]s" },
-    decamel    => sub { $_[0] =~ s{([a-z])([A-Z])}{$1_$2}g; lc $_[0] },
-    undercolon => sub { $_[0] =~ s{\:\:}{_}g; lc $_[0] },
-    lower      => sub { lc $_[0] },
-    lc         => sub { lc $_[0] },
-    upper      => sub { uc $_[0] },
-    uc         => sub { uc $_[0] },
-    default => sub {
-        $_[0] =~ s{([a-z])([A-Z])}{$1_$2}g;
-        $_[0] =~ s{\:\:}{_}g;
-        lc $_[0];
-    }
-);
-subtype 'Mongoose::CodeRef' => as 'CodeRef';
-coerce 'Mongoose::CodeRef'
-    => from 'Str' => via {
-        my $template = $naming_template{ $_[0] }
-            or die "naming template '$_[0]' not found";
-        return $template;
-    }
-    => from 'ArrayRef' => via {
-        my @filters;
-        for( @{ $_[0] } ) {
-            my $template = $naming_template{ $_ }
-                or die "naming template '$_' not found";
-            # add filter to list
-            push @filters, sub { 
-                my $name = shift;
-                return $template->($name);
-            } 
-        }
-        # now, accumulate all filters
-        return sub {
-            my $name = shift;
-            map { $name = $_->($name) } @filters;
-            return $name;
-        }
-    };
-
-has 'naming' => (
-    is      => 'rw',
-    isa     => 'Mongoose::CodeRef',
-    coerce  => 1,
-    default => sub {$naming_template{default} }
 );
 
 sub db {
@@ -120,9 +70,6 @@ sub connect {
     $name ||= 'default';
     my %p   = %{ $self->_args->{db}{$name} };
     my $data_db_name = delete $p{db_name};
-    my $auth_db_name = delete $p{auth_db_name};
-    # in MongoDB::Client db_name is auth db, not necessarily data db
-    #$p{db_name} = $auth_db_name;
 
     $self->_client->{$name} = MongoDB::MongoClient->new(%p)
       unless ref $self->_client->{$name};
@@ -194,9 +141,9 @@ power of MongoDB within your Moose classes, without sacrificing MongoDB's
 power, flexibility and speed.
 
 It's loosely inspired by Ruby's MongoMapper,
-which is in turn loosely based on the ActiveRecord pattern. 
+which is in turn loosely based on the ActiveRecord pattern.
 
-Start by reading the introduction L<Mongoose::Intro>. 
+Start by reading the introduction L<Mongoose::Intro>.
 
 Or proceed directly to the L<Mongoose::Cookbook> for many day-to-day recipes.
 
@@ -212,22 +159,19 @@ The connection defaults to whatever MongoDB defaults are
 (typically localhost:27017).
 
 For more control over the connection, C<db> takes the same parameters as
-L<MongoDB::MongoClient>, plus C<auth_db_name>. 
+L<MongoDB::MongoClient>.
 
     my $db = Mongoose->db(
-        host          => 'mongodb://somehost:27017',
-        query_timeout => 60,
-        db_name       => 'mydb',
-        auth_db_name  => 'admin',
-        username      => 'myuser',
-        password      => 'mypass',
+        host           => 'mongodb://somehost:27017',
+        read_pref_mode => 'secondaryPreferred',
+        db_name        => 'mydb',
+        username       => 'myuser',
+        password       => 'mypass',
+        ssl            => 1
     );
 
-This will, in turn, instantiate a L<MongoDB::MongoClient> instance after
-authenticating user vs C<admin> with all given parameters, and return
+This will, in turn, instantiate a L<MongoDB::MongoClient> and return
 a L<MongoDB::Database> object for C<mydb>.
-
-C<auth_db_name> defaults to the value of C<db_name>.
 
 B<Important>: Mongoose will always defer connecting to Mongo
 until the last possible moment. This is done to prevent
@@ -254,13 +198,13 @@ by calling db() several times:
 
     # Default host/database (connect now!)
     my $db = Mongoose->db( 'mydb' );
-    
+
     # Other database for some class (defer connection)
     Mongoose->db( db_name => 'my_other_db', class => 'Log' );
 
     # Other database on other host for several classes
-    Mongoose->db( 
-        db_name => 'my_remote_db', 
+    Mongoose->db(
+        db_name => 'my_remote_db',
         host    => 'mongodb://192.168.1.23:27017',
         class   => [qw/ Author Post /]
     );
@@ -297,48 +241,6 @@ Will shorten the module name to it's last bit:
 
     Author->new( ... );
 
-=head2 naming 
-
-By default, Mongoose composes the Mongo collection name from your package name 
-by replacing double-colon C<::> with underscores C<_>, separating camel-case,
-such as C<aB> with C<a_b> and uppercase with lowercase letters. 
-
-This method let's you change this behaviour, by setting
-the collection naming routine with a C<closure>.
-
-The closure receives the package name as first parameter and 
-should return the collection name. 
-
-    # let me change the naming strategy
-    #  for my mongo collections
-    #  to plain lowercase
-
-    Mongoose->naming( sub { lc(shift) } );
-
-    # if you prefer, use a predefined naming template
-
-    Mongoose->naming( 'plural' );  # my favorite
-
-    # or combine them 
-
-    Mongoose->naming( ['decamel','plural' ] );  # same as 'shorties'
-
-Here are the templates available:
-
-     template     | package name             |  collection
-    --------------+--------------------------+---------------------------
-     short        | MyApp::Schema::FooBar    |  foobar
-     plural       | MyApp::Schema::FooBar    |  foobars
-     decamel      | MyApp::Schema::FooBar    |  foo_bar
-     lower        | MyApp::Schema::FooBar    |  myapp::schema::author
-     upper        | MyApp::Schema::FooBar    |  MYAPP::SCHEMA::AUTHOR
-     undercolon   | MyApp::Schema::FooBar    |  myapp_schema_foobar
-     default      | MyApp::Schema::FooBar    |  myapp_schema_foo_bar
-     none         | MyApp::Schema::Author    |  MyApp::Schema::Author
-
-BTW, you can just use the full package name (template C<none>) as a collection 
-in Mongo, as it won't complain about colons in the collection name. 
-
 =head2 connection
 
 Sets/returns the current connection object, of class L<MongoDB::MongoClient>.
@@ -347,7 +249,16 @@ Defaults to whatever MongoDB defaults.
 
 =head2 disconnect
 
-Unsets the Mongoose connection handler. 
+Unsets the Mongoose connection handler.
+
+=head1 COLLECTION NAMING
+
+By default, Mongoose composes the Mongo collection name from your package name
+by replacing double-colon C<::> with underscores C<_>, separating camel-case,
+such as C<aB> with C<a_b> and uppercase with lowercase letters.
+
+This behaviour can be changed by choosing other named method or by setting
+the collection naming routine with a C<closure> as exlained in L<Mongoose::Role::Naming>.
 
 =head1 REPOSITORY
 
@@ -355,7 +266,7 @@ Fork me on github: L<http://github.com/rodrigolive/mongoose>
 
 =head1 BUGS
 
-This is a WIP, now *beta* quality software. 
+This is a WIP, now *beta* quality software.
 
 Report bugs via Github Issue reporting L<https://github.com/rodrigolive/mongoose/issues>.
 Test cases highly desired and appreciated.
