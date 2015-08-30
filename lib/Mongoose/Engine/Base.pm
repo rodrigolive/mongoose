@@ -7,6 +7,7 @@ use Carp;
 use List::Util qw/first/;
 use Mongoose::Cursor; #initializes moose
 use Tie::IxHash;
+use boolean qw( boolean );
 
 with 'Mongoose::Role::Collapser';
 with 'Mongoose::Role::Expander';
@@ -39,6 +40,13 @@ sub collapse {
             if ( my $type = $attr->type_constraint ) {
                 if ( $type->is_a_type_of('Num') ) {
                     $packed->{$key} += 0; # Ensure it's saved as a number
+                    next;
+                }
+                elsif ( $type->is_a_type_of('Bool') ) {
+                    # Ensure it's saved as a Boolean
+                    $packed->{$key} = ref( $packed->{$key} ) eq 'boolean' ?
+                        $packed->{$key} :
+                        boolean( $packed->{$key} );
                     next;
                 }
                 elsif ( $type->is_a_type_of('FileHandle') ) {
@@ -246,12 +254,14 @@ sub expand {
             }
         }
         else { #non-moose
-            my $data = delete $doc->{$name};
-            if ( ref $data ) {
-                $doc->{$name} = bless $data => $class;
-            }
-            else {
-                push @later, { attrib => $name, value => $data };
+            unless ( ref $doc->{$name} && ref $doc->{$name} eq 'boolean' ) {
+                my $data = delete $doc->{$name};
+                if ( ref $data ) {
+                    $doc->{$name} = bless $data => $class;
+                }
+                else {
+                    push @later, { attrib => $name, value => $data };
+                }
             }
         }
     }
@@ -540,4 +550,3 @@ foreign object ids.
 =cut
 
 1;
-
