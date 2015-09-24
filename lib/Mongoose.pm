@@ -151,11 +151,20 @@ Start by reading the introduction L<Mongoose::Intro>.
 
 Or proceed directly to the L<Mongoose::Cookbook> for many day-to-day recipes.
 
+=head1 WARNING
+
+Since version 0.33 Mongoose support the new L<MongoDB> driver v1.x.x but it still requires
+the old version 0.708.x which will be recomended for some more releases while I keep working
+on the internals. On my initial testing Mongoose is notably faster when running on the old
+version of the driver.
+
+Please let me know if you find anything strange using this new driver.
+
 =head1 METHODS
 
 =head2 db
 
-Sets the current MongoDB connection and/or db name. 
+Sets the current MongoDB connection and/or db name.
 
     Mongoose->db( 'mydb' );
 
