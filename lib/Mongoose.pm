@@ -1,11 +1,10 @@
 package Mongoose;
 
-use MongoDB;
 use MooseX::Singleton;
-use Mongoose::Join;
-use Mongoose::File;
-use Mongoose::Meta::AttributeTraits;
+use Class::MOP;
+use MongoDB;
 use Carp;
+use version;
 
 with 'Mongoose::Role::Naming';
 
@@ -27,6 +26,11 @@ has '_args' => (
     is      => 'rw',
     isa     => 'HashRef',
     default => sub{{}}
+);
+
+has _mongodb_v1 => (
+    is      => 'ro',
+    default => sub { version->parse($MongoDB::VERSION) > '0.900' }
 );
 
 sub db {

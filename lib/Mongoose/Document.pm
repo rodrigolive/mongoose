@@ -2,6 +2,8 @@ package Mongoose::Document;
 
 use strict;
 use Mongoose;
+use Mongoose::Join;
+use Mongoose::File;
 use MooseX::Role::Parameterized;
 use Mongoose::Meta::AttributeTraits;
 use Class::Load;
@@ -51,7 +53,7 @@ role {
     };
 
     # load the selected engine
-    my $engine = $p->{'-engine'} || 'Mongoose::Engine::V1';
+    my $engine = $p->{'-engine'} || 'Mongoose::Engine';
     Class::Load::load_class($engine);
 
     # import the engine role into this class

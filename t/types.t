@@ -20,11 +20,9 @@ use Test::More;
     has_one 'arr_int'    => 'ArrayRef[Int]';
 	has 'cc' => ( is=>'rw', isa=>'CodeRef', traits=>['DoNotMongoSerialize'] );
 
-    use Data::Dump qw/pp/;
 	around 'collapse' => sub {
 		my ($orig, $self, @args ) = @_;
 		my $ret = $orig->( $self, @args );
-        #        print(pp $ret);
 		return $ret;
 	};
 }

@@ -24,8 +24,9 @@ eval{ $db->run_command({ drop => 'thing' }) };
     ok !$t->file->isa('FileHandle'), 'not blessed yet';
     #print $t->file;
     #my $grid = db->get_gridfs;
-    #print $grid->get( $t->_id ); 
+    #print $grid->get( $t->_id );
 }
+sleep 1; # :-/
 {
     my $t = Thing->find_one;
     ok $t->file->isa('Mongoose::File'), 'blessed ok';

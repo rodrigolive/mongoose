@@ -4,6 +4,9 @@ use Moose;
 use Moose::Util::TypeConstraints;
 use Moose::Meta::TypeConstraint::Parameterizable;
 use Moose::Meta::TypeConstraint::Registry;
+use Tie::IxHash;
+
+my $API_V1 = Mongoose->_mongodb_v1;
 
 my $REGISTRY = Moose::Meta::TypeConstraint::Registry->new;
 $REGISTRY->add_type_constraint(
@@ -43,6 +46,7 @@ sub add {
     for my $obj (@objs) {
         $self->buffer->{ refaddr $obj } = $obj;
     }
+    @objs;
 }
 
 sub remove {
@@ -62,7 +66,7 @@ sub remove {
             my $id = $obj->_id;
             next unless defined $id;
             $self->children([
-                grep { $_->id ne $id } _tie_refs( @{$children} )
+                grep { _rel_id($_) ne $id } _build_rel( @{$children} )
             ]);
         }
     }
@@ -100,7 +104,7 @@ sub _save {
     if( ref $children eq 'Mongoose::Join' ) {
         $children = $children->children;
     }
-    my @objs = _tie_refs( @{$children ||[]} );
+    my @objs = _build_rel( @{$children ||[]} );
 
     my $collection_name = $self->with_collection_name;
 
@@ -113,7 +117,7 @@ sub _save {
         my $obj = delete $buffer->{$_};
         next if exists $delete_buffer->{ refaddr $obj };
         $obj->save( @scope );
-        push @objs, MongoDB::DBRef->new( ref => $collection_name, id => $obj->_id );
+        push @objs, _build_rel({ '$ref' => $collection_name, '$id' => $obj->_id });
     }
 
     # adjust
@@ -121,7 +125,7 @@ sub _save {
     $self->delete_buffer({});
 
     # make sure unique children is saved
-    my %unique = map { $_->id => $_ } @objs;
+    my %unique = map { _rel_id($_) => $_ } @objs;
     @objs = values %unique;
     $self->children( \@objs );
     return @objs;
@@ -131,7 +135,7 @@ sub _children_refs {
     my ($self)=@_;
     my @found;
     $self->find->each( sub{
-        push @found, MongoDB::DBRef->new( ref => $_[0]->_collection_name, id => $_[0]->{_id} );
+        push @found, _build_rel( '$ref' => $_[0]->_collection_name, '$id' => $_[0]->{_id} );
     });
     return @found;
 }
@@ -144,7 +148,7 @@ sub find {
     if( ref $children eq 'Mongoose::Join' ) {
         $children = $children->children;
     }
-    my @children = map { $_->id } _tie_refs( @{$children ||[]} );
+    my @children = map { _rel_id($_) } _build_rel( @{$children ||[]} );
 
     $opts->{_id} = { '$in' => \@children };
     return $class->find( $opts, @scope );
@@ -154,7 +158,7 @@ sub find_one {
     my ( $self, $opts, @scope ) = @_;
     my $class = $self->with_class;
     $opts ||= {};
-    my @children = map { $_->id } _tie_refs( @{$self->children ||[]} );
+    my @children = map { _rel_id($_) } _build_rel( @{$self->children ||[]} );
     $opts->{_id} = { '$in' => \@children };
     return $class->find_one( $opts, @scope );
 }
@@ -168,7 +172,7 @@ sub query {
     my ( $self, $opts, $attrs, @scope ) = @_;
     my $class = $self->with_class;
     $opts ||= {};
-    my @children = map { $_->id } _tie_refs( @{$self->children ||[]} );
+    my @children = map { _rel_id($_) } _build_rel( @{$self->children ||[]} );
     $opts->{_id} = { '$in' => \@children };
     return $class->query( $opts, $attrs, @scope );
 }
@@ -198,15 +202,23 @@ sub hash_array {
     return %hash;
 }
 
-# make sure all refs are sorted hashes
-sub _tie_refs {
+# make sure all refs what's expected on the MongoDB driver in use
+sub _build_rel {
     for (@_) {
-        $_ = MongoDB::DBRef->new( ref => $_->{'$ref'}, id => $_->{'$id'})
-            unless ref $_ eq 'MongoDB::DBRef';
+        if ($API_V1) {
+            $_ = MongoDB::DBRef->new( ref => $_->{'$ref'}, id => $_->{'$id'} )
+                unless ref $_ eq 'MongoDB::DBRef';
+        }
+        else {
+             $_ = Tie::IxHash->new( '$ref' => $_->{'$ref'}, '$id' => $_->{'$id'} )
+                unless ref $_ eq 'Tie::IxHash';
+        }
     }
-
     @_;
 }
+
+# Read rel ID from ref type in use depending on driver version
+sub _rel_id { $API_V1 ? $_[0]->id : $_[0]->FETCH('$id') }
 
 =head1 NAME
 

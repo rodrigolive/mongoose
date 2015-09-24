@@ -37,13 +37,13 @@ for my $coll (qw/ employee department person /) {
 	use Mongoose::Class;
 	with 'Mongoose::Document';
 	has 'title' => ( is=>'rw', isa=>'Str', required=>1 );
-	has_many 'authors' => 'Author'; 
+	has_many 'authors' => 'Author';
 }
 {
 	package Author;
 	use Mongoose::Class; with 'Mongoose::Document';
 	has 'name' => ( is=>'rw', isa=>'Str', required=>1 );
-	has_many 'articles' => 'Article'; 
+	has_many 'articles' => 'Article';
 }
 {
 	package Authorship;
@@ -66,9 +66,6 @@ package main;
 	my $dep = Department->find_one({code=>'ACC'});
 	my $cur = $dep->employees->find;
 	is $cur->count, 15, 'joined ok';
-	while( my $r = $cur->next ) {
-		#print "FOUND: " . $r;
-	}
 }
 {
 	my $dep = Department->new({code=>'Devel'});
@@ -117,7 +114,7 @@ package main;
 }
 {
     my $author = Author->find_one;
-	my $article = Article->new(title=>'OnMoney'); 
+	my $article = Article->new(title=>'OnMoney');
 	$author->articles->add( $article );
 	$author->save;
 	$author->articles->add( $article );
@@ -157,30 +154,31 @@ package main;
 	package Mouse;
 	use Mongoose::Class;
 	with 'Mongoose::Document';
+    has size => ( is => 'ro', isa => 'Num' );
 }
 {
 	Cat->collection->drop;
 	Mouse->collection->drop;
 	Ball->collection->drop;
-    diag('ok');
 
-	my $cat = Cat->new();
-	$cat->save;
+	ok( my $cat = Cat->new, 'Create a cat' );
+	ok( $cat->save, '...and save it') ;
 
 	for( 1 .. 10 ){
 		my $ball = Ball->new( cat => $cat );
-		$cat->balls->add( $ball );
+		ok( $cat->balls->add( $ball ), "Add ball ($_)" );
 	}
 
 	for( 1 .. 10 ){
-		my $mouse = Mouse->new();
-		$cat->mice->add( $mouse );
+		my $mouse = Mouse->new( size => $_ );
+		ok( $cat->mice->add( $mouse ), "Add mice ($_)" );
 	}
 
-	$cat->save;
+    ok( $cat->save, '...and save it again') ;
 
-	is( Cat->find_one({_id => $cat->_id})->balls->find->count, 10, "added 10 balls" );
-	is( Cat->find_one({_id => $cat->_id})->mice->find->count, 10, "added 10 mice" ); 
+	ok( $cat = Cat->find_one($cat->_id), 'Get it back from storage') ;
+	is( $cat->balls->find->count, 10, "has 10 balls" );
+	is( $cat->mice->find->count, 10, "has 10 mice's" );
 
 }
 

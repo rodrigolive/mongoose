@@ -1,4 +1,9 @@
 {{$NEXT}}
+    [ ENHANCEMENTS ]
+    * #42 - Support for MongoDB driver v1.x.x series while still supporting v0.x
+
+    [ CLEANUP ]
+    * Some code cleanup
 
 0.32      2015-06-28 17:04:24+02:00 Europe/Madrid
     [ BUGS ]
