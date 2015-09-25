@@ -1,5 +1,8 @@
 {{$NEXT}}
 
+    [ CLEANUP ]
+    * Removed debug code from GridFS tests
+
 0.33      2015-09-25 02:49:43+02:00 Europe/Madrid
     [ ENHANCEMENTS ]
     * #42 - Support for MongoDB driver v1.x.x series while still supporting v0.x

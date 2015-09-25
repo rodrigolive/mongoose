@@ -25,10 +25,6 @@ eval{ $db->run_command({ drop => 'thing' }) };
     is( Thing->count, 1, 'There is one doc' );
     ok my $t = Thing->find_one, 'Retrieve it';
     ok my $file = $t->file, 'Object has file';
-    unless ( $file ) {
-        use Data::Dump qw/pp/;
-        diag(pp($t))
-    }
     ok $file->isa('Mongoose::File'), 'blessed ok';
     ok $file->isa('MongoDB::GridFS::File'), 'extended ok';
     ok my $data = $t->file->slurp, 'Slurp file content';
