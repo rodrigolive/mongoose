@@ -11,7 +11,7 @@ eval {
 
     # use params from MONGOOSEDB if available but w/ unique db_names
     my (%p1,%p2);
-    %p1 = split( /,/, $ENV{MONGOOSEDB}) if $ENV{MONGOOSEDB} ;
+    %p1 = split( /,/, $ENV{MONGOOSEDB}) if $ENV{MONGOOSEDB};
     %p2 = %p1;
     $p1{db_name}="multi_1_$ts";
     $p2{db_name}="multi_2_$ts";

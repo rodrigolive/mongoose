@@ -3,7 +3,7 @@ use warnings;
 use Test::More;
 
 use lib 't/lib';
-use MongooseT; # this connects to the db for me
+use MongooseT;
 
 my $ball_count = 0;
 my $cat_count  = 0;

@@ -3,10 +3,7 @@ use warnings;
 use Test::More;
 
 use lib 't/lib';
-use MongooseT; # this connects to the db for me
-my $db = db;
-
-eval { $db->run_command({ drop=>'request' }) };
+use MongooseT;
 
 {
 	package Request;

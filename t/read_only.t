@@ -2,9 +2,7 @@ use strict;
 use warnings;
 use Test::More;
 use lib 't/lib';
-use MongooseT; # this connects to the db for me
-my $db = db;
-eval { $db->run_command({ drop=>'person_ro' }) };
+use MongooseT;
 
 {
 	package Person;
@@ -25,7 +23,7 @@ package main;
 }
 {
 	my $homer = Person->find_one({ name=>"Homer Simpson" });
-	is( ref($homer), 'Person', 'great, object expanded even with read_only attribute' );	
+	is( ref($homer), 'Person', 'great, object expanded even with read_only attribute' );
 	is( $homer->name, 'Homer Simpson', 'homer found');
 }
 

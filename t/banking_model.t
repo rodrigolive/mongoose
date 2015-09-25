@@ -46,11 +46,6 @@ package main;
 use lib 't/lib';
 use MongooseT; # connects to the db for me
 
-my $db = db;
-for my $coll (qw/ bank_account checking_account /) {
-    eval{ $db->run_command({ drop => $coll }) };
-}
-
 {
 	my $savings_account = BankAccount->new( balance => 250 );
 	$savings_account->save;

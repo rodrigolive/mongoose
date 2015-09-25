@@ -4,10 +4,6 @@ use Test::More;
 
 use lib 't/lib';
 use MongooseT;
-my $db = db;
-
-eval { $db->run_command({ drop=>'bar' }) };
-eval { $db->run_command({ drop=>'foo' }) };
 
 package Bar;
 use Moose;

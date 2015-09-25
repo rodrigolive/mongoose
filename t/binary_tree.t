@@ -4,10 +4,7 @@ use Test::More;
 
 package main;
 use lib 't/lib';
-use MongooseT; # this connects to the db for me
-my $db = db;
-
-eval{ $db->run_command({ drop => 'test_binary_tree' }) };
+use MongooseT;
 
 {
 	package Test::BinaryTree;
@@ -57,7 +54,6 @@ eval{ $db->run_command({ drop => 'test_binary_tree' }) };
 	ok( my $bt3 = new Test::BinaryTree( node=>{ name=>'Kate', candidate=>4 } ), 'Create third node' );
 	$bt->left( $bt2 );
 	$bt->right( $bt3 );
-    #print $bt->dump;
 	$bt->save;
 }
 
@@ -65,7 +61,7 @@ eval{ $db->run_command({ drop => 'test_binary_tree' }) };
 	ok( my $btc = Test::BinaryTree->collection->find_one({ 'node.name'=>'Jack', 'node.candidate'=>15 }), 'Get first from real collection' );
 	ok( ref $btc eq 'HASH', 'hashref real collection' );
 	ok( my $bt = Test::BinaryTree->find_one({ 'node.name'=>'Jack', 'node.candidate'=>15 }), 'Get it from schema' );
-	ok( ref $bt->node eq 'HASH', 'hashref node inflated' ); 
+	ok( ref $bt->node eq 'HASH', 'hashref node inflated' );
     #print $bt->dump;
 	is( $bt->{node}->{name}, $btc->{node}->{name}, 'data matches' );
 	is( $bt->right->{node}->{name}, 'Kate', 'right node ok' );

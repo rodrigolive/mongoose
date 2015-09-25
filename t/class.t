@@ -3,12 +3,7 @@ use warnings;
 use Test::More;
 
 use lib 't/lib';
-use MongooseT; # this connects to the db for me
-my $db = db;
-
-for my $coll (qw/ employee department person /) {
-    eval{ $db->run_command({ drop => $coll }) };
-}
+use MongooseT;
 
 {
 	package Department;

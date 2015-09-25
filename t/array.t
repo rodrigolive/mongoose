@@ -4,11 +4,6 @@ use Test::More;
 
 use lib 't/lib';
 use MongooseT;
-my $db = db;
-
-for my $coll (qw/ bar foo /) {
-    eval{ $db->run_command({ drop => $coll }) };
-}
 
 # from RT Bug #81725
 package Bar;

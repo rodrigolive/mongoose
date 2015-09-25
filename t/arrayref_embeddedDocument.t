@@ -35,28 +35,28 @@ use Test::More;
 	use strict;
 	use lib 't/lib';
 	use MongooseT;
-	Thing->collection->drop;
-	my $t = Thing->new( 
+
+	my $t = Thing->new(
 			name => 'test_1',
 			tt   => [
-				Person->new( name=>'Person 0', 
+				Person->new( name=>'Person 0',
 					     address=> [ Address->new( street => 'Street name 0.0'),
 							 Address->new( street => 'Street name 0.1'),
 							 Address->new( street => 'Street name 0.2'),
  						       ] ),
-				Person->new( name=>'Person 1', 
+				Person->new( name=>'Person 1',
 					     address=> [ Address->new( street => 'Street name 1.0'),
 							 Address->new( street => 'Street name 1.1'),
 							 Address->new( street => 'Street name 1.2'),
 						       ] ),
-				Person->new( name=>'Person 2', 
+				Person->new( name=>'Person 2',
 					     address=> [ Address->new( street => 'Street name 2.0'),
 							 Address->new( street => 'Street name 2.1'),
 							 Address->new( street => 'Street name 2.2'),
 						       ] ),
 				],
 	);
-	
+
 	$t->save;
 	my $t2 = Thing->find_one;
 

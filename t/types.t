@@ -32,7 +32,7 @@ use Test::More;
 	use strict;
     use lib 't/lib';
 	use MongooseT;
-	Thing->collection->drop;
+
 	my $t = Thing->new(
         alive_more=>[55],
         tt=>{ aa=> Person->new(name=>'Bobby') },

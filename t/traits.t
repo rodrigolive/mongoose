@@ -4,9 +4,7 @@ use Test::More;
 use DateTime;
 
 use lib 't/lib';
-use MongooseT; # this connects to the db for me
-my $db = db;
-eval{ $db->run_command({ drop=>'person' }) };
+use MongooseT;
 
 {
     package Person;

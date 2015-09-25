@@ -4,11 +4,6 @@ use Test::More;
 
 use lib 't/lib';
 use MongooseT;
-my $db = db;
-
-for my $coll (qw/ artist cd track musician /) {
-    eval{ $db->run_command({ drop => $coll }) };
-}
 
 package Artist;
 use Mongoose::Class; with 'Mongoose::Document';
@@ -45,7 +40,7 @@ package main;
     my $mus = Musician->new( name=>'Roy' );
 
     $tr->musicians->add( $mus );
-    $cd->tracks->add( $tr ); 
+    $cd->tracks->add( $tr );
     $a->cds->add( $cd );
     $a->save;
 }
@@ -64,7 +59,7 @@ package main;
 {
     my $a = Artist->find_one;
     my $cd = CD->new( title=>'Human' );
-    $a->cds->add( $cd ); 
+    $a->cds->add( $cd );
     $a->save;
 }
 {
@@ -72,7 +67,7 @@ package main;
     my $tr = Track->new( title=>'Fire' );
     $tr->cd( $cd );
     $tr->save;
-    $cd->tracks->add( $tr ); 
+    $cd->tracks->add( $tr );
     $cd->save;
 }
 {

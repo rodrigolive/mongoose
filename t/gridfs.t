@@ -2,11 +2,8 @@ use strict;
 use warnings;
 use Test::More;
 use lib 't/lib';
-use MongooseT; # this connects to the db for me
+use MongooseT;
 use IO::File;
-
-my $db = db;
-eval{ $db->run_command({ drop => 'thing' }) };
 
 {
     package Thing;

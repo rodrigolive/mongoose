@@ -12,18 +12,14 @@ has 'name' => ( is=>'rw', isa=>'Str', required=>1 );
 
 package main;
 use lib 't/lib';
-use MongooseT; # this connects to the db for me
-my $db = db;
+use MongooseT;
 
 my $homer = Test::Person->new( name => "Homer" );
-
-eval { $db->run_command({ drop=>'people' }) };
-eval { $db->run_command({ drop=>'simpsons' }) };
 
 #Mongoose->naming( sub{ uc(shift) } );
 {
 	$homer->save;
-	my $people = $db->get_collection('people');
+	my $people = db->get_collection('people');
 	is( $people->find_one({ name => 'Homer' })->{name}, 'Homer', 'role param collection_name'); 
 }
 {
@@ -31,7 +27,7 @@ eval { $db->run_command({ drop=>'simpsons' }) };
 	ok( $@, 'error off on object collection change');
 	is( Test::Person->collection('simpsons')->name, 'simpsons', 'guaranteed coll name change' );
 	$homer->save;
-	my $people = $db->get_collection('simpsons');
+	my $people = db->get_collection('simpsons');
 	is( $people->find_one({ name => 'Homer' })->{name}, 'Homer', 'role param collection_name'); 
 }
 {

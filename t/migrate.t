@@ -18,7 +18,7 @@ use Test::More;
 
 use lib 't/lib';
 use MongooseT;
-Author->collection->drop;
+
 for( 1..5 ) {
 	Author->new(name=>"Jake-$_")->save;
 }
