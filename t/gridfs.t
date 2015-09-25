@@ -3,7 +3,7 @@ use warnings;
 use Test::More;
 use lib 't/lib';
 use MongooseT; # this connects to the db for me
-use MongoDB::GridFS;
+use IO::File;
 
 my $db = db;
 eval{ $db->run_command({ drop => 'thing' }) };
@@ -15,23 +15,23 @@ eval{ $db->run_command({ drop => 'thing' }) };
     has 'file' => ( is=>'rw', isa=>'FileHandle' );
 }
 {
-    require IO::File;
     my $fh = new IO::File "t/file/in.txt", "r";
     ok defined $fh, 'file open';
-    my $t = Thing->new( file=>$fh );
-    $t->save;
-    $fh->close;
+    ok my $t = Thing->new( file => $fh ), 'Create object with file';
+    ok $t->save, 'Save it';
     ok !$t->file->isa('FileHandle'), 'not blessed yet';
-    #print $t->file;
-    #my $grid = db->get_gridfs;
-    #print $grid->get( $t->_id );
 }
-sleep 1; # :-/
 {
-    my $t = Thing->find_one;
-    ok $t->file->isa('Mongoose::File'), 'blessed ok';
-    ok $t->file->isa('MongoDB::GridFS::File'), 'extended ok';
-    my $data = $t->file->slurp;
+    is( Thing->count, 1, 'There is one doc' );
+    ok my $t = Thing->find_one, 'Retrieve it';
+    ok my $file = $t->file, 'Object has file';
+    unless ( $file ) {
+        use Data::Dump qw/pp/;
+        diag(pp($t))
+    }
+    ok $file->isa('Mongoose::File'), 'blessed ok';
+    ok $file->isa('MongoDB::GridFS::File'), 'extended ok';
+    ok my $data = $t->file->slurp, 'Slurp file content';
     is $data, "Test file\n", 'contents ok';
     ok $t->file->drop, 'dropped';
 }

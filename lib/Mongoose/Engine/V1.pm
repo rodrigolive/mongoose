@@ -216,7 +216,11 @@ sub expand {
             next;
         }
         elsif( $type->is_a_type_of('FileHandle') ) {
-            my $file = $self->db->get_gridfs->find_one({ _id=> $doc->{$name}->{'$id'} });
+            #TODO: fix storing to make it allways be a DBRef
+            my $file = ref($doc->{$name}) eq 'HASH'
+                     ? $self->db->get_gridfs->find_one({ _id=> $doc->{$name}->{'$id'} })
+                     : $self->db->get_gridfs->find_one({ _id=> $doc->{$name}->id });
+
             delete $doc->{$name}, next unless defined $file;
             $doc->{$name} = bless $file, 'Mongoose::File';
             next;
