@@ -41,10 +41,10 @@ sub collapse {
                     next;
                 }
                 elsif ( $type->is_a_type_of('FileHandle') ) {
-                    $packed->{$key} = {
-                        '$ref' => 'FileHandle',
-                        '$id'  => $self->db->get_gridfs->put( delete $packed->{$key} )
-                    };
+                    $packed->{$key} = MongoDB::DBRef->new(
+                        ref => 'FileHandle',
+                        id  => $self->db->get_gridfs->put( delete $packed->{$key} )
+                    );
                     next;
                 }
             }
@@ -100,7 +100,7 @@ sub _collapse {
         my @docs;
         for my $key ( keys %$value ) {
             if ( blessed $value->{$key} ) {
-                $ret->{$key} = $self->_unbless( $value->{$key}, blessed($value->{$key}), @scope );;
+                $ret->{$key} = $self->_unbless( $value->{$key}, blessed($value->{$key}), @scope );
             }
             elsif ( ref $value->{$key} eq 'ARRAY' ) {
                 $ret->{$key} = [ map { $self->_collapse( $_, @scope ) } @{ $value->{$key} } ];
@@ -156,8 +156,9 @@ sub expand {
 
     # check if it's an straight ref
     if ( ref $doc eq 'MongoDB::DBRef' ) {
-        return $scope->{$doc->id} if defined $scope->{$doc->id};
-        return $class_main->find_one({ _id => $doc->id });
+        return defined $scope->{$doc->id}
+             ? $scope->{$doc->id}
+             : $class_main->find_one({ _id => $doc->id });
         #TODO: set at $scope?
     }
 
@@ -216,11 +217,7 @@ sub expand {
             next;
         }
         elsif( $type->is_a_type_of('FileHandle') ) {
-            #TODO: fix storing to make it allways be a DBRef
-            my $file = ref($doc->{$name}) eq 'HASH'
-                     ? $self->db->get_gridfs->find_one({ _id=> $doc->{$name}->{'$id'} })
-                     : $self->db->get_gridfs->find_one({ _id=> $doc->{$name}->id });
-
+            my $file = $self->db->get_gridfs->find_one({ _id=> $doc->{$name}->id });
             delete $doc->{$name}, next unless defined $file;
             $doc->{$name} = bless $file, 'Mongoose::File';
             next;

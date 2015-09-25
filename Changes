@@ -1,4 +1,6 @@
 {{$NEXT}}
+    [ ENHANCEMENTS ]
+    * Ensure GridFS relations are DBRef's on v1.x.x
 
 0.34      2015-09-25 02:55:32+02:00 Europe/Madrid
 
