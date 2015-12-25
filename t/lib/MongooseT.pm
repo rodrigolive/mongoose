@@ -8,19 +8,20 @@ my $db;
 sub db { $db }
 
 eval {
+    die 'xxx';
     my $db_name = 'mongoose_testing_'. $$;
     $db = Mongoose->db( $db_name );
     # Show database name when runner want to keep it alive
     diag("Created test database: $db_name") if $ENV{MONGOOSE_SKIP_DROP};
 };
 if( $@ ) {
-	$ENV{MONGOOSE_SKIP} = 1;
+	$ENV{MONGOOSE_SKIP}      = 1;
     plan skip_all => "Could not find a local MongoDB instance to connect for testing: $@'"
 }
 
 END {
     unless ( $ENV{MONGOOSE_SKIP_DROP} ) {
-        $db->drop;
+        $db->drop if $db;
     }
 }
 
