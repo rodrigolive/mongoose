@@ -18,6 +18,7 @@ eval {
     $p2{class}='Post';
 
     my $default_db = Mongoose->db( %p1 );
+    $default_db->run_command([ping => 1]);
     my $other_db   = Mongoose->db( %p2 );
     $db = [ $default_db, $other_db ];
 
