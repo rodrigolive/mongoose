@@ -20,10 +20,10 @@ has val => (isa=>'Int', is=>'ro' );
 
 package main;
 
-my $x = Bar->new( y => { xx => [ Foo->new( val => 1234 ) ] } );
-$x->save;
-my $raw = $x->collection->find_one();
-is $raw->{y}{xx}[0]{val}, 1234, 'raw save ok';
+ok my $x = Bar->new( y => { xx => [ Foo->new( val => 1234 ) ] } ), 'Create a doc with deep embed attribute';
+ok $x->save, 'save it';
+ok my $raw = $x->collection->find_one, 'Get raw object from store';
+is $raw->{y}{xx}[0]{val}, 1234, 'raw is ok';
 
 #my $d = Bar->find_one();
 #is $d->y->{xx}->[0]->{val}, 1234, 'storage ok';

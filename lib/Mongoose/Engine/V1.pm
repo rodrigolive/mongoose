@@ -21,7 +21,7 @@ sub collapse {
         return undef unless defined $class && $ref_id;
         return undef if $self->_id && $self->_id eq $ref_id; # prevent self references?
         return MongoDB::DBRef->new(
-            ref => $class->meta->{mongoose_config}{collection_name},
+            ref => Mongoose->class_config($class)->{collection_name},
             id  => $ref_id
         );
     }
@@ -63,7 +63,7 @@ sub _collapse {
         if ( ref $value eq 'HASH' && defined ( my $ref_id = $value->{_id} ) ) {
             # it has an id, so join ref it
             return MongoDB::DBRef->new(
-                ref => $class->meta->{mongoose_config}{collection_name},
+                ref => Mongoose->class_config($class)->{collection_name},
                 id  => $ref_id
             );
         }
@@ -85,7 +85,7 @@ sub _collapse {
             elsif ( $aryclass && $aryclass->does('Mongoose::Document') ) {
                 $item->_save( @scope, $self );
                 push @arr, MongoDB::DBRef->new(
-                    ref => $aryclass->meta->{mongoose_config}{collection_name},
+                    ref => Mongoose->class_config($aryclass)->{collection_name},
                     id  => $item->_id
                 );
             }
@@ -126,7 +126,7 @@ sub _unbless {
         elsif ( $class->does('Mongoose::Document') ) {
             $obj->_save( @scope, $self );
             $ret = MongoDB::DBRef->new(
-                ref => $class->meta->{mongoose_config}->{collection_name},
+                ref => Mongoose->class_config($class)->{collection_name},
                 id  => $obj->_id
             );
         }
@@ -146,11 +146,10 @@ sub _unbless {
 }
 
 sub expand {
-    my ($self,$doc,$fields,$scope)=@_;
-    my @later;
-    my $config     = $self->meta->{mongoose_config};
-    my $coll_name  = $config->{collection_name};
+    my ( $self, $doc, $fields, $scope ) = @_;
+    my $config     = Mongoose->class_config($self);
     my $class_main = ref $self || $self;
+    my @later;
 
     $scope = {} unless ref $scope eq 'HASH';
 
@@ -245,8 +244,9 @@ sub expand {
                 my $ref_arr = delete( $doc->{$name} );
                 my $ref_class = $type->type_parameter->class ;
                 $doc->{$name} = bless {
-                    class=>$class_main, field=>$name, parent=>$doc->{_id},
-                    with_class=>$ref_class, children=>$ref_arr, buffer=>{} } => $class;
+                    class => $class_main, field => $name, parent => $doc->{_id},
+                    with_class => $ref_class, children => $ref_arr, buffer => {}
+                } => $class;
             }
         }
         else { #non-moose
@@ -316,7 +316,7 @@ sub _save {
         return $id;
     }
     else {
-        if ( ref $self->meta->{mongoose_config}->{pk} ) {
+        if ( ref Mongoose->class_config($self)->{pk} ) {
             # if we have a pk and no _id, we must have a new
             # document, so we insert to allow the pk constraint
             # to ensure uniqueness; the 'safe' parameter ensures
@@ -390,7 +390,7 @@ sub collection {
     my $db = $self->db;
 
     # getter
-    my $config = $self->meta->{mongoose_config};
+    my $config = Mongoose->class_config($self);
     $new_collection or return $config->{collection}
         || ( $config->{collection} = $db->get_collection( $config->{collection_name} ) );
 
@@ -420,21 +420,18 @@ sub collection {
 
 sub _primary_key_query {
     my ( $self, $hash ) = @_;
-    my @keys  = @{ $self->meta->{mongoose_config}->{pk} || ['_id'] };
+    my @keys  = @{ Mongoose->class_config($self)->{pk} || ['_id'] };
     my @pairs = map { $_ => $self->{$_} } grep { $self->{$_} } @keys;
     # Query need to have all pk's
     return {@pairs} if @pairs == @keys * 2;
 }
 
-sub _collection_name {
-    my $self = shift;
-    return $self->meta->{mongoose_config}->{collection_name} ;
-}
+sub _collection_name { Mongoose->class_config(shift)->{collection_name} }
 
 sub find {
     my ($self,$query,$attrs) = @_;
     my $cursor = bless $self->collection->find($query,$attrs), 'Mongoose::Cursor';
-    $cursor->_collection_name( $self->meta->{mongoose_config}->{collection_name} );
+    $cursor->_collection_name( $self->_collection_name );
     $cursor->_class( ref $self || $self );
     return $cursor;
 }
@@ -442,7 +439,7 @@ sub find {
 sub query {
     my ($self,$query,$attrs) = @_;
     my $cursor = bless $self->collection->query($query,$attrs), 'Mongoose::Cursor';
-    $cursor->_collection_name( $self->meta->{mongoose_config}->{collection_name} );
+    $cursor->_collection_name( $self->_collection_name );
     $cursor->_class( ref $self || $self );
     return $cursor;
 }

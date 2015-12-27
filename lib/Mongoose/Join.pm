@@ -90,8 +90,8 @@ sub with_collection_name {
     my $self = shift;
     defined $self->_with_collection_name
         and return $self->_with_collection_name;
-    return $self->_with_collection_name(
-        $self->with_class->meta->{mongoose_config}->{collection_name} );
+
+    $self->_with_collection_name( Mongoose->class_config($self->with_class)->{collection_name} );
 }
 
 sub _insert {    #TODO insert and commit

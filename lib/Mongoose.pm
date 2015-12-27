@@ -8,13 +8,13 @@ use version;
 
 with 'Mongoose::Role::Naming';
 
-has '_db' => (
+has _db => (
     is      => 'rw',
     isa     => 'HashRef',
     default => sub {{}},
 );
 
-has '_client' => (
+has _client => (
     is      => 'rw',
     isa     => "HashRef",
     lazy    => 1,
@@ -22,7 +22,7 @@ has '_client' => (
     clearer => 'disconnect'
 );
 
-has '_args' => (
+has _args => (
     is      => 'rw',
     isa     => 'HashRef',
     default => sub{{}}
@@ -33,6 +33,18 @@ has _mongodb_v1 => (
     default => sub { version->parse($MongoDB::VERSION) > '0.900' }
 );
 
+has _alias => ( # keep track of aliased() document classes.
+    is      => 'rw',
+    isa     => 'HashRef',
+    default => sub{{}}
+);
+
+has _config => ( # Store document classes configuration
+    is      => 'rw',
+    isa     => 'HashRef',
+    default => sub{{}}
+);
+
 sub db {
     my $self = shift;
     my %p    = @_ == 1 ? (db_name=>shift) : @_;
@@ -40,6 +52,19 @@ sub db {
     my $name = $self->_add_args( \%p );
 
     return $self->connect($name) if $now || defined wantarray;
+}
+
+sub class_config {
+    my ( $self, $class_name, $config ) = @_;
+
+    # Set
+    return $self->_config->{$class_name} = $config if $config;
+
+    # Get
+    my $class = $self->aliased(ref $class_name || $class_name);
+    confess "Document class '$class' is not registered. Registered classes are: ".
+            join(', ', keys %{$self->_config}) unless exists $self->_config->{$class};
+    $self->_config->{$class};
 }
 
 # setup db config and class to db mapping if class exists.
@@ -90,9 +115,10 @@ sub connection {
 
 sub load_schema {
     my ( $self, %args ) = @_;
-    require Module::Pluggable;
-    my $shorten = delete $args{shorten};
+    my $shorten     = delete $args{shorten};
     my $search_path = delete $args{search_path};
+
+    require Module::Pluggable;
     Module::Pluggable->import( search_path => $search_path );
     for my $module ( $self->plugins ) {
         eval "require $module";
@@ -103,8 +129,15 @@ sub load_schema {
             *{ $short_name . "::" } = \*{ $module . "::" };
             Class::MOP::store_metaclass_by_name( $short_name, $module->meta );
             Class::MOP::weaken_metaclass( $short_name );
+            $self->aliased($short_name => $module);
         }
     }
+}
+
+sub aliased {
+    my ( $self, $alias, $class ) = @_;
+    $self->_alias->{$alias} = $class if $class;
+    exists $self->_alias->{$alias} ? $self->_alias->{$alias} : $alias;
 }
 
 1;

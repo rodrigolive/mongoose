@@ -1,4 +1,8 @@
 {{$NEXT}}
+    [ ENHANCEMENTS ]
+    * GH#23 - Move document class config to the singleton object
+
+0.36      2015-12-27 15:33:50+01:00 Europe/Madrid
     [ BUGS ]
     * Tests sould be skipped when there is no server available.
     * Tests sould not drop db when it was not created.
@@ -9,7 +13,6 @@
     * Each tests now creates a random db and drops it at the END (allow parallel run)
 
 0.34      2015-09-25 02:55:32+02:00 Europe/Madrid
-
     [ CLEANUP ]
     * Removed debug code from GridFS tests
 
