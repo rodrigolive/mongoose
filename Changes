@@ -2,6 +2,9 @@
     [ ENHANCEMENTS ]
     * GH#23 - Move document class config to the singleton object
 
+    [ BUGS ]
+    * Fixed Mongoose::Join method to inflate rels (used by fix_integrity).
+
 0.36      2015-12-27 15:33:50+01:00 Europe/Madrid
     [ BUGS ]
     * Tests sould be skipped when there is no server available.
