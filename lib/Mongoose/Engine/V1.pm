@@ -280,17 +280,14 @@ sub expand {
 sub _joint_fields {
     my $self = shift;
     return map { $_->name }
-        grep {
-            $_->type_constraint->isa('Mongoose::Join')
-        }
-        $self->meta->get_all_attributes ;
+        grep { $_->type_constraint->isa('Mongoose::Join') }
+        $self->meta->get_all_attributes;
 }
 
 sub fix_integrity {
     my ($self, @fields ) = @_;
     my $id = $self->_id;
-    @fields = $self->_joint_fields
-        unless scalar @fields;
+    @fields = $self->_joint_fields unless scalar @fields;
     for my $field ( @fields ) {
         my @children = $self->$field->_children_refs;
         $self->collection->update( { _id=>$id }, { '$set'=>{ $field=>\@children } } );

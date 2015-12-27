@@ -135,7 +135,7 @@ sub _children_refs {
     my ($self)=@_;
     my @found;
     $self->find->each( sub{
-        push @found, _build_rel( '$ref' => $_[0]->_collection_name, '$id' => $_[0]->{_id} );
+        push @found, _build_rel({ '$ref' => $_[0]->_collection_name, '$id' => $_[0]->{_id} });
     });
     return @found;
 }
