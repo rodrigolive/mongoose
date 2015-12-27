@@ -1,5 +1,6 @@
 {{$NEXT}}
     [ BUGS ]
+    * Tests sould be skipped when there is no server available.
     * Tests sould not drop db when it was not created.
 
 0.35      2015-09-25 04:09:11+02:00 Europe/Madrid
