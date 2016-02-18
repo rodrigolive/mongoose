@@ -222,7 +222,7 @@ Saves the current object to the database, inserting the document if needed.
 
 =head3 delete
 
-Deletes the correspondind document from the database.
+Deletes the corresponding document from the database.
 
     $person->delete;
 
