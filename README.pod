@@ -83,7 +83,7 @@ using the MongoDB driver in a forked environment (ie. with a
 prefork appserver like Starman, Hypnotoad or Catalyst's
 HTTP::Prefork).
 
-If you prefer to connect while setting the connection string, 
+If you prefer to connect while setting the connection string,
 use one of these options:
 
     Mongoose->db( db_name=>'mydb', -now=>1 );  # connect now
@@ -97,7 +97,7 @@ use one of these options:
     Mongoose->db( 'mydb' );
     Mongoose->connect;
 
-You can separate your classes storage on multiple hosts/databases 
+You can separate your classes storage on multiple hosts/databases
 by calling db() several times:
 
     # Default host/database (connect now!)
@@ -122,8 +122,8 @@ Connects to Mongo using the connection arguments passed to the C<db> method.
 Uses L<Module::Pluggable> to C<require> all modules under a given search path
 or search dir.
 
-All arguments will be sent to Module::Pluggable's C<import>, except for 
-Mongoose specific ones. 
+All arguments will be sent to Module::Pluggable's C<import>, except for
+Mongoose specific ones.
 
     package main;
     use Mongoose;
@@ -154,6 +154,14 @@ Defaults to whatever MongoDB defaults.
 =head2 disconnect
 
 Unsets the Mongoose connection handler.
+
+=head2 class_config
+
+Keep track of document classes config solving aliasing indirection.
+
+=head2 aliased
+
+Keep track of aliasing classes. Useful to retrieve full document class from a shortened one.
 
 =head1 COLLECTION NAMING
 
