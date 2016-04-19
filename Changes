@@ -4,6 +4,7 @@
 
     [ BUGS ]
     * Fixed Mongoose::Join method to inflate rels (used by fix_integrity).
+    * Pass string as is to find_one() when failing to inflate it into MongoDB::OID
 
 0.36      2015-12-27 15:33:50+01:00 Europe/Madrid
     [ BUGS ]
