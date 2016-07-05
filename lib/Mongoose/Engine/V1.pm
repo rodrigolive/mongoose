@@ -445,7 +445,7 @@ sub find_one {
     my $self = shift;
 
     if( @_ == 1 && ( !ref($_[0]) || ref($_[0]) eq 'MongoDB::OID' ) ) {
-        my $query = { _id=> ref $_[0] ? $_[0] : MongoDB::OID->new( value=>$_[0] ) };
+        my $query = { _id=> ref $_[0] ? $_[0] : eval{MongoDB::OID->new( value=>$_[0] )}||$_[0] };
         if ( my $doc = $self->collection->find_one($query) ) {
             return $self->expand( $doc );
         }

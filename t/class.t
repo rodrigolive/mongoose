@@ -6,174 +6,173 @@ use lib 't/lib';
 use MongooseT;
 
 {
-	package Department;
-	use Mongoose::Class;
-	with 'Mongoose::Document';
+    package Department;
+    use Mongoose::Class;
+    with 'Mongoose::Document';
     has 'code' => ( is=>'rw', isa=>'Str');
     #has 'locs' => ( is=>'rw', isa=>'ArrayRef', metaclass=>'Array', default=>sub{[]} );
     has_many 'employees' => ( is=>'rw', isa=>'Employee' );
 }
 {
-	package Employee;
-	use Moose;
-	with 'Mongoose::Document';
-	has 'name' => ( is=>'rw', isa=>'Str', required=>1 );
+    package Employee;
+    use Moose;
+    with 'Mongoose::Document';
+    has 'name' => ( is=>'rw', isa=>'Str', required=>1 );
 }
 
 {
-	package Person;
-	use Mongoose::Class;
-	with 'Mongoose::Document';
-	has 'name' => ( is=>'rw', isa=>'Str', required=>1 );
-	belongs_to 'department' => ( is=>'rw', isa=>'Department', );
+    package Person;
+    use Mongoose::Class;
+    with 'Mongoose::Document';
+    has 'name' => ( is=>'rw', isa=>'Str', required=>1 );
+    belongs_to 'department' => ( is=>'rw', isa=>'Department', );
 }
 {
-	package Article;
-	use Mongoose::Class;
-	with 'Mongoose::Document';
-	has 'title' => ( is=>'rw', isa=>'Str', required=>1 );
-	has_many 'authors' => 'Author';
+    package Article;
+    use Mongoose::Class;
+    with 'Mongoose::Document';
+    has 'title' => ( is=>'rw', isa=>'Str', required=>1 );
+    has_many 'authors' => 'Author';
 }
 {
-	package Author;
-	use Mongoose::Class; with 'Mongoose::Document';
-	has 'name' => ( is=>'rw', isa=>'Str', required=>1 );
-	has_many 'articles' => 'Article';
+    package Author;
+    use Mongoose::Class; with 'Mongoose::Document';
+    has 'name' => ( is=>'rw', isa=>'Str', required=>1 );
+    has_many 'articles' => 'Article';
 }
 {
-	package Authorship;
-	use Mongoose::Class; with 'Mongoose::Document';
-	has_one 'author' => 'Author';
-	has_many 'articles' => 'Article';
+    package Authorship;
+    use Mongoose::Class; with 'Mongoose::Document';
+    has_one 'author' => 'Author';
+    has_many 'articles' => 'Article';
 }
+
 package main;
 {
     my $c = Department->new( code=>'ACC' );
-	#$c->locs->push( 'me' );
-	for( 1..15 ) {
-		my $e = Employee->new( name=>'Bob' . $_ );
-		$c->employees->add( $e );
-	}
-	$c->save;
+    #$c->locs->push( 'me' );
+    for( 1..15 ) {
+	my $e = Employee->new( name=>'Bob' . $_ );
+	$c->employees->add( $e );
+    }
+    $c->save;
 }
 
 {
-	my $dep = Department->find_one({code=>'ACC'});
-	my $cur = $dep->employees->find;
-	is $cur->count, 15, 'joined ok';
+    my $dep = Department->find_one({code=>'ACC'});
+    my $cur = $dep->employees->find;
+    is $cur->count, 15, 'joined ok';
 }
 {
-	my $dep = Department->new({code=>'Devel'});
-	my $per = Person->new( name=>'Mary', department=>$dep );
-	$per->save;
+    my $dep = Department->new({code=>'Devel'});
+    my $per = Person->new( name=>'Mary', department=>$dep );
+    $per->save;
 }
 {
-	my $per = Person->find_one({ name=>'Mary' });
-	is $per->department->code, 'Devel', 'belongs to ok';
+    my $per = Person->find_one({ name=>'Mary' });
+    is $per->department->code, 'Devel', 'belongs to ok';
 }
 {
-	Article->collection->drop;
-	Author->collection->drop;
-	my $ar = Article->new( title=>'on foo' );
-	my $au = Author->new( name=>'Jack' );
-	$ar->authors->add( $au );
-	$au->articles->add( $ar );
-	$au->save;
+    Article->collection->drop;
+    Author->collection->drop;
+    my $ar = Article->new( title=>'on foo' );
+    my $au = Author->new( name=>'Jack' );
+    $ar->authors->add( $au );
+    $au->articles->add( $ar );
+    $au->save;
 
-	my $authorship = Authorship->new;
-	$authorship->author( $au );
-	$authorship->articles->add( Article->new(title=>'Eneida') );
-	$authorship->articles->add( Article->new(title=>'Ulisses') );
+    my $authorship = Authorship->new;
+    $authorship->author( $au );
+    $authorship->articles->add( Article->new(title=>'Eneida') );
+    $authorship->articles->add( Article->new(title=>'Ulisses') );
 }
 {
-	my $article = Article->find_one({ title=>'on foo' });
-	is $article->authors->find({ name=>'Jack' })->count, 1, 'join find';
-	is $article->authors->find({ name=>'Unknown' })->count, 0, 'join find not';
+    my $article = Article->find_one({ title=>'on foo' });
+    is $article->authors->find({ name=>'Jack' })->count, 1, 'join find';
+    is $article->authors->find({ name=>'Unknown' })->count, 0, 'join find not';
 }
 {
-	Article->collection->drop;
-	Author->collection->drop;
-	my $ar = Article->new( title=>'on foo' );
-	my $au = Author->new( name=>'Jack' );
-	$ar->authors->add( $au );
-	$au->articles->add( $ar );
-	$au->save;
+    Article->collection->drop;
+    Author->collection->drop;
+    my $ar = Article->new( title=>'on foo' );
+    my $au = Author->new( name=>'Jack' );
+    $ar->authors->add( $au );
+    $au->articles->add( $ar );
+    $au->save;
 
     my $author = Author->find_one;
     my $first_article = $author->articles->find_one;
-	ok $first_article->isa('Article'), 'find_one on join';
-	is $author->articles->find->count, 1, 'count ok';
+    ok $first_article->isa('Article'), 'find_one on join';
+    is $author->articles->find->count, 1, 'count ok';
     $author->articles->remove( $first_article );
-	$author->save;
-	is $author->articles->find->count, 0, 'count after remove ok';
+    $author->save;
+    is $author->articles->find->count, 0, 'count after remove ok';
 }
 {
     my $author = Author->find_one;
-	my $article = Article->new(title=>'OnMoney');
-	$author->articles->add( $article );
-	$author->save;
-	$author->articles->add( $article );
-	$author->articles->add( $article );
-	my $buffer = $author->articles->buffer;
-	is scalar(keys(%{$author->articles->buffer})), 1, 'buffer is not empty';
-	$author->save;
-	$author->save;
-	is scalar(keys(%{$author->articles->buffer})), 0, 'buffer is flushed after save';
-	is $author->articles->find->count, 1, 'count ok';
+    my $article = Article->new(title=>'OnMoney');
+    $author->articles->add( $article );
+    $author->save;
+    $author->articles->add( $article );
+    $author->articles->add( $article );
+    my $buffer = $author->articles->buffer;
+    is scalar(keys(%{$author->articles->buffer})), 1, 'buffer is not empty';
+    $author->save;
+    $author->save;
+    is scalar(keys(%{$author->articles->buffer})), 0, 'buffer is flushed after save';
+    is $author->articles->find->count, 1, 'count ok';
 }
 {
-	my $article = Article->find_one({ title=>'on foo' });
-	my $q1 = $article->authors->query({ name=>'Jack' });
-	is $q1->count, 1, 'join query';
+    my $article = Article->find_one({ title=>'on foo' });
+    my $q1 = $article->authors->query({ name=>'Jack' });
+    is $q1->count, 1, 'join query';
 
-	is ref( $q1->next ), 'Author', 'join query ref';
-	my $q2 = $article->authors->query({ name=>'Jack' }, { limit=>1, skip=>1 });
-	is $q2->next, undef, 'join skipped query';
-
+    is ref( $q1->next ), 'Author', 'join query ref';
+    my $q2 = $article->authors->query({ name=>'Jack' }, { limit=>1, skip=>1 });
+    is $q2->next, undef, 'join skipped query';
 }
 {
-	package Cat;
-	use Mongoose::Class;
-	with 'Mongoose::Document';
-	has_many balls => 'Ball';
-	has_many mice  => 'Mouse';
-
+    package Cat;
+    use Mongoose::Class;
+    with 'Mongoose::Document';
+    has_many balls => 'Ball';
+    has_many mice  => 'Mouse';
 }
 {
-	package Ball;
-	use Mongoose::Class;
-	with 'Mongoose::Document';
-	belongs_to cat => 'Cat'; # funky circularity
+    package Ball;
+    use Mongoose::Class;
+    with 'Mongoose::Document';
+    belongs_to cat => 'Cat'; # funky circularity
 }
 {
-	package Mouse;
-	use Mongoose::Class;
-	with 'Mongoose::Document';
+    package Mouse;
+    use Mongoose::Class;
+    with 'Mongoose::Document';
     has size => ( is => 'ro', isa => 'Num' );
 }
 {
-	Cat->collection->drop;
-	Mouse->collection->drop;
-	Ball->collection->drop;
+    Cat->collection->drop;
+    Mouse->collection->drop;
+    Ball->collection->drop;
 
-	ok( my $cat = Cat->new, 'Create a cat' );
-	ok( $cat->save, '...and save it') ;
+    ok( my $cat = Cat->new, 'Create a cat' );
+    ok( $cat->save, '...and save it') ;
 
-	for( 1 .. 10 ){
-		my $ball = Ball->new( cat => $cat );
-		ok( $cat->balls->add( $ball ), "Add ball ($_)" );
-	}
+    for( 1 .. 10 ){
+	    my $ball = Ball->new( cat => $cat );
+	    ok( $cat->balls->add( $ball ), "Add ball ($_)" );
+    }
 
-	for( 1 .. 10 ){
-		my $mouse = Mouse->new( size => $_ );
-		ok( $cat->mice->add( $mouse ), "Add mice ($_)" );
-	}
+    for( 1 .. 10 ){
+	    my $mouse = Mouse->new( size => $_ );
+	    ok( $cat->mice->add( $mouse ), "Add mice ($_)" );
+    }
 
     ok( $cat->save, '...and save it again') ;
 
-	ok( $cat = Cat->find_one($cat->_id), 'Get it back from storage') ;
-	is( $cat->balls->find->count, 10, "has 10 balls" );
-	is( $cat->mice->find->count, 10, "has 10 mice's" );
+    ok( $cat = Cat->find_one($cat->_id), 'Get it back from storage') ;
+    is( $cat->balls->find->count, 10, "has 10 balls" );
+    is( $cat->mice->find->count, 10, "has 10 mice's" );
 
 }
 
