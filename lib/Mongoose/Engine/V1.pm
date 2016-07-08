@@ -4,6 +4,7 @@ use Moose::Role;
 use Carp;
 use Scalar::Util qw/refaddr reftype/;
 use List::Util qw/first/;
+use boolean;
 
 use Mongoose::Cursor; #initializes moose
 
@@ -67,8 +68,7 @@ sub _collapse {
                 id  => $ref_id
             );
         }
-        elsif ( ref($value) =~ /^DateTime(?:\:\:Tiny)?$/ ) {
-            # DateTime as raw always
+        elsif ( ref($value) =~ /^(?: DateTime(?:\:\:Tiny)? | boolean )$/x ) { # Types accepted by the driver
             return $value;
         }
         else {
@@ -251,8 +251,8 @@ sub expand {
         }
         else { #non-moose
             my $data = delete $doc->{$name};
-            if ( ref $data ) {
-                $doc->{$name} = bless $data => $class;
+            if ( my $data_class = ref $data ) {
+                $doc->{$name} = $data_class eq 'boolean' ? $data : bless $data => $class;
             }
             else {
                 push @later, { attrib => $name, value => $data };
