@@ -98,7 +98,7 @@ sub connect {
     my ( $self, $name ) = @_;
     $name ||= 'default';
     my %p   = %{ $self->_args->{db}{$name} };
-    my $data_db_name = delete $p{db_name};
+    my $data_db_name = $p{db_name};
 
     $self->_client->{$name} = MongoDB::MongoClient->new(%p)
       unless ref $self->_client->{$name};
