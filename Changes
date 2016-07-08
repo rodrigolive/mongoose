@@ -1,5 +1,10 @@
 {{$NEXT}}
     [ ENHANCEMENTS ]
+    * GH#44 - Make boolean objects roundtrip without force Bool types into booleans (yet)
+    * GH#47 - Add test prereq on HTTP::Headers
+
+0.37      2016-04-19 11:20:04+02:00 Europe/Madrid
+    [ ENHANCEMENTS ]
     * GH#23 - Move document class config to the singleton object
 
     [ BUGS ]
