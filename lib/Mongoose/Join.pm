@@ -245,22 +245,22 @@ Mongoose::Join - simple class relationship resolver
 
 =head1 DESCRIPTION
 
-This module can be used to establish relationships 
+This module can be used to establish relationships
 between two C<Mongoose::Document> classes. It should not
-be used with C<Mongoose::EmbeddedDocument> classes.  
+be used with C<Mongoose::EmbeddedDocument> classes.
 
 All object relationships are stored as reference C<$id> arrays
 into the parent object. This translates into a slight performance hit
-when loading the parent class, but not as much as loading all 
-objects at one as when using an C<ArrayRef>. 
+when loading the parent class, but not as much as loading all
+objects at one as when using an C<ArrayRef>.
 
-B<Attention>: the relationship attribute needs to be initialized to 
-an instance of C<Mongoose::Join> before it can be used. 
+B<Attention>: the relationship attribute needs to be initialized to
+an instance of C<Mongoose::Join> before it can be used.
 
 =head2 Mongoose::Class
 
 Take a look at L<Mongoose::Class>, it has nice syntatic sugar
-that does most of the initialization behind the scenes for you. 
+that does most of the initialization behind the scenes for you.
 
 =head1 METHODS
 
@@ -268,7 +268,7 @@ that does most of the initialization behind the scenes for you.
 
 Add (join) a Mongoose::Document object for later saving.
 
-Saving the parent Mongoose::Document will save both. 
+Saving the parent Mongoose::Document will save both.
 
     my $author = Author->new;
     $author->articles->add( Article->new );
@@ -292,11 +292,15 @@ Run a MongoDB C<find> on the joint collection.
         ...
     }
 
-Returns a L<Mongoose::Cursor>. 
+Returns a L<Mongoose::Cursor>.
+
+=head2 count
+
+Count relations.
 
 =head2 find_one
 
-Just like find, but returns the first row found. 
+Just like find, but returns the first row found.
 
 =head2 first
 
@@ -306,17 +310,17 @@ Alias to C<find_one>
 
 =head2 all
 
-Same as C<find>, but returns an ARRAY with all the results, instead 
-of a cursor. 
+Same as C<find>, but returns an ARRAY with all the results, instead
+of a cursor.
 
     my @cds = $artist->cds->all;
 
 =head2 hash_on
 
 Same as C<all>, but returns a HASH instead of an ARRAY.
-The hash will be indexed by the key name sent as the first parameter. 
-The hash value contains exactly one object. In case duplicate rows 
-with the same key value are found, the resulting hash will contain 
+The hash will be indexed by the key name sent as the first parameter.
+The hash value contains exactly one object. In case duplicate rows
+with the same key value are found, the resulting hash will contain
 the first one found.
 
     # ie. returns $cds{'111888888292adf0000003'} = <CD Object>;
@@ -328,7 +332,7 @@ the first one found.
 =head2 hash_array
 
 Similar to C<hash_on>, but returns a hash with ALL rows found, grouped
-by the key. 
+by the key.
 
     # ie. returns $cds{'Title1'} = [ <CD1 Object>, <CD2 Object>, ... ];
     my %cds = $artist->cds->hash_array( 'title' => { artist=>'Joe' });
