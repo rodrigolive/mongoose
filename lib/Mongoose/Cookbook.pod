@@ -85,7 +85,7 @@ Use the C<ArrayRef> Moose type.
 Then, define the Account class, either as a document or embedded document, 
 depending on how you want it stored.
 
-    package Address;
+    package Account;
     use Moose;
     with Mongoose::EmbeddedDocument;
 
