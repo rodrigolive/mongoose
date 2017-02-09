@@ -47,7 +47,7 @@ my $cat_count  = 0;
         is $ball_count, 10, "Ball->after_save called 10 times";
         is $cat_count,  1,  "Cat->after_save called 1 times";
 
-	is( Cat->find_one({_id => $cat->_id})->balls->find->count, 10, "added 10 balls" );
+	is( Cat->find_one({_id => $cat->_id})->balls->count, 10, "added 10 balls" );
 }
 
 done_testing;

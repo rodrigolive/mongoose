@@ -1,5 +1,9 @@
 {{$NEXT}}
     [ ENHANCEMENTS ]
+    * Replace deprecated methods on Engine::V1 and some tests
+
+0.38      2016-07-08 12:39:07+02:00 Europe/Madrid
+    [ ENHANCEMENTS ]
     * GH#44 - Make boolean objects roundtrip without force Bool types into booleans (yet)
     * GH#47 - Add test prereq on HTTP::Headers
 

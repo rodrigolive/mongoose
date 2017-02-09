@@ -154,19 +154,27 @@ sub find {
     return $class->find( $opts, @scope );
 }
 
-sub find_one {
-    my ( $self, $opts, @scope ) = @_;
-    my $class = $self->with_class;
-    $opts ||= {};
-    my @children = map { _rel_id($_) } _build_rel( @{$self->children ||[]} );
-    $opts->{_id} = { '$in' => \@children };
-    return $class->find_one( $opts, @scope );
+sub count {
+    my $self = shift;
+    $self->_call_rel_method( count => @_ );
 }
 
-sub first {
+sub find_one {
     my $self = shift;
-    return $self->find_one;
+    $self->_call_rel_method( find_one => @_ );
 }
+
+sub _call_rel_method {
+    my ( $self, $method, $opts, @scope ) = @_;
+    my $class = $self->with_class;
+
+    $opts ||= {};
+    $opts->{_id} = { '$in' => [ map { _rel_id($_) } _build_rel( @{$self->children ||[]} ) ] };
+
+    return $class->$method( $opts, @scope );
+}
+
+sub first { shift->find_one }
 
 sub query {
     my ( $self, $opts, $attrs, @scope ) = @_;

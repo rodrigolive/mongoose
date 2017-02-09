@@ -35,7 +35,7 @@ my $homer = Test::Person->new( name => "Homer" );
 	is( $homer->name, 'Homer', 'as alias working');
 }
 {
-	Person->collection->insert({ name=>'Marge' });
+	Person->collection->insert_one({ name=>'Marge' });
 	my $marge = Person->db
 		->get_collection('simpsons')->find_one({ name=>'Marge' });
 	is( ref($marge), 'HASH', 'as alias keeps collection change across');

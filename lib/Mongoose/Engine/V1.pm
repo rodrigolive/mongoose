@@ -306,10 +306,8 @@ sub _save {
     my $doc = $self->collapse( @scope );
     return unless defined $doc;
 
-    if ( $self->_id ) {
-        ## update on my id
-        my $id = $self->_id;
-        my $ret = $coll->update( { _id=>$id }, $doc, { upsert=>1 } );
+    if ( my $id = $self->_id ) { ## update on my id
+        my $ret = $coll->replace_one( { _id => $id }, $doc, { upsert => 1 } );
         return $id;
     }
     else {
@@ -318,13 +316,13 @@ sub _save {
             # document, so we insert to allow the pk constraint
             # to ensure uniqueness; the 'safe' parameter ensures
             # an exception is thrown on a duplicate
-            my $id = $coll->insert( $doc, { safe => 1 } );
+            my $id = $coll->insert_one( $doc )->inserted_id;
             $self->_id( $id );
             return $id;
         }
         else {
             # save without pk
-            my $id = $coll->save( $doc );
+            my $id = $coll->insert_one( $doc )->inserted_id;
             $self->_id( $id );
 
             # if there are any new, unsaved, documents in the scope,
@@ -365,7 +363,7 @@ sub delete {
         return $self->collection->remove($args);
     }
     elsif ( my $pk = $self->_primary_key_query ) {
-        return $self->collection->remove($pk);
+        return $self->collection->delete_one($pk);
     }
 
     return undef;
