@@ -152,17 +152,16 @@ Mongoose - MongoDB document to Moose object mapper
     use Mongoose;
 
     Mongoose->db('mydb');
+
     my $person = Person->new( name => 'Jack' );
     $person->save;
 
-    my $person = Person->find_one( { name => 'Jack' } );
-    say $person->name;    # Jack
+    $person = Person->find_one({ name => 'Jack' });
+    say $person->name; # Jack
 
-    my $cursor = Person->find( { name => 'Jack' } );
-    die "Not found" unless defined $cursor;
-    while ( my $person = $cursor->next ) {
-        say "You're " . $person->name;
-    }
+    Person->find({ name => qr/^J/' })->each(sub{
+        say "Found ", $person->name;
+    });
 
     $person->delete;
 
