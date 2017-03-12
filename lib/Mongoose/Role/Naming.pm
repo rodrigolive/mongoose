@@ -1,4 +1,5 @@
 package Mongoose::Role::Naming;
+
 use Moose::Role;
 use Moose::Util::TypeConstraints;
 

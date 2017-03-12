@@ -15,17 +15,16 @@ Mongoose - MongoDB document to Moose object mapper
     use Mongoose;
 
     Mongoose->db('mydb');
+
     my $person = Person->new( name => 'Jack' );
     $person->save;
 
-    my $person = Person->find_one( { name => 'Jack' } );
-    say $person->name;    # Jack
+    $person = Person->find_one({ name => 'Jack' });
+    say $person->name; # Jack
 
-    my $cursor = Person->find( { name => 'Jack' } );
-    die "Not found" unless defined $cursor;
-    while ( my $person = $cursor->next ) {
-        say "You're " . $person->name;
-    }
+    Person->find({ name => qr/^J/' })->each(sub{
+        say "Found ", $person->name;
+    });
 
     $person->delete;
 
@@ -44,10 +43,7 @@ Or proceed directly to the L<Mongoose::Cookbook> for many day-to-day recipes.
 
 =head1 WARNING
 
-Since version 0.33 Mongoose support the new L<MongoDB> driver v1.x.x but it still requires
-the old version 0.708.x which will be recomended for some more releases while I keep working
-on the internals. On my initial testing Mongoose is notably faster when running on the old
-version of the driver.
+Since version 0.40 Mongoose only support the new L<MongoDB> driver v1.x.x which it's now required.
 
 Please let me know if you find anything strange using this new driver.
 

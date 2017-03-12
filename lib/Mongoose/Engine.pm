@@ -1,4 +1,5 @@
 package Mongoose::Engine;
+
 use Moose::Role;
 
 use Carp;

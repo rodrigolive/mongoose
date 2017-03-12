@@ -1,9 +1,13 @@
 {{$NEXT}}
+    [ CLEANUP ]
+    * Remove support for pre 1.x MongoDB drivers, version bumped to 1.0 to reflex this!
+
     [ ENHANCEMENTS ]
-    * Remove support for pre 1.x MongoDB drivers
     * Replace all deprecated methods
     * Mongoose::File is now a wrapper to handle files over the default MongoDB::GridFSBucket
     * Emulate count on a cursor to keep this deprecated functionality
+
+    [ DOCS ]
     * Cleaned up and updated Intro and Cookbook to reflex current usage
 
 0.39      2017-02-09 01:55:51+01:00 Europe/Madrid
@@ -165,7 +169,7 @@
       it on its own.
 
 0.07 Wed Feb  2 22:42:59 CET 2011
-    * Changed Mongoose->db to connect to Mongo only when needed. That 
+    * Changed Mongoose->db to connect to Mongo only when needed. That
       makes it easier to initialize Mongoose in a forked server environment.
     * Changed Mongoose->load_schema to handle package namespaces
       in a flexible way.
@@ -206,5 +210,5 @@
     * Joining with Mongoose::Join
     * New Mongoose::Class sugar: has_many, has_one, belongs_to
 
-0.01_01 2010-08-16 00:10:37 
+0.01_01 2010-08-16 00:10:37
     * Initial release

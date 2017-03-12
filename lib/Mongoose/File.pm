@@ -1,4 +1,5 @@
 package Mongoose::File;
+
 use Moose;
 
 has file_id => ( is => 'ro', isa => 'MongoDB::OID', required => 1 );
