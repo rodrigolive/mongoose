@@ -65,6 +65,11 @@ so that it expands a document into a class.
 
 For your convenience:
 
+=head2 count
+
+Same as calling count() on the collection. It will allways return the total
+counting of the filter ignoring skip() and limit().
+
 =head2 each
 
 Iterates over a cursor, calling your sub.
