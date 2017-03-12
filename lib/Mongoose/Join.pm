@@ -6,8 +6,6 @@ use Moose::Meta::TypeConstraint::Parameterizable;
 use Moose::Meta::TypeConstraint::Registry;
 use Tie::IxHash;
 
-my $API_V1 = Mongoose->_mongodb_v1;
-
 my $REGISTRY = Moose::Meta::TypeConstraint::Registry->new;
 $REGISTRY->add_type_constraint(
     Moose::Meta::TypeConstraint::Parameterizable->new(
@@ -66,7 +64,7 @@ sub remove {
             my $id = $obj->_id;
             next unless defined $id;
             $self->children([
-                grep { _rel_id($_) ne $id } _build_rel( @{$children} )
+                grep { $_->id ne $id } _build_rel( @{$children} )
             ]);
         }
     }
@@ -125,7 +123,7 @@ sub _save {
     $self->delete_buffer({});
 
     # make sure unique children is saved
-    my %unique = map { _rel_id($_) => $_ } @objs;
+    my %unique = map { $_->id => $_ } @objs;
     @objs = values %unique;
     $self->children( \@objs );
     return @objs;
@@ -148,7 +146,7 @@ sub find {
     if( ref $children eq 'Mongoose::Join' ) {
         $children = $children->children;
     }
-    my @children = map { _rel_id($_) } _build_rel( @{$children ||[]} );
+    my @children = map { $_->id } _build_rel( @{$children ||[]} );
 
     $opts->{_id} = { '$in' => \@children };
     return $class->find( $opts, @scope );
@@ -169,7 +167,7 @@ sub _call_rel_method {
     my $class = $self->with_class;
 
     $opts ||= {};
-    $opts->{_id} = { '$in' => [ map { _rel_id($_) } _build_rel( @{$self->children ||[]} ) ] };
+    $opts->{_id} = { '$in' => [ map { $_->id } _build_rel( @{$self->children ||[]} ) ] };
 
     return $class->$method( $opts, @scope );
 }
@@ -180,7 +178,7 @@ sub query {
     my ( $self, $opts, $attrs, @scope ) = @_;
     my $class = $self->with_class;
     $opts ||= {};
-    my @children = map { _rel_id($_) } _build_rel( @{$self->children ||[]} );
+    my @children = map { $_->id } _build_rel( @{$self->children ||[]} );
     $opts->{_id} = { '$in' => \@children };
     return $class->query( $opts, $attrs, @scope );
 }
@@ -212,21 +210,11 @@ sub hash_array {
 
 # make sure all refs what's expected on the MongoDB driver in use
 sub _build_rel {
-    for (@_) {
-        if ($API_V1) {
-            $_ = MongoDB::DBRef->new( ref => $_->{'$ref'}, id => $_->{'$id'} )
-                unless ref $_ eq 'MongoDB::DBRef';
-        }
-        else {
-             $_ = Tie::IxHash->new( '$ref' => $_->{'$ref'}, '$id' => $_->{'$id'} )
-                unless ref $_ eq 'Tie::IxHash';
-        }
-    }
-    @_;
+    map { ref $_ eq 'MongoDB::DBRef'
+        ? $_
+        : MongoDB::DBRef->new( ref => $_->{'$ref'}, id => $_->{'$id'} )
+    } @_;
 }
-
-# Read rel ID from ref type in use depending on driver version
-sub _rel_id { $API_V1 ? $_[0]->id : $_[0]->FETCH('$id') }
 
 =head1 NAME
 

@@ -125,11 +125,11 @@ package main;
 }
 {
     my $article = Article->find_one({ title=>'on foo' });
-    my $q1 = $article->authors->query({ name=>'Jack' });
+    my $q1 = $article->authors->find({ name=>'Jack' });
     is $q1->count, 1, 'join query';
 
     is ref( $q1->next ), 'Author', 'join query ref';
-    my $q2 = $article->authors->query({ name=>'Jack' }, { limit=>1, skip=>1 });
+    my $q2 = $article->authors->find({ name => 'Jack' })->skip(1)->limit(1);
     is $q2->next, undef, 'join skipped query';
 }
 {

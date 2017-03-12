@@ -93,24 +93,19 @@ package main;
     for( 'aa', 'cc', 'bb', 'dd' ) {
 	    Person->new( name=>$_ )->save;
     }
-    my $sorted = join ',',
-	    map{ $_->name } Person->query({}, { sort_by=>{ name=>1 } } )->all;
+    my $sorted = join ',', map{ $_->name } Person->find->sort({ name => 1 })->all;
     is $sorted, 'aa,bb,cc,dd', 'sorted ok';
 
-    my $limited = join ',',
-	    map{ $_->name } Person->query({}, { sort_by=>{ name=>1 }, limit=>2, skip=>2 })->all;
+    my $limited = join ',', map{ $_->name } Person->find->sort({ name => 1 })->skip(2)->limit(2)->all;
     is $limited, 'cc,dd', 'limited ok';
-    is(Person->count(), 4, 'count totals');
+    is( Person->count, 4, 'count totals' );
 
-    my $cur = Person->query({}, { limit=>2, skip=>2 });
-    is $cur->count(), 4, 'cursor total';
+    my $cur = Person->find->skip(2)->limit(2);
+    is $cur->count(), 4, 'cursor count emulation counts on total';
 
-    my $cnt=0;
-    $cur->each(sub{$cnt++});
-    is $cnt,2,'each count';
-
-    $cur = Person->query({}, { sort_by=>{ name=>1 }, limit=>2, skip=>2 });
-    is $cur->count(), 4, 'cursor total';
+    my $cnt = 0;
+    $cur->each(sub{ $cnt++ });
+    is( $cnt, 2, 'each count' );
 }
 
 {

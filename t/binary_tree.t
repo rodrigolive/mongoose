@@ -75,7 +75,7 @@ use MongooseT;
 }
 
 {
-	ok( my $bt = Test::BinaryTree->query({ 'node.name'=>'Hurley', 'node.candidate'=>8 })->next, 'Retrive parent node querying schema' );
+	ok( my $bt = Test::BinaryTree->find_one({ 'node.name' => 'Hurley', 'node.candidate' => 8 }), 'Retrive parent node querying schema' );
 	is( $bt->parent->node->{name}, 'Jack', 'parent retrieved' );
 }
 
