@@ -8,10 +8,10 @@ use Test::More;
 	with 'Mongoose::Document' => {
 		-collection_name => 'people',
 		-as              => 'Person',
-		-alias=>{ 'find_one' => '_find_one' },
-		-excludes=>['find_one']
+		-alias           => { 'find_one' => '_find_one' },
+		-excludes        => [ 'find_one' ]
 	};
-	has 'name' => ( is=>'rw', isa=>'Str', required=>1 );
+	has 'name' => ( is => 'rw', isa => 'Str', required => 1 );
 }
 
 package main;
@@ -38,8 +38,8 @@ my $homer = Test::Person->new( name => "Homer" );
 	is( $homer->name, 'Homer', 'as alias working');
 }
 {
-	Person->collection->insert({ name=>'Marge' });
-	my $marge = Person->db->get_collection('simpsons')->find_one({ name=>'Marge' });
+	Person->collection->insert_one({ name => 'Marge' });
+	my $marge = Person->db->get_collection('simpsons')->find_one({ name => 'Marge' });
 	is( ref($marge), 'HASH', 'as alias keeps collection change across');
 }
 {

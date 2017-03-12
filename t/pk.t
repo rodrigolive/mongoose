@@ -16,7 +16,7 @@ package main;
 use lib 't/lib';
 use MongooseT;
 
-BankAccount->collection->ensure_index( { "drivers_license" => 1 }, { unique => 1 } );
+BankAccount->collection->indexes->create_one( [ drivers_license => 1 ], { unique => 1 } );
 
 {
 	my $ba1 = BankAccount->new( name=>'Jordi', drivers_license => 112233 );

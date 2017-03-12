@@ -44,7 +44,7 @@ sub collapse {
                 elsif ( $type->is_a_type_of('FileHandle') ) {
                     $packed->{$key} = MongoDB::DBRef->new(
                         ref => 'FileHandle',
-                        id  => $self->db->get_gridfs->put( delete $packed->{$key} )
+                        id  => $self->db->gfs->upload_from_stream( $key. time, delete($packed->{$key}) )
                     );
                     next;
                 }
@@ -216,9 +216,10 @@ sub expand {
             next;
         }
         elsif( $type->is_a_type_of('FileHandle') ) {
-            my $file = $self->db->get_gridfs->find_one({ _id=> $doc->{$name}->id });
-            delete $doc->{$name}, next unless defined $file;
-            $doc->{$name} = bless $file, 'Mongoose::File';
+            $doc->{$name} = Mongoose::File->new(
+                file_id  => $doc->{$name}->id,
+                bucket   => $self->db->gfs
+            );
             next;
         }
 
@@ -535,4 +536,3 @@ foreign object ids.
 =cut
 
 1;
-

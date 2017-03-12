@@ -62,15 +62,15 @@ Mongoose::Class - sugary Mongoose-oriented replacement for Moose
 This is very much a work-in-progress.
 
 Basically, this module adds some sugar into your Mongoose
-Document class by defining some stand-in replacements for 
-Moose's own C<has>. 
+Document class by defining some stand-in replacements for
+Moose's own C<has>.
 
     has_many
     has_one
     belongs_to
 
 The idea: fewer keystrokes and improved readability
-by self-documenting your class. 
+by self-documenting your class.
 
 =head1 METHODS
 
@@ -85,7 +85,7 @@ for a shorter syntax:
 
 =head2 belongs_to
 
-It's the same as using C<has_one> from above. 
+It's the same as using C<has_one> from above.
 It exists to improve your code expressiveness.
 
 =head2 has_many
@@ -107,8 +107,7 @@ Becomes this:
         isa     => 'Mongoose::Join[Employee]',
         default => sub { Mongoose::Join->new( with_class=>'Employee' ) }
     );
-    
+
 =cut
 
 1;
-

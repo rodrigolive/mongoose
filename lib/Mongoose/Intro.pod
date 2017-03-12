@@ -7,56 +7,11 @@ Mongoose::Intro - an introduction
 
 =head1 MOTIVATION
 
-This module is an attempt to bring together the full power 
-of Moose into one of the hottest new databases out there: MongoDB.
+This module is an attempt to bring together the full power
+of Moose into the MongoDB database.
 
-Before using this module you should take a little time to 
-read on MongoDB. 
-
-=head1 Why not use KiokuDB?
-
-KiokuDB is an awesome module that maps objects to data
-and caters to a wide variety of backends. Currently there's even a
-MongoDB backend that may suit your needs. 
-
-So, why use Mongoose instead?
-
-=over 4
-
-=item *
-
-You want your objects to have their own collection. KiokuDB stores all objects in 
-a single collection. MongoDB performs best the more collections you have.
-
-=item *
-
-You want to be able to store relations as either embedded documents or
-foreign documents. KiokuDB embeds everything. Here you get to choose.
-
-=item *
-
-You want to abstract your data from your class representation. KiokuDB stores
-an extra field called __CLASS__ that ties data to its representation. 
-It's not a bad decision, it's just a design choice. 
-
-=item *
-
-You don't need to keep a scope. KiokuDB will keep objects in scope for
-you, avoiding breakage in relationships. Here nothing is kept in scope.
-
-=item *
-
-You don't plan to use transactions. KiokuDB is transaction ready. 
-But MongoDB is not. So, what's the point here?
-
-=item *
-
-You feel adventurous. 
-
-=back
-
-If you don't need any of this, go grab KiokuDB instead.  It's much more
-configurable, stable and you can painlessly switch backends in the future. 
+Before using this module you should take a little time to
+read on MongoDB.
 
 =head1 REQUIREMENTS
 
@@ -80,7 +35,7 @@ After intalling the software, start the Mongo daemon:
 Set the C<MONGOOSEDB> environment variable to your MongoDB connection
 in case it's not standard (localhost).
 
-    make 
+    make
     export MONGOOSEDB=host,mongodb://localhost,db_name,mytestdb
     make test
     make install
@@ -104,7 +59,7 @@ Some of Mongoose features:
 
 It's fast. Not as fast as working with MongoDB documents directly though.
 But it's way faster than any other ORM and relational mapping modules
-out there. 
+out there.
 
 =item *
 
@@ -113,18 +68,18 @@ It handles most object relationships, circular references included.
 =item *
 
 No persistency. It doesn't manage states for your object. If you save
-your object twice, it writes twice to the database. In most cases,
-this is actually faster than trying to manage states. 
+your object twice, it writes twice to the database. If you need partial
+updating you can do it as there is always access to the MongoDB layer.
 
 =item *
 
-Primary keys. This is quite a extraneuos concept for objects, and 
-it's not mandatory. But it allows you to automatically control 
+Primary keys. This is quite a extraneuos concept for objects, and
+it's not mandatory. But it allows you to automatically control
 when new objects translate to new MongoDB documents, or just update
-them.  
+them.
 
-This is an experimental feature. There are other ways to do this 
-anyway with the MongoDB built-in C<_id> primary-key attribute. 
+This is an experimental feature. There are other ways to do this
+anyway with the MongoDB built-in C<_id> primary-key attribute.
 
 =item *
 
@@ -134,7 +89,7 @@ new attributes for your object and delete old ones at your leasure.
 =item *
 
 No data-object binding means that you may reuse collections,
-and peruse inheritance to great extent. 
+and peruse inheritance to great extent.
 
 =back
 
@@ -144,19 +99,14 @@ and peruse inheritance to great extent.
 
 =item *
 
-This is very much *BETA* software. In fact it's almost alpha, except that the
-API is so simple it will probably not change, so let's call it "beta". 
-
-=item *
-
-This module intrusively imports singleton based methods into your class. It's 
-the price to pay for a simpler user interface and less keystrokes. 
+This module intrusively imports singleton based methods into your class. It's
+the price to pay for a simpler user interface and less keystrokes.
 
 =item *
 
 Object expansion from the database is done using plain bless most of the time.
 Which means your attribute triggers, etc. will not be fired during expansion.
-There are exceptions to this rule though. 
+There are exceptions to this rule though.
 
 =item *
 
@@ -185,21 +135,21 @@ Read on for details on the difference.
 
 There are two roles to make your Moose class a Mongoose document:
 
-* L<Mongoose::Document> 
+* L<Mongoose::Document>
 
-* L<Mongoose::EmbeddedDocument> 
+* L<Mongoose::EmbeddedDocument>
 
 The difference between these roles lies in the way objects
-of different classes will be joined and stored (collapsed) into the DB. 
+of different classes will be joined and stored (collapsed) into the DB.
 
 Read the L<MongoDB docs|http://http://www.mongodb.org/display/DOCS/Schema+Design#SchemaDesign-EmbeddingandLinking>
-if you don't understand the difference. 
+if you don't understand the difference.
 
 =head3 Document
 
-Akin to a row in the relational model. Objects are stored into 
+Akin to a row in the relational model. Objects are stored into
 independent collections. Relationships are stored using
-references, MongoDB's foreign key system. 
+references, MongoDB's foreign key system.
 
 =head3 EmbbededDocument
 
@@ -207,7 +157,7 @@ Tells Mongoose to store your class as an embedded document, inside a
 parent document.
 
 This is usually faster than using document-to-document reference joins. But
-it's not meant for object reuse by foreign documents. 
+it's not meant for object reuse by foreign documents.
 
 =head2 Methods you get when using the Document roles
 
@@ -230,20 +180,18 @@ Deletes the corresponding document from the database.
 
 Wraps MongoDB's find method to return a cursor that expands data into objects.
 
-=head3 query
-
-    my $cursor = Person->query({ age => { '$lt' => 30 } });
+    my $cursor = Person->find({ age => { '$lt' => 30 } });
 
 =head3 find_one
 
-Finds exactly one document. 
+Finds exactly one document.
 
     my $jack = Person->find_one({ first_name => 'Jack' });
 
 =head3 collection
 
-Returns the L<MongoDB::Collection> object supporting this class. It's a way 
-to switch quickly back to MongoDB hash documents. 
+Returns the L<MongoDB::Collection> object supporting this class. It's a way
+to switch quickly back to MongoDB hash documents.
 
     Person->find_one({ name=>'thyself' }); # isa Person
 
@@ -262,12 +210,12 @@ being updated.
 
 =head2 The Default Engine
 
-Mongoose comes with a default engine, L<Mongoose::Engine::Base> that takes
+Mongoose comes with a default engine, L<Mongoose::Engine> that takes
 care of expanding and collapsing objects to and from the Mongo database.
 
 =head3 Collapsing
 
-Collapsing is the process of serializing classes. 
+Collapsing is the process of serializing classes.
 
 Your Moose objects are collapsed by unblessing them until they become
 a hash. Relationships are mantained in the process.
@@ -277,15 +225,15 @@ a hash. Relationships are mantained in the process.
 Expansion is the process of inflating Mongo documents (plain hashes)
 into Moose objects.
 
-This is done by inspecting the class attribute metadata. The base engine
-tries to do it's best identifying data types. The document is then C<bless>ed 
+This is done by inspecting the class attribute metadata. The engine
+tries to do it's best identifying data types. The document is then C<bless>ed
 into your class. This is faster than calling C<new>, but also means
-that B<no special class or attribute methods will be fired, 
-such as default values, setters, triggers or coercion>. You've been warned.  
+that B<no special class or attribute methods will be fired,
+such as default values, setters, triggers or coercion>. You've been warned.
 
-Naturally, there are many cases where
-this guesswork is not enough. These may be addressed in the future
-using attribute traits, but should be fine for most trivial classes.
+Naturally, there are many cases where this guesswork is not enough. These
+may be addressed in the future using attribute traits, but should be fine
+for most trivial classes.
 
 =head1 CONFIGURATION
 
@@ -294,14 +242,12 @@ for greater flexibility.
 
 =head2 Collection naming
 
-You can control the collection name for an individual 
+You can control the collection name for an individual
 class this way:
 
     package My::Mumbo::Jumbo::Class;
     use Moose;
-    with 'Mongoose::Document' => {
-        -collection_name => 'mumbo_jumbo'   
-    };
+    with 'Mongoose::Document' => { -collection_name => 'mumbo_jumbo' };
 
 =head2 Global collection naming stategy
 
@@ -327,46 +273,42 @@ of your liking:
         $pkg =~ s{^MyApp::Schema::}{}g;
         return lc $pkg;
     });
-    
+
 =head2 Primary keys
 
-The standard way MongoDB deals with primary keys is by using 
+The standard way MongoDB deals with primary keys is by using
 the C<_id> attribute. By default, a L<MongoDB::OID> is assigned
-to each object you commit to the database with C<save>. 
+to each object you commit to the database with C<save>.
 
 Checkout this L<Devel::REPL> example:
-    
+
     $ re.pl
     > use Person;
 
-    > my $hurley = Person->new(name=>'Hurley');                                                                                                                                         
+    > my $hurley = Person->new(name=>'Hurley');
     $Person1 = Person=HASH(0x102099d08);
 
-    > $hurley->dump;                                                                                                                                                                    
+    > $hurley->dump;
+    $VAR1 = bless( { 'name' => 'Hurley' }, 'Person' );
+
+    > $hurley->save;
+    4c683525a74100a8df000000
+
+    > $hurley->dump;
     $VAR1 = bless( {
-                     'name' => 'Hurley'
-                   }, 'Person' );
+        _id  => bless( { 'value' => '4c683525a74100a8df000000' }, 'MongoDB::OID' ),
+        name => 'Hurley'
+    }, 'Person' );
 
-    > $hurley->save;                                                                                                                                                                    
-    4c683525a74100a8df000000                                                                                                                                                            $ $hurley->dump;         
+This is pretty standard MongoDB stuff.
 
-    > $hurley->dump;                                                                                                                                                                    
-    $VAR1 = bless( {
-                     '_id' => bless( {
-                           'value' => '4c683525a74100a8df000000'
-                             }, 'MongoDB::OID' ),
-                     'name' => 'Hurley'
-                   }, 'Person' );
-
-This is pretty standard MongoDB stuff. 
-
-Now, for a more control over your primary key, use 
-the role parameter C<-pk>. 
+Now, for a more control over your primary key, use
+the role parameter C<-pk>.
 
     package BankAccount;
     use Moose;
     with 'Mongoose::Document' => {
-        -pk    => [qw/ drivers_license /]
+        -pk => [qw/ drivers_license /]
     };
     has 'drivers_license' => (is=>'rw', isa=>'Int' );
 
@@ -381,17 +323,17 @@ If you first had a class definition as such:
     package Author;
     use Moose; with 'Mongoose::Document';
 
-    has 'name' => ( is=>'rw', isa=>'Str' );
+    has 'name' => ( is => 'rw', isa => 'Str' );
 
 Saved some objects into the DB:
 
-    Author->new( name=>'Mike Old Schema' )->save;
+    Author->new( name => 'Mike Old Schema' )->save;
 
 Then, later on, changed it to:
 
-    has 'first_name' => ( is=>'rw', isa=>'Str' );
+    has 'first_name' => ( is => 'rw', isa => 'Str' );
 
-When reading from the database, at expansion time, 
+When reading from the database, at expansion time,
 since the MongoDB document is just blessed into your
 class the old attribute will be loaded as if nothing had
 happened:
@@ -410,7 +352,7 @@ happened:
 
 At this time, no C<BUILD> or C<BUILDARGS> methods are
 called, which could be used to rearrange the object
-into the new schema.  This will be probably fixed soon. 
+into the new schema.
 
 On the meanwhile, you can always invoke an "alignment"
 method after loading the data, or do a bulk migration:
@@ -420,10 +362,10 @@ method after loading the data, or do a bulk migration:
         $obj->first_name( delete $obj->{name} );
         $obj->save;
     });
-    
+
 =head1 SEE ALSO
 
-Now head on to the L<Mongoose::Cookbook>. 
+Now head on to the L<Mongoose::Cookbook>.
 
 =cut
 

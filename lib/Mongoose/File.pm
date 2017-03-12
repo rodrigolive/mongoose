@@ -1,26 +1,36 @@
 package Mongoose::File;
 use Moose;
-extends 'MongoDB::GridFS::File';
+
+has file_id => ( is => 'ro', isa => 'MongoDB::OID', required => 1 );
+has bucket  => ( is => 'ro', isa => 'MongoDB::GridFSBucket', required => 1 );
+
+has stream_download =>
+    is      => 'ro',
+    isa     => 'MongoDB::GridFSBucket::DownloadStream',
+    lazy    => 1,
+    default => sub { $_[0]->bucket->open_download_stream($_[0]->file_id) },
+    handles => [qw/ fh readline read eof fileno getc /];
+
+sub slurp { local $/; shift->readline; }
 
 sub delete {
     my $self = shift;
-    my $id = $self->info->{_id};
-    $self->_grid->delete($id); # This will die on error
-    $id;
+    $self->bucket->delete($self->file_id);
+    $self->file_id;
 }
 
 *drop = \&delete;
 
 =head1 NAME
 
-Mongoose::File - wrapper for MongoDB::GridFS::File
+Mongoose::File - container for MongoDB::GridFSBucket files
 
 =head1 DESCRIPTION
 
 This module is automatically used when your class
 has C<FileHandle> type attributes.
 
-It extends L<MongoDB::GridFS::File> and adds a
+It wraps L<MongoDB::GridFSBucket::DownloadStream> and adds a
 few convenience methods to it.
 
 =head1 METHODS
@@ -35,4 +45,10 @@ Same as delete
 
 =cut
 
-1;
+=head2 slurp
+
+Retrieve the full content of the file at once.
+
+=cut
+
+__PACKAGE__->meta->make_immutable();

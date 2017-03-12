@@ -11,49 +11,48 @@ Here we go.
 
 =head2 Connecting to MongoDB
 
-First connect to a database before starting to use your classes. 
+First connect to a database before starting to use your classes.
 
     use Mongoose;
-    Mongoose->db( 'mydb'); # looks for a localhost connection
+    Mongoose->db('mydb'); # looks for a localhost connection
 
     # or, for more control:
 
     Mongoose->db(
-        host=>'mongodb://data.server:4000',
-        db_name=>'mydb'
+        host    => 'mongodb://mongodb.server:4000',
+        db_name => 'mydb'
     );
 
 This is done globally here for simplicity sake, but multiple
-connections and databases are also supported. 
+connections and databases are also supported.
 
 =head2 Connecting to more than one database
 
 This is a work in progress. Right now this syntax is supported:
 
     # No class, this will be default db
-    Mongoose->db( db_name=>'mydbone', ... );
+    Mongoose->db( db_name => 'mydbone', ... );
 
     # A db for one class
-    Mongoose->db( class=>'Person', db_name=>'mydbone', ... );
+    Mongoose->db( class => 'Person', db_name => 'mydbone', ... );
 
     # A db/host for several classes
-    Mongoose->db( class=>['Address', 'Telephone'], db_name=>'mydbtwo', host=>'mongodb://host:27017' );
-
-This is quite rudimentary, and will probably change in the future.
+    Mongoose->db( class => ['Address', 'Telephone'], db_name => 'mydbtwo', host => 'mongodb://host:27017' );
 
 =head2 Loading a Schema
 
-To quickly load your Mongoose classes (or any kind of 
+To quickly load your Mongoose classes (or any kind of
 package for that matter), use the C<load_schema> method:
 
     package main;
-    Mongoose->load_schema( search_path=>'MyApp::Schema', shorten=>1 );
+    Mongoose->load_schema( search_path => 'MyApp::Schema', shorten => 1 );
 
 Use it only once in your program. Your modules will be C<require>d
-and may be used from anywhere else. 
+and may be used from anywhere else.
 
 If set to 1, the C<shorten> option will alias C<MyApp::Schema::MyClass>
-into C<MyClass> for convenience.
+into C<MyClass> for convenience. Be careful not to shadow other classes
+by using this option.
 
 =head2 Preventing attributes from being stored
 
@@ -63,13 +62,13 @@ In case your class has attributes you don't want to store in the database.
     use Moose;
     with 'Mongoose::Document';
 
-    has 'name' => ( is => 'rw', isa => 'Str', required => 1 );
-    has 'age'  => ( is => 'rw', isa => 'Int', default  => 40 );
-    has 'salary' => ( is => 'rw', isa => 'Int', traits => ['DoNotMongoSerialize'] );
+    has name   => ( is => 'rw', isa => 'Str', required => 1 );
+    has age    => ( is => 'rw', isa => 'Int', default  => 40 );
+    has salary => ( is => 'rw', isa => 'Int', traits => ['DoNotMongoSerialize'] );
 
 =head2 One-to-many Relationships
 
-This can be accomplished several ways. 
+This can be accomplished several ways.
 
 =head3 ArrayRef
 
@@ -79,23 +78,23 @@ Use the C<ArrayRef> Moose type.
     use Moose;
     with 'Mongoose::Document';
 
-    has 'name' => ( is => 'rw', isa => 'Str', required => 1 );
-    has 'accounts'  => ( is => 'rw', isa => 'ArrayRef[Account]' );
+    has name     => ( is => 'rw', isa => 'Str', required => 1 );
+    has accounts => ( is => 'rw', isa => 'ArrayRef[Account]' );
 
-Then, define the Account class, either as a document or embedded document, 
+Then, define the Account class, either as a document or embedded document,
 depending on how you want it stored.
 
     package Account;
     use Moose;
     with Mongoose::EmbeddedDocument;
 
-    has 'amount' => ...;
+    has amount => ( is => 'rw', isa => 'Int', required => 1 );
 
 But this has a memory and performance cost, since all related rows
 will be loaded in memory during object expansion.
 
 To avoid loading related rows, use a L<Mongoose::Join>
-parameterized type. 
+parameterized type.
 
 =head3 Mongoose::Join
 
@@ -105,8 +104,8 @@ lazily:
     package Person;
     use Moose; with 'Mongoose::Document';
 
-    has 'name' => ( is => 'rw', isa => 'Str', required => 1 );
-    has 'accounts'  => ( is => 'rw', isa => 'Mongoose::Join[Account]' );
+    has name     => ( is => 'rw', isa => 'Str', required => 1 );
+    has accounts => ( is => 'rw', isa => 'Mongoose::Join[Account]' );
 
 Then retrieve data with a cursor:
 
@@ -120,18 +119,18 @@ Then retrieve data with a cursor:
 Use L<Mongoose::Class> instead of C<Moose>.
 
     package Article;
-    use Mongoose::Class;
-    with 'Mongoose::Document';
-    has        title     => ( is => 'rw', isa => 'Str', required => 1 );
-    has_one    author    => 'Author';
-    has_many   comments  => 'Comment';
-    belongs_to acc       => 'Account';
+    use Mongoose::Class; with 'Mongoose::Document';
+
+    has        title    => ( is => 'rw', isa => 'Str', required => 1 );
+    has_one    author   => 'Author';
+    has_many   comments => 'Comment';
+    belongs_to acc      => 'Account';
 
 =head2 Normalizing a Relationship
 
 Normalization is a relational concept, not natural to the
 document-oriented MongoDB, but an useful approach that
-should sometimes be taken into consideration. 
+should sometimes be taken into consideration.
 
 Sometimes it may just be more adequate than storing relationships
 directly in objects:
@@ -139,11 +138,11 @@ directly in objects:
     package Authorship;
     use Mongoose::Class; with 'Mongoose::Document';
 
-    has_one 'author' => 'Author';
-    has_many 'articles' => 'Article';
+    has_one  author   => 'Author';
+    has_many articles => 'Article';
 
     # or even:
-    #  has_one 'article' => 'Article';
+    #  has_one article => 'Article';
 
     package main;
 
@@ -156,7 +155,7 @@ directly in objects:
 
     # find
 
-    my $articles = Authorship->find_one({ author=>$author->_id });
+    my $articles = Authorship->find_one({ author => $author->_id });
     while( my $article = $articles->next ) {
         ...
     }
@@ -166,9 +165,7 @@ directly in objects:
 To make a long package name shorter, use:
 
     package My::Mumbo::Jumbo::Class;
-    with 'Mongoose::Document' => {
-        -as    => 'Mumbo',
-    };
+    with 'Mongoose::Document' => { -as => 'Mumbo' };
 
     # then in your code
 
@@ -206,7 +203,7 @@ altogether, use the C<Raw> trait. That way,
 the MongoDB driver will receive the attribute
 as is.
 
-    has 'code' => ( is=>'rw', isa=>'MongoDB::Code', traits=>['Raw'] );
+    has code => ( is => 'rw', isa => 'MongoDB::Code', traits => ['Raw'] );
 
 =head2 DateTime Handling
 
@@ -243,38 +240,26 @@ into a C<DateTime> object.
 
 =head2 Paging and Sorting
 
-Just use MongoDB's C<query> standard syntax:
+Just use MongoDB's C<find> standard syntax:
 
     # sorting
 
-    my $sorted = Person->query( {}, { sort_by => { name => 1 } } )->each(
-        sub {
-            my $person = shift;
-            print $person->name;
-        }
-    );
+    Person->find->sort({ name => 1 })->each(sub{
+        my $person = shift;
+        print $person->name;
+    });
 
     # paging
 
-    my $paged = Person->query(
-        {},
-        {
-            sort_by => { name => 1 },
-            limit   => 20,
-            skip    => 40
-        }
-      )->each(
-        sub {
-            my $person = shift;
-            print $person->name;
-        }
-      );
-
+    Person->find->sort({ name => 1 })->skip(20)->limit(20)->each(sub{
+        my $person = shift;
+        print $person->name;
+    });
 
 =head2 FileHandle
 
 Support for the FileHandle Moose type is done making use
-of L<MooseDB::GridFS>.
+of L<MooseDB::GridFSBucket>.
 
     package Thing;
     use Mongoose::Class; with 'Mongoose::Document';
@@ -287,8 +272,8 @@ Then store it using a C<FileHandle> type object:
     my $t = Thing->new( file=>$fh );
     $t->save;
 
-The file is stored in Mongo's GridFS using the 
-C<_id> as filename. A special reference is created in
+The file is stored in Mongo's GridFS using the field name
+and C<_id> as filename. A special reference is created in
 your document to point to the GridFS file. The C<thing>
 collection BSON may look like this:
 
@@ -298,12 +283,11 @@ collection BSON may look like this:
     }
 
 When expanding the doc, the file attibute becomes
-a L<Mongoose::File>, an extension of L<MongoDB::GridFS::File>,
+a L<Mongoose::File>, a wrapper of L<MongoDB::GridFSBucket::DownloadStream>,
 which can be easily slurped or streamed.
 
     my $file = Thing->find_one->file;
-
-    print $file->isa('MongoDB::GridFS::File'); # prints 1
+    print $file->slurp;
 
 This is asymmetric, which means it's probably best
 if you check the attribute if it isa C<Mongoose::File>
@@ -314,25 +298,24 @@ before using it as such, specially in your class methods.
     sub my_file_method {
         my $self = shift;
         if( $self->file->isa('Mongoose::File') ) {
-            my $data = $file->slurp; 
-            # do stuff 
+            my $data = $file->slurp;
+            # do stuff
         } else {
             # probably an IO::File filehandle still
         }
     }
 
-This less-than-optimal asymmetric behavior may change in
-the future. 
+This less-than-optimal asymmetric behavior may change in the future.
 
 =head2 Direct access to MongoDB Calls
 
 To skip Mongoose and have direct access to MongoDB, use the
-C<db> and C<collection> methods on your class: 
+C<db> and C<collection> methods on your class:
 
     # finds and expands documents into objects
 
     my $cur = Person->find;
-    
+
     # or just get the plain documents (hashrefs)
 
     my $cur = Person->collection->find;
@@ -342,28 +325,25 @@ C<db> and C<collection> methods on your class:
     my $db = Person->db;
     $db->run_command({ shutdown => 1 });
 
-This can be useful for performance reasons, when you 
-don't need to expand objects, or need to access
-MongoDB functionality not available in Mongoose. It's also 
-useful for testing, to compare if some set of query results
-returned by Mongoose are identical to the straight MongoDB
-driver's results. 
+This can be useful for performance reasons, when you don't need to expand
+objects, or need to access MongoDB functionality not available in Mongoose.
+It's also useful for testing, to compare if some set of query results
+returned by Mongoose are identical to the straight MongoDB driver's results.
 
 =head2 Finding by string _id
 
-If you're passing around the C<_id> attribute from your
-objects in, ie, a webapp, you're probably 
-turning it into a string.
+If you're passing around the C<_id> attribute from your objects in,
+ie, a webapp, you're probably turning it into a string.
 
-The MongoDB way of retrieving an C<_id> from a string 
+The MongoDB way of retrieving an C<_id> from a string
 is a little annoying to type:
 
     $author_id = "4dd77f4ebf4342d711000000";
-    $author = Author->find_one({ _id=>MongoDB::OID->new( value=>$author_id ) });
+    $author = Author->find_one( MongoDB::OID->new( value => $author_id ) );
 
 So, now there is a shorthand variation of C<find_one> to this for you:
 
-    $author = Author->find_one( '4dd77f4ebf4342d711000000' );
+    $author = Author->find_one('4dd77f4ebf4342d711000000');
 
 Will automatically search by C<_id> on the given value by first
 turning it into a C<MongoDB::OID>.

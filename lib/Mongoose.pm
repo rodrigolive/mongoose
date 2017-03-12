@@ -140,7 +140,7 @@ sub aliased {
     exists $self->_alias->{$alias} ? $self->_alias->{$alias} : $alias;
 }
 
-1;
+__PACKAGE__->meta->make_immutable();
 
 =head1 NAME
 

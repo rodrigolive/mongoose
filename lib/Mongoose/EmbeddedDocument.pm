@@ -31,11 +31,11 @@ Mongoose::EmbeddedDocument - role for embedded documents
 
 This role is a copy of C<Mongoose::Document>, but flags the class
 as 'embedded' so that it's collapsed into a single parent document
-in the database. 
+in the database.
 
 =head1 SEE ALSO
 
-Read the Mongoose intro or cookbook. 
+Read the Mongoose intro or cookbook.
 
 From the MongoDB docs: L<http://www.mongodb.org/display/DOCS/Updating+Data+in+Mongo#UpdatingDatainMongo-EmbeddingDocumentsDirectlyinDocuments>
 

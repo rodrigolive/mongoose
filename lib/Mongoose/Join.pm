@@ -353,4 +353,4 @@ Return the collection name for the joint Mongoose::Document.
 
 =cut
 
-1;
+__PACKAGE__->meta->make_immutable();

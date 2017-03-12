@@ -61,6 +61,7 @@ package main;
 {
     my $dep = Department->find_one({code=>'ACC'});
     my $cur = $dep->employees->find;
+    diag ref($cur);
     is $cur->count, 15, 'joined ok';
 }
 {

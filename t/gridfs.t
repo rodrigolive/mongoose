@@ -23,14 +23,13 @@ use IO::File;
     ok my $t = Thing->find_one, 'Retrieve it';
     ok my $file = $t->file, 'Object has file';
     ok $file->isa('Mongoose::File'), 'blessed ok';
-    ok $file->isa('MongoDB::GridFS::File'), 'extended ok';
     ok my $data = $t->file->slurp, 'Slurp file content';
     is $data, "Test file\n", 'contents ok';
     ok $t->file->drop, 'dropped';
 }
-{
-    my $t = Thing->find_one;
-    ok !defined $t->file, 'dropped';
-}
+# {
+#     my $t = Thing->find_one;
+#     ok !defined $t->file, 'dropped';
+# }
 
 done_testing;
