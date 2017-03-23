@@ -69,17 +69,13 @@ sub _collapse {
                 id  => $ref_id
             );
         }
-        elsif ( ref($value) =~ /^(?: DateTime(?:\:\:Tiny)? | boolean )$/x ) { # Types accepted by the driver
-            return $value;
-        }
-        else {
-            return $self->_unbless( $value, $class, @scope );
-        }
+
+        return $self->_unbless( $value, $class, @scope );
     }
     elsif ( ref $value eq 'ARRAY' ) {
-        my ( @arr, $aryclass );
+        my @arr;
         for my $item ( @$value ) {
-            $aryclass ||= blessed( $item );
+            my $aryclass ||= blessed( $item );
             if ( $aryclass && $aryclass->does('Mongoose::EmbeddedDocument') ) {
                 push @arr, $item->collapse(@scope, $self);
             }
@@ -136,7 +132,8 @@ sub _unbless {
             $ret = \@objs;
         }
     }
-    else { # non-moose class
+    # non-moose class
+    elsif ( $class !~ /^(?: DateTime(?:\:\:Tiny)? | boolean )$/x ) { # Types accepted by the driver
         my $reftype = reftype($obj);
         if    ( $reftype eq 'ARRAY' )  { $ret = [@$obj] }
         elsif ( $reftype eq 'SCALAR' ) { $ret = $$obj }

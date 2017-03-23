@@ -1,5 +1,6 @@
 use Test::More;
 use boolean qw/true false/;
+use DateTime;
 
 {
     package Person;
@@ -34,8 +35,9 @@ use boolean qw/true false/;
     use Mongoose::Class;
     use boolean qw/true false/;
     with 'Mongoose::Document';
-    has name  => ( is => 'ro', isa => 'Str' );
-    has ready => ( is => 'rw', isa => 'Bool', default => sub {false} );
+    has name    => ( is => 'ro', isa => 'Str' );
+    has ready   => ( is => 'rw', isa => 'Bool',    default => sub {false} );
+    has updated => ( is => 'rw', isa => 'HashRef', default => sub {{}} );
 }
 
 {
@@ -69,14 +71,22 @@ use boolean qw/true false/;
     is ref($t2->hh->{aa}), 'ARRAY', 'expanded hash into array';
 
     subtest 'Booleans roundtip' => sub {
-	ok( my $obj = OtherThing->new( name => 'Ambar' ), 'Create new object with state false (default)' );
-	isa_ok( $obj->ready, 'boolean', 'State is a boolean' );
-	ok( $obj->save, 'Save it' );
-	ok( $obj = OtherThing->find_one($obj->_id), 'Get it back from store' );
-	isa_ok( $obj->ready, 'boolean', 'State is still a boolean' );
+        ok( my $obj = OtherThing->new( name => 'Ambar' ), 'Create new object with state false (default)' );
+        isa_ok( $obj->ready, 'boolean', 'State is a boolean' );
+        ok( $obj->save, 'Save it' );
+        ok( $obj = OtherThing->find_one($obj->_id), 'Get it back from store' );
+        isa_ok( $obj->ready, 'boolean', 'State is still a boolean' );
 
-	is( OtherThing->count({ ready => false }), 1, 'Count objects matching a boolean' );
-	is( OtherThing->count({ ready => 0 }), 0, 'Count objects matching a pseudo-boolean' );
+        is( OtherThing->count({ ready => false }), 1, 'Count objects matching a boolean' );
+        is( OtherThing->count({ ready => 0 }), 0, 'Count objects matching a pseudo-boolean' );
+    };
+
+    subtest 'DateTime on hashrefs roundtip' => sub {
+        ok( my $obj = OtherThing->find_one, 'Get one object' );
+        ok( $obj->updated({ x => DateTime->now }), 'Set a HashRef[DateTime] attribute' );
+        ok( $obj->save, 'Save it' );
+        ok( $obj = OtherThing->find_one($obj->_id), 'Get it back from store' );
+        isa_ok( $obj->updated->{x}, 'DateTime', 'Attribute is ok' );
     };
 }
 
