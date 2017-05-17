@@ -82,11 +82,11 @@ This are the available named methods:
      short        | MyApp::Schema::FooBar | foobar
      plural       | MyApp::Schema::FooBar | foobars
      decamel      | MyApp::Schema::FooBar | foo_bar
-     lower        | MyApp::Schema::FooBar | myapp::schema::author
-     upper        | MyApp::Schema::FooBar | MYAPP::SCHEMA::AUTHOR
+     lower        | MyApp::Schema::FooBar | myapp::schema::foobar
+     upper        | MyApp::Schema::FooBar | MYAPP::SCHEMA::FOOBAR
      undercolon   | MyApp::Schema::FooBar | myapp_schema_foobar
      default      | MyApp::Schema::FooBar | myapp_schema_foo_bar
-     none         | MyApp::Schema::Author | MyApp::Schema::Author
+     none         | MyApp::Schema::FooBar | MyApp::Schema::FooBar
 
 You can choose a predefined naming method
 
