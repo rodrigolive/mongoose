@@ -2,7 +2,7 @@ package Mongoose::File;
 
 use Moose;
 
-has file_id => ( is => 'ro', isa => 'MongoDB::OID', required => 1 );
+has file_id => ( is => 'ro', isa => 'BSON::OID', required => 1 );
 has bucket  => ( is => 'ro', isa => 'MongoDB::GridFSBucket', required => 1 );
 
 has stream_download =>

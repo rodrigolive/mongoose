@@ -22,7 +22,7 @@ sub collapse {
         my $ref_id = $duplicate->_id;
         return undef unless defined $class && $ref_id;
         return undef if $self->_id && $self->_id eq $ref_id; # prevent self references?
-        return MongoDB::DBRef->new(
+        return BSON::DBRef->new(
             ref => Mongoose->class_config($class)->{collection_name},
             id  => $ref_id
         );
@@ -43,7 +43,7 @@ sub collapse {
                     next;
                 }
                 elsif ( $type->is_a_type_of('FileHandle') ) {
-                    $packed->{$key} = MongoDB::DBRef->new(
+                    $packed->{$key} = BSON::DBRef->new(
                         ref => 'FileHandle',
                         id  => $self->db->gfs->upload_from_stream( $key. time, delete($packed->{$key}) )
                     );
@@ -64,7 +64,7 @@ sub _collapse {
     if ( my $class = blessed $value ) {
         if ( ref $value eq 'HASH' && defined ( my $ref_id = $value->{_id} ) ) {
             # it has an id, so join ref it
-            return MongoDB::DBRef->new(
+            return BSON::DBRef->new(
                 ref => Mongoose->class_config($class)->{collection_name},
                 id  => $ref_id
             );
@@ -81,7 +81,7 @@ sub _collapse {
             }
             elsif ( $aryclass && $aryclass->does('Mongoose::Document') ) {
                 $item->_save( @scope, $self );
-                push @arr, MongoDB::DBRef->new(
+                push @arr, BSON::DBRef->new(
                     ref => Mongoose->class_config($aryclass)->{collection_name},
                     id  => $item->_id
                 );
@@ -122,7 +122,7 @@ sub _unbless {
         }
         elsif ( $class->does('Mongoose::Document') ) {
             $obj->_save( @scope, $self );
-            $ret = MongoDB::DBRef->new(
+            $ret = BSON::DBRef->new(
                 ref => Mongoose->class_config($class)->{collection_name},
                 id  => $obj->_id
             );
@@ -133,7 +133,7 @@ sub _unbless {
         }
     }
     # non-moose class
-    elsif ( $class !~ /^(?: DateTime(?:\:\:Tiny)? | boolean )$/x ) { # Types accepted by the driver
+    elsif ( $class !~ /^(?: DateTime(?:\:\:Tiny)? | boolean | ^BSON::)$/x ) { # Types accepted by the driver
         my $reftype = reftype($obj);
         if    ( $reftype eq 'ARRAY' )  { $ret = [@$obj] }
         elsif ( $reftype eq 'SCALAR' ) { $ret = $$obj }
@@ -141,6 +141,26 @@ sub _unbless {
     }
 
     $ret;
+}
+
+sub _expand_subtype {
+    my ( $self, $param_class, $value, $scope ) = @_;
+
+    return $value->as_datetime if $param_class eq 'DateTime';
+
+    return $param_class->expand($value) if $param_class->does('Mongoose::EmbeddedDocument');
+
+    if ( $param_class->does('Mongoose::Document') ) {
+        if ( my $circ_doc = $scope->{ $value->id } ) {
+            return bless( $circ_doc, $param_class );
+        }
+        elsif ( my $obj = $param_class->find_one({ _id => $value->id }, undef, $scope ) ) {
+            return $obj;
+        }
+    }
+
+    warn "Unable to expand subtype $param_class from ". ref($value) || "unblesed value: $value";
+    $value; # Not expanded :-/
 }
 
 sub expand {
@@ -152,7 +172,7 @@ sub expand {
     $scope = {} unless ref $scope eq 'HASH';
 
     # check if it's an straight ref
-    if ( ref $doc eq 'MongoDB::DBRef' ) {
+    if ( ref $doc eq 'BSON::DBRef' ) {
         return defined $scope->{$doc->id}
              ? $scope->{$doc->id}
              : $class_main->find_one({ _id => $doc->id });
@@ -172,10 +192,13 @@ sub expand {
             # HashRef[ parameter ]
             if( defined $type->{type_parameter} ) {
                 my $param = $type->{type_parameter};
-                if( my $param_class = $param->{class} ) {
+                if ( my $param_class = $param->{class} ) {
                     for my $key ( keys %{ $doc->{$name} || {} } ) {
-                        $doc->{$name}{$key} = $param_class->expand( $doc->{$name}{$key}, undef, $scope );
+                        $doc->{$name}{$key} = $self->_expand_subtype( $param_class, $doc->{$name}{$key}, $scope );
                     }
+                }
+                else {
+                    $doc->{$name} ||= {};
                 }
             }
 
@@ -185,24 +208,10 @@ sub expand {
             if ( defined $type->{type_parameter} ) {
                 # ArrayRef[ parameter ]
                 my $param = $type->{type_parameter};
-                if( my $param_class = $param->{class} ) {
+                if ( my $param_class = $param->{class} ) {
                     my @objs;
                     for my $item ( @{ $doc->{$name} || [] } ) {
-                        #TODO: why not to call myself always like:
-                        #push @obj, $param_class->expand( $item, undef, $scope );
-                        if ( $param_class->does('Mongoose::EmbeddedDocument') ) {
-                            push @objs, $param_class->expand($item);
-                        }
-                        elsif ( $param_class->does('Mongoose::Document') ) {
-                            if( my $circ_doc = $scope->{ $item->id } ) {
-                                push @objs, bless( $circ_doc , $param_class );
-                            }
-                            else {
-                                if ( my $obj = $param_class->find_one({ _id => $item->id }, undef, $scope ) ) {
-                                    push @objs, $obj;
-                                }
-                            }
-                        }
+                        push @objs, $self->_expand_subtype( $param_class, $item, $scope );
                     }
                     $doc->{$name} = \@objs;
                 }
@@ -211,6 +220,10 @@ sub expand {
                 }
             }
 
+            next;
+        }
+        elsif ( $type->is_a_type_of('DateTime') ) {
+            $doc->{$name} = $doc->{$name}->as_datetime,
             next;
         }
         elsif( $type->is_a_type_of('FileHandle') ) {
@@ -227,7 +240,7 @@ sub expand {
                 $doc->{$name} = bless $doc->{$name}, $class;
             }
             elsif ( $class->does('Mongoose::Document') ) {
-                if ( ref $doc->{$name} eq 'MongoDB::DBRef' ) {
+                if ( ref $doc->{$name} eq 'BSON::DBRef' ) {
                     my $_id = $doc->{$name}->id;
                     if ( my $circ_doc = $scope->{"$_id"} ) {
                         $doc->{$name} = bless( $circ_doc , $class );
@@ -439,8 +452,8 @@ sub query {
 sub find_one {
     my $self = shift;
 
-    if( @_ == 1 && ( !ref($_[0]) || ref($_[0]) eq 'MongoDB::OID' ) ) {
-        my $query = { _id=> ref $_[0] ? $_[0] : eval{MongoDB::OID->new( value=>$_[0] )}||$_[0] };
+    if( @_ == 1 && ( !ref($_[0]) || ref($_[0]) eq 'BSON::OID' ) ) {
+        my $query = { _id=> ref $_[0] ? $_[0] : eval{BSON::OID->new( oid => pack("H*",$_[0]) )}||$_[0] };
         if ( my $doc = $self->collection->find_one($query) ) {
             return $self->expand( $doc );
         }
@@ -455,11 +468,16 @@ sub find_one {
     undef;
 }
 
-sub count { shift->collection->count(@_) }
+sub count {
+    my $self = shift;
+    @_ ? $self->count_documents(@_) : $self->estimated_document_count;
+}
+sub count_documents { shift->collection->count_documents(@_) }
+sub estimated_document_count { shift->collection->estimated_document_count(@_) }
 
 =head1 NAME
 
-Mongoose::Engine::V1 - serialization for MongoDBv1 driver
+Mongoose::Engine - serialization for MongoDB driver
 
 =head1 DESCRIPTION
 
@@ -474,14 +492,14 @@ Just like L<MongoDB::Collection/find_one>, but blesses the hash document
 into your class package.
 
 Also has a handy mode which allows
-retrieving an C<_id> directly from a MongoDB::OID or just a string:
+retrieving an C<_id> directly from a BSON:OID or just a string:
 
    my $author = Author->find_one( '4dd77f4ebf4342d711000000' );
 
 Which expands onto:
 
    my $author = Author->find_one({
-       _id=>MongoDB::OID->new( value=>'4dd77f4ebf4342d711000000' )
+       _id=>BSON::OID->new( value=>'4dd77f4ebf4342d711000000' )
    });
 
 =head2 find
@@ -498,7 +516,16 @@ your package.
 
 =head2 count
 
-Just like L<MongoDB::Collection/count>.
+Helper and back-compat method to call estimated_document_count() or count_documents()
+depending on arguments passed.
+
+=head2 estimated_document_count
+
+Just like L<MongoDB::Collection/estimated_document_count>.
+
+=head2 count_documents
+
+Just like L<MongoDB::Collection/count_documents>.
 
 =head2 delete
 

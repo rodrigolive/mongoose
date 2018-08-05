@@ -37,7 +37,7 @@ use DateTime;
     with 'Mongoose::Document';
     has name    => ( is => 'ro', isa => 'Str' );
     has ready   => ( is => 'rw', isa => 'Bool',    default => sub {false} );
-    has updated => ( is => 'rw', isa => 'HashRef', default => sub {{}} );
+    has updated => ( is => 'rw', isa => 'HashRef[DateTime]', default => sub {{}} );
 }
 
 {

@@ -1,4 +1,6 @@
 {{$NEXT}}
+
+1.02      2017-03-23 12:33:01+01:00 Europe/Madrid
     [ BUGS ]
     * Keep bools and dates untouched when collapsing hashrefs
 

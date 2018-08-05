@@ -25,7 +25,7 @@ package main;
         address => Address->new( street => 'Elm St.' )
     );
     my $id = $pers->save;
-    is( ref($id), 'MongoDB::OID', 'created, id defined' );
+    is( ref($id), 'BSON::OID', 'created, id defined' );
 }
 {
 	my $obj = Person->find_one({ name=>'Juanita' });

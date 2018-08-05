@@ -26,7 +26,7 @@ has 'class'                 => ( is => 'rw', isa => 'Str' );
 has 'field'                 => ( is => 'rw', isa => 'Str' );
 has 'with_class'            => ( is => 'rw', isa => 'Str' );
 has '_with_collection_name' => ( is => 'rw', isa => 'Str' );
-has 'parent'                => ( is => 'rw', isa => 'MongoDB::OID' );
+has 'parent'                => ( is => 'rw', isa => 'BSON::OID' );
 
 # once the object is expanded, it has children too
 has 'children'              => ( is => 'rw', isa => 'ArrayRef', default => sub{[]} );
@@ -210,9 +210,9 @@ sub hash_array {
 
 # make sure all refs what's expected on the MongoDB driver in use
 sub _build_rel {
-    map { ref $_ eq 'MongoDB::DBRef'
+    map { ref $_ eq 'BSON::DBRef'
         ? $_
-        : MongoDB::DBRef->new( ref => $_->{'$ref'}, id => $_->{'$id'} )
+        : BSON::DBRef->new( ref => $_->{'$ref'}, id => $_->{'$id'} )
     } @_;
 }
 

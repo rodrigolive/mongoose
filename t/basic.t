@@ -19,7 +19,7 @@ package main;
 {
     ok( my $homer = Person->new( name => "Homer Simpson" ), 'Create homer person' );
     ok( my $id = $homer->save, 'save it' );
-    is( ref($id), 'MongoDB::OID', 'save() returns OID' );
+    is( ref($id), 'BSON::OID', 'save() returns OID' );
     is( Person->count, 1, 'collection has one doc');
     ok( $homer->delete, 'Delete it' );
     is( Person->count, 0, 'collection is empty now');
@@ -31,7 +31,7 @@ package main;
     $homer->spouse($marge);
     $marge->spouse($homer);
     my $id = $homer->save;
-    is( ref($id), 'MongoDB::OID', 'xref, id defined' );
+    is( ref($id), 'BSON::OID', 'xref, id defined' );
 
     is( Person->count, 2, '2 Simpsons ok' );
 
@@ -56,7 +56,7 @@ package main;
 
     ok( !Person->find_one('fail'), 'find_one(STRING-NO-OID)' );
 
-    ok( $p = Person->find_one($id), 'find_one(MongoDB::OID)' );
+    ok( $p = Person->find_one($id), 'find_one(BSON::OID)' );
     is( $p->name, 'Homer Simpson', 'homer found');
 }
 
