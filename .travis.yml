@@ -9,7 +9,6 @@ perl:
 services: mongodb
 before_install:
    - cpanm -n Dist::Zilla
-   - cpanm -n Test::Fatal
    - dzil authordeps | cpanm -n
    - dzil build
    - cd ./Mongoose*
