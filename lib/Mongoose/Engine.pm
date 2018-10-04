@@ -286,8 +286,14 @@ sub expand {
         }
     }
 
+    $doc->expanded;
     $doc;
 }
+
+# Called after doc is expanded, a good point for some black magic
+# Mostly needed to allow old mongoose document classes to
+# manipulate dates on nested types.
+sub expanded {}
 
 sub _joint_fields {
     my $self = shift;
@@ -538,6 +544,16 @@ Turns an object into a hash document.
 =head2 expand
 
 Turns a hash document back into an object.
+
+=head2 expanded
+
+This is an empty method called by expand() after a document was turned into an object. This
+was added in version 2 to allow old classes to handle dates on nested types that previously
+were DateTime objects and now are BSON::Time, but it can be used/abused to any kind of fix
+to the expanded object.
+
+It's recommended to use with care and alway using method modifiers (after) to allow subclassing
+and composition.
 
 =head2 collection
 
