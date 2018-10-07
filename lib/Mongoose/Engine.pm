@@ -505,7 +505,7 @@ retrieving an C<_id> directly from a BSON:OID or just a string:
 Which expands onto:
 
    my $author = Author->find_one({
-       _id=>BSON::OID->new( value=>'4dd77f4ebf4342d711000000' )
+       _id => BSON::OID->new( value => pack( 'H*', '4dd77f4ebf4342d711000000' ) )
    });
 
 =head2 find
