@@ -1,4 +1,7 @@
 {{$NEXT}}
+    * Reworked to support MongoDB 2.x driver. Version bumped to reflex this!
+    * New expanded() method to allow object modifications required to migrate from old MongoDB driver when using  nested structs
+    * Start to rework docs to update after several reworks...
 
 1.02      2017-03-23 12:33:01+01:00 Europe/Madrid
     [ BUGS ]

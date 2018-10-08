@@ -202,11 +202,10 @@ to switch quickly back to MongoDB hash documents.
 =head3 _id
 
 Not really a method but an attribute used by Mongoose (and MongoDB).
-Contains a unique L<MongoDB::OID> instance.
+Contains a unique L<BSON::OID> instance.
 
-Deleting or modifying this attribute
-may cause your object to be re-inserted on the next C<save>, instead of
-being updated.
+Deleting or modifying this attribute may cause your object to be
+re-inserted on the next C<save>, instead of being updated.
 
 =head2 The Default Engine
 
@@ -277,7 +276,7 @@ of your liking:
 =head2 Primary keys
 
 The standard way MongoDB deals with primary keys is by using
-the C<_id> attribute. By default, a L<MongoDB::OID> is assigned
+the C<_id> attribute. By default, a L<BSON::OID> is assigned
 to each object you commit to the database with C<save>.
 
 Checkout this L<Devel::REPL> example:
@@ -296,7 +295,7 @@ Checkout this L<Devel::REPL> example:
 
     > $hurley->dump;
     $VAR1 = bless( {
-        _id  => bless( { 'value' => '4c683525a74100a8df000000' }, 'MongoDB::OID' ),
+        _id  => bless( { 'oid' => '4c683525a74100a8df000000' }, 'BSON::OID' ),
         name => 'Hurley'
     }, 'Person' );
 
@@ -346,8 +345,8 @@ happened:
     # prints
 
     --- !!perl/hash:MyTestApp::Schema::Author
-    _id: !!perl/hash:MongoDB::OID
-          value: 4c723348a741001455000000
+    _id: !!perl/hash:BSON::OID
+          oid: 4c723348a741001455000000
     name: Mike Old Schema
 
 At this time, no C<BUILD> or C<BUILDARGS> methods are
@@ -362,6 +361,9 @@ method after loading the data, or do a bulk migration:
         $obj->first_name( delete $obj->{name} );
         $obj->save;
     });
+
+You can also check the expanded() method where you can
+manipulate your just expanded object.
 
 =head1 SEE ALSO
 
