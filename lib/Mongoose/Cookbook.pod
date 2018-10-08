@@ -207,8 +207,8 @@ as is.
 
 =head2 DateTime Handling
 
-DateTime and DateTime::Tiny objects are passed untouched to the MongoDB
-driver, so using the Raw helper is not necesary.
+DateTime, DateTime::Tiny and BSON::Time objects are passed untouched to the
+MongoDB driver, so using the Raw helper is not necesary and not recommended.
 
 This attribute:
 
@@ -219,7 +219,7 @@ This attribute:
     );
 
 
-Is exactly the same as:
+Is collapsed exactly the same as:
 
     has date => (
         is      => 'rw',
@@ -236,7 +236,15 @@ Which in turn is stored as:
     }
 
 Either way the object will be expanded back from the database
-into a C<DateTime> object.
+into a C<BSON::TIme> object. If you want to have it back as a
+DateTime object as in the old versions, you should not use the
+Raw trait and make sure your attribute 'isa' DateTime:
+
+    has date => (
+        is      => 'rw',
+        isa     => 'DateTime',
+        default => sub{ DateTime->now }
+    );
 
 =head2 Paging and Sorting
 
@@ -339,13 +347,13 @@ The MongoDB way of retrieving an C<_id> from a string
 is a little annoying to type:
 
     $author_id = "4dd77f4ebf4342d711000000";
-    $author = Author->find_one( MongoDB::OID->new( value => $author_id ) );
+    $author = Author->find_one( BSON::OID->new( oid => pack("H*",$author_id) ) );
 
-So, now there is a shorthand variation of C<find_one> to this for you:
+So, there is a shorthand variation of C<find_one> to help you on this:
 
     $author = Author->find_one('4dd77f4ebf4342d711000000');
 
 Will automatically search by C<_id> on the given value by first
-turning it into a C<MongoDB::OID>.
+turning it into a C<BSON::OID>.
 
 =cut
