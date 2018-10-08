@@ -53,11 +53,11 @@ package main;
 {
     my $r = new Request( base=>'http://example.com', headers=>{ "user-agent"=> 'mozilla' });
     my $id = $r->save;
-    is( ref($id), 'MongoDB::OID', 'id ok' );
+    is( ref($id), 'BSON::OID', 'id ok' );
 }
 {
     my $r = Request->find->next;
-    is( ref($r->_id), 'MongoDB::OID', 'id ok again' );
+    is( ref($r->_id), 'BSON::OID', 'id ok again' );
     ok( $r->base->isa('URI::http'), 'isa uri' );
     ok( $r->headers->isa('HTTP::Headers'), 'isa uri' );
     $r->delete;

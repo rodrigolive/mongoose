@@ -51,7 +51,7 @@ role {
     with( $p->{'-engine'} || 'Mongoose::Engine' );
 
     # attributes
-    has '_id' => ( is => 'rw', isa => 'MongoDB::OID', traits => ['DoNotMongoSerialize'] );
+    has '_id' => ( is => 'rw', isa => 'BSON::OID', traits => ['DoNotMongoSerialize'] );
 
     # aliasing
     if ( my $as = $p->{'-as'} ) {

@@ -19,7 +19,7 @@ package main;
 {
 	my $homer = Person->new( name => "Homer Simpson", email => 'homer@springfield.tv' );
 	my $id = $homer->save;
-	is( ref($id), 'MongoDB::OID', 'created, id defined' );
+	is( ref($id), 'BSON::OID', 'created, id defined' );
 }
 {
 	my $homer = Person->find_one({ name=>"Homer Simpson" });

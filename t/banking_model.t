@@ -72,8 +72,8 @@ use MongooseT; # connects to the db for me
 {
 	my $coll = CheckingAccount->collection;
 	ok( my $account = $coll->find->next, 'Get from collection' );
-    isa_ok( my $ba = $account->{overdraft_account}, 'MongoDB::DBRef' );
-    is( ref($ba->id), 'MongoDB::OID', 'foreign key stored' );
+    isa_ok( my $ba = $account->{overdraft_account}, 'BSON::DBRef' );
+    is( ref($ba->id), 'BSON::OID', 'foreign key stored' );
     is( $ba->ref, 'bank_account', 'make sure its foreign' );
 }
 

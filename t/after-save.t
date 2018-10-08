@@ -29,23 +29,20 @@ my $cat_count  = 0;
         };
 }
 {
-	Cat->collection->drop;
-	Ball->collection->drop;
-
 	my $cat = Cat->new();
 	$cat->save;
-        is $cat_count,  1,  "Cat->after_save called 1 times";
-        $cat_count = 0;
+    is $cat_count,  1,  "Cat->after_save called 1 times";
+    $cat_count = 0;
 
 	for( 1 .. 10 ){
-            my $ball = Ball->new( cat => $cat );
-            $cat->balls->add( $ball );
+        my $ball = Ball->new( cat => $cat );
+        $cat->balls->add( $ball );
 	}
 
 	$cat->save;
 
-        is $ball_count, 10, "Ball->after_save called 10 times";
-        is $cat_count,  1,  "Cat->after_save called 1 times";
+    is $ball_count, 10, "Ball->after_save called 10 times";
+    is $cat_count,  1,  "Cat->after_save called 1 times";
 
 	is( Cat->find_one({_id => $cat->_id})->balls->count, 10, "added 10 balls" );
 }
