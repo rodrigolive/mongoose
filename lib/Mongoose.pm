@@ -180,7 +180,7 @@ Or proceed directly to the L<Mongoose::Cookbook> for many day-to-day recipes.
 
 =head1 WARNING
 
-Since version 1.00 Mongoose only support the new L<MongoDB> driver v1.x.x which it's now required.
+Since version 2.00 Mongoose only support the new L<MongoDB> driver v2.x.x which it's now required.
 
 Please let me know if you find anything strange using this new driver.
 
