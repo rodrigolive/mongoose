@@ -1,6 +1,11 @@
 {{$NEXT}}
+
+    * Initial support for multitenancy (namespaces)
+    * Removed capability of forcing a collection on a Document class (was never documented)
+
+2.00      2018-10-08 18:08:32+02:00 Europe/Madrid
     * Reworked to support MongoDB 2.x driver. Version bumped to reflex this!
-    * New expanded() method to allow object modifications required to migrate from old MongoDB driver when using  nested structs
+    * New expanded() method to allow object modifications required to migrate from old MongoDB driver when using nested structs
     * Start to rework docs to update after several reworks...
 
 1.02      2017-03-23 12:33:01+01:00 Europe/Madrid

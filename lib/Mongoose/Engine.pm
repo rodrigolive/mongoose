@@ -399,36 +399,8 @@ sub db {
 }
 
 sub collection {
-    my ($self, $new_collection) = @_;
-    my $db = $self->db;
-
-    # getter
-    my $config = Mongoose->class_config($self);
-    $new_collection or return $config->{collection}
-        || ( $config->{collection} = $db->get_collection( $config->{collection_name} ) );
-
-    # setter
-    my $is_singleton = ! ref $self;
-    if( ref($new_collection) eq 'MongoDB::Collection' ) {
-        # changing collection objects directly
-        if( $is_singleton ) {
-            $config->{collection_name} = $new_collection->name;
-            return $config->{collection} = $new_collection;
-        } else {
-            my $class = ref $self;
-            Carp::confess "Changing the object collection is not currently supported. Use $class->collection() instead";
-        }
-    }
-    elsif( $new_collection ) {
-        # setup a new collection by name
-        if( $is_singleton ) {
-            $config->{collection_name} = $new_collection;
-            return $config->{collection} = $db->get_collection( $new_collection );
-        } else {
-            my $class = ref $self;
-            Carp::confess "Changing the object collection is not currently supported. Use $class->collection() instead";
-        }
-    }
+    my $self = shift;
+    $self->db->get_collection( $self->_collection_name );
 }
 
 sub _primary_key_query {

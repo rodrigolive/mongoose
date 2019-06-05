@@ -40,6 +40,18 @@ has _config => ( # Store document classes configuration
     default => sub{{}}
 );
 
+has _ns => ( # Selected namespace/tenant
+    is      => 'rw',
+    isa     => 'Str',
+    default => sub{'default'}
+);
+
+sub namespace {
+    my $self = shift;
+    if ( my $name = shift ) { $self->_ns($name) }
+    $self->_ns;
+}
+
 sub db {
     my $self = shift;
     my %p    = @_ == 1 ? (db_name=>shift) : @_;
@@ -66,12 +78,14 @@ sub class_config {
 sub _add_args {
     my ( $self, $args ) = @_;
     my $name = 'default';
+    my $ns   = delete $args->{namespace} || $self->_ns;
+
     if ( my $class = delete $args->{class} ) {
         $class = [$class] unless ref $class eq 'ARRAY';
         $name  = join "-", @$class;
         $self->_args->{class}{$_} = $name for @$class;
     }
-    $self->_args->{db}{$name} = $args;
+    $self->_args->{db}{$ns}{$name} = $args;
     $name;
 }
 
@@ -86,26 +100,26 @@ sub _name_for_class {
 sub _db_for_class {
     my ( $self, $class ) = @_;
     my $name = $self->_name_for_class($class);
-    $self->_db->{$name} || $self->connect($name);
+    $self->_db->{$self->_ns}{$name} || $self->connect($name);
 }
 
 sub connect {
     my ( $self, $name ) = @_;
     $name ||= 'default';
-    my %p   = %{ $self->_args->{db}{$name} };
+    my $ns  = $self->_ns;
+    my %p   = %{ $self->_args->{db}{$ns}{$name} };
     my $data_db_name = $p{db_name};
 
-    $self->_client->{$name} = MongoDB::MongoClient->new(%p)
-      unless ref $self->_client->{$name};
+    $self->_client->{$ns}{$name} = MongoDB::MongoClient->new(%p)
+      unless ref($self->_client->{$ns}) && ref($self->_client->{$ns}{$name});
 
-    $self->_db->{$name} = $self->_client->{$name}->get_database( $data_db_name );
+    $self->_db->{$ns}{$name} = $self->_client->{$ns}{$name}->get_database( $data_db_name );
 }
 
 sub connection {
     my ( $self, $name ) = @_;
     $name ||= 'default';
-    $self->_client->{$name} and return $self->_client->{$name};
-    $self->connect($name) and return $self->_client->{$name};
+    $self->_client->{$self->_ns}{$name} || $self->connect($name);
 }
 
 sub load_schema {
