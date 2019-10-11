@@ -20,7 +20,9 @@ eval {
     my $default_db = Mongoose->db( %p1 );
     $default_db->run_command([ping => 1]);
     my $other_db   = Mongoose->db( %p2 );
-    $db = [ $default_db, $other_db ];
+    my $other_ns   = Mongoose->db( %p2, db_name => "multi_2_ns_$ts", namespace => "test" );
+
+    $db = [ $default_db, $other_db, $other_ns ];
 
     Mongoose->load_schema( search_path=>'MyTestApp::Schema', shorten=>1 );
 };
@@ -51,5 +53,13 @@ ok( $author->save, 'Save it!' );
 ok( my $post = Post->new( title => 'This is the title', body => 'blah blah blah!' ), 'Create new object on other class' );
 ok( $post->save, 'Save new object' );
 is( ref($post), 'MyTestApp::Schema::Post', 'Other class found and object created' );
+
+is( Author->count, 1, 'There is one saved author' );
+is( Post->count, 1, 'There is one saved post' );
+ok( Mongoose->namespace('test'), 'Change namespace' );
+is( Author->count, 1, 'Still one saved author (same db as default namespace was used)' );
+is( Post->count, 0, 'There is no saved posts on this namespace (db was switched)' );
+ok( Mongoose->namespace('default'), 'Change back to default namespace' );
+is( Post->count, 1, 'There is one saved post' );
 
 done_testing;

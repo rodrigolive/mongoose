@@ -1,73 +1,50 @@
 use strict;
 use warnings;
 use Test::More;
-
-{
-	package Test::Person;
-	use Moose;
-	with 'Mongoose::Document' => {
-		-collection_name => 'people',
-		-as              => 'Person',
-		-alias           => { 'find_one' => '_find_one' },
-		-excludes        => [ 'find_one' ]
-	};
-	has 'name' => ( is => 'rw', isa => 'Str', required => 1 );
-}
-
-package main;
 use lib 't/lib';
 use MongooseT;
 
-my $homer = Test::Person->new( name => "Homer" );
+subtest 'Passing params to Document role' => sub{
+    {
+        package Test::Person;
+        use Moose;
+        with 'Mongoose::Document' => {
+            -collection_name => 'people',
+            -as              => 'Person',
+            -alias           => { 'find_one' => '_find_one' },
+            -excludes        => [ 'find_one' ]
+        };
+        has 'name' => ( is => 'rw', isa => 'Str', required => 1 );
+    }
 
-{
-	$homer->save;
-	my $people = db->get_collection('people');
-	is( $people->find_one({ name => 'Homer' })->{name}, 'Homer', 'role param collection_name');
-}
-{
-	eval { $homer->collection('simpsons'); };
-	ok( $@, 'error off on object collection change');
-	is( Test::Person->collection('simpsons')->name, 'simpsons', 'guaranteed coll name change' );
-	$homer->save;
-	my $people = db->get_collection('simpsons');
-	is( $people->find_one({ name => 'Homer' })->{name}, 'Homer', 'role param collection_name');
-}
-{
-	my $homer = Person->_find_one({ name=>'Homer'});
-	is( $homer->name, 'Homer', 'as alias working');
-}
-{
-	Person->collection->insert_one({ name => 'Marge' });
-	my $marge = Person->db->get_collection('simpsons')->find_one({ name => 'Marge' });
-	is( ref($marge), 'HASH', 'as alias keeps collection change across');
-}
-{
-	my $marge = Person->_find_one({ name=>'Marge' });
-	# this is a perl quirk - even when blessed into Person,
-	#    the structure points to Test::Person
-	#  try this: print bless {}, 'Person';
-	is( ref($marge), 'Test::Person', 'method alias original');
-	# isa, on the other hand, works fine
-	ok( $marge->isa('Person'), 'isa a person' );
-}
-{
-	my $marge = Test::Person->_find_one({ name=>'Marge' });
-	is( ref($marge), 'Test::Person', 'package as alias consistent');
-}
-{
-	Mongoose->naming( sub{ uc(shift) } );
-	{
-		package FooPkg;
-		use Moose;
-		with 'Mongoose::Document';
-		has 'name' => ( is=>'rw', isa=>'Str', required=>1 );
-	}
+    ok( my $homer = Test::Person->new( name => "Homer" ), 'Create new object from and aliased class' );
+    ok( $homer->save, 'save it' );
+    ok( my $people = db->get_collection('people'), 'Get collection as set on the role "collection_name" param' );
+    is( $people->find_one({ name => 'Homer' })->{name}, 'Homer', 'Doc was created');
+    ok( $homer = Person->_find_one({ name=>'Homer'}), 'aliases methods exists' );
+    is( $homer->name, 'Homer', '-as alias is working');
+    # this is a perl quirk - even when blessed into Person,
+    #    the structure points to Test::Person
+    #  try this: print bless {}, 'Person';
+    is( ref($homer), 'Test::Person', 'method alias original');
+    # isa, on the other hand, works fine
+    ok( $homer->isa('Person'), 'isa a person' );
+};
 
-	my $f = FooPkg->new( name=>'Yoyo' );
-	$f->save;
-	my @all = db->get_collection('FOOPKG')->find->all;
-	is( scalar(@all) , 1, 'naming strategy changed' );
-}
+subtest 'Changing collection naming strategy' => sub{
+    ok( Mongoose->naming( sub{ uc(shift) } ), 'Setting new naming convention' );
+
+    {
+        package FooPkg;
+        use Moose;
+        with 'Mongoose::Document';
+        has 'name' => ( is=>'rw', isa=>'Str', required=>1 );
+    }
+
+    is( db->get_collection('FOOPKG')->estimated_document_count, 0, 'Test collection is empty' );
+    ok( my $f = FooPkg->new( name => 'Yoyo' ), 'Create new object from a class after setting custom naming convention' );
+    ok( $f->save, 'save it' );
+    is( db->get_collection('FOOPKG')->estimated_document_count, 1, 'There is one object, naming strategy changed' );
+};
 
 done_testing;
