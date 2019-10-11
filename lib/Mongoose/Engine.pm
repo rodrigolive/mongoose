@@ -394,8 +394,8 @@ sub delete {
 
 sub db {
     my $self=shift;
-    return Mongoose->_db_for_class( ref $self || $self )
-        || croak 'MongoDB not set. Set Mongoose->db("name") first';
+    return Mongoose->connection( ref $self || $self )
+        || croak 'MongoDB database need to be configured. Set Mongoose->db(...) first';
 }
 
 sub collection {

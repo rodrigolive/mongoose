@@ -141,12 +141,6 @@ Will shorten the module name to it's last bit:
 
     Author->new( ... );
 
-=head2 connection
-
-Sets/returns the current connection object, of class L<MongoDB::MongoClient>.
-
-Defaults to whatever MongoDB defaults.
-
 =head2 disconnect
 
 Unsets the Mongoose connection handler.
