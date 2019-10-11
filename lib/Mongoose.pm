@@ -113,7 +113,13 @@ sub connect {
     my $ns  = $self->_ns;
 
     confess "Namespace `$ns` is not defined" unless $self->_args->{db}{$ns};
-    $name = 'default' unless exists $self->_args->{db}{$ns}{$name};
+
+    # Ensure we have a config for $ns and $name or fallback to defaults
+    unless ( exists $self->_args->{db}{$ns}{$name} ) {
+        if    ( exists $self->_args->{db}{$ns}{default} ) { $name = 'default' }
+        elsif ( exists $self->_args->{db}{default}{$name} ) { $ns = 'default' }
+        else { ($ns, $name) = ('default', 'default')  }
+    }
 
     my %conf    = %{ $self->_args->{db}{$ns}{$name} };
     my $db_name = delete $conf{db_name};
