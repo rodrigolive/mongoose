@@ -2,6 +2,7 @@
 
     * Initial support for multitenancy (namespaces)
     * Removed capability of forcing a collection on a Document class (was never documented)
+    * Cleanup and improvements of intro docs
 
 2.00      2018-10-08 18:08:32+02:00 Europe/Madrid
     * Reworked to support MongoDB 2.x driver. Version bumped to reflex this!
