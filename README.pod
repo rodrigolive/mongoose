@@ -33,6 +33,8 @@ Mongoose - MongoDB document to Moose object mapper
 This is a L<MongoDB> to L<Moose> object mapper. This module allows you to use the full
 power of MongoDB within your Moose classes, without sacrificing MongoDB's
 power, flexibility and speed.
+It allows data partition based on class names and on later versions it's possible to
+have multitenant models.
 
 It's loosely inspired by Ruby's MongoMapper,
 which is in turn loosely based on the ActiveRecord pattern.
@@ -47,149 +49,16 @@ Since version 2.00 Mongoose only support the new L<MongoDB> driver v2.x.x which 
 
 Please let me know if you find anything strange using this new driver.
 
-=head1 METHODS
-
-=head2 db
-
-Sets the current MongoDB connection and/or db name.
-
-    Mongoose->db( 'mydb' );
-
-The connection defaults to whatever MongoDB defaults are
-(typically localhost:27017).
-
-For more control over the connection, C<db> takes the same parameters as
-L<MongoDB::MongoClient>.
-
-    my $db = Mongoose->db(
-        host           => 'mongodb://somehost:27017',
-        read_pref_mode => 'secondaryPreferred',
-        db_name        => 'mydb',
-        username       => 'myuser',
-        password       => 'mypass',
-        ssl            => 1
-    );
-
-This will, in turn, instantiate a L<MongoDB::MongoClient> and return
-a L<MongoDB::Database> object for C<mydb>.
-
-B<Important>: Mongoose will always defer connecting to Mongo
-until the last possible moment. This is done to prevent
-using the MongoDB driver in a forked environment (ie. with a
-prefork appserver like Starman, Hypnotoad or Catalyst's
-HTTP::Prefork).
-
-If you prefer to connect while setting the connection string,
-use one of these options:
-
-    Mongoose->db( db_name=>'mydb', -now=>1 );  # connect now
-
-    # or by wating for a return value
-
-    my $db = Mongoose->db( 'mydb' );
-
-    # or explicitly:
-
-    Mongoose->db( 'mydb' );
-    Mongoose->connect;
-
-You can separate your classes storage on multiple hosts/databases
-by calling db() several times:
-
-    # Default host/database (connect now!)
-    my $db = Mongoose->db( 'mydb' );
-
-    # Other database for some class (defer connection)
-    Mongoose->db( db_name => 'my_other_db', class => 'Log' );
-
-    # Other database on other host for several classes
-    Mongoose->db(
-        db_name => 'my_remote_db',
-        host    => 'mongodb://192.168.1.23:27017',
-        class   => [qw/ Author Post /]
-    );
-
-=head2 connect
-
-Connects to Mongo using the connection arguments passed to the C<db> method.
-
-=head2 load_schema
-
-Uses L<Module::Pluggable> to C<require> all modules under a given search path
-or search dir.
-
-All arguments will be sent to Module::Pluggable's C<import>, except for
-Mongoose specific ones.
-
-    package main;
-    use Mongoose;
-
-    # to load a schema from a namespace path:
-    Mongoose->load_schema( search_path=>'MyApp::Schema' );
-
-
-This method can be used to shorten class names, aliasing them for
-convenience if you wish:
-
-    Mongoose->load_schema( search_path=>'MyApp::Schema', shorten=>1 );
-
-Will shorten the module name to it's last bit:
-
-    MyApp::Schema::Author->new( ... );
-
-    # becomes
-
-    Author->new( ... );
-
-=head2 disconnect
-
-Unsets the Mongoose connection handler.
-
-=head2 class_config
-
-Keep track of document classes config solving aliasing indirection.
-
-=head2 aliased
-
-Keep track of aliasing classes. Useful to retrieve full document class from a shortened one.
-
-=head1 COLLECTION NAMING
-
-By default, Mongoose composes the Mongo collection name from your package name
-by replacing double-colon C<::> with underscores C<_>, separating camel-case,
-such as C<aB> with C<a_b> and uppercase with lowercase letters.
-
-This behaviour can be changed by choosing other named method or by setting
-the collection naming routine with a C<closure> as exlained in L<Mongoose::Role::Naming>.
-
 =head1 REPOSITORY
 
 Fork me on github: L<http://github.com/rodrigolive/mongoose>
 
 =head1 BUGS
 
-This is a WIP, now *beta* quality software.
+This is a WIP used in production on L<http://soysuper.com> since many years.
 
 Report bugs via Github Issue reporting L<https://github.com/rodrigolive/mongoose/issues>.
 Test cases highly desired and appreciated.
-
-=head1 TODO
-
-* Better error control
-
-* Finish-up multiple database support
-
-* Allow query->fields to control which fields get expanded into the object.
-
-* Cleanup internals.
-
-* More tests and use cases.
-
-* Better documentation.
-
-=head1 SEE ALSO
-
-L<KiokuDB>
 
 =head1 AUTHOR
 

@@ -20,16 +20,14 @@ To use this module, you need:
 =head2 MongoDB installed somewhere in your network.
 
 Grab a pre-built copy for your OS from
-L<here|http://www.mongodb.org/downloads>, or build it
-from L<sources|http://www.mongodb.org/display/DOCS/Source+Code>.
+L<here|https://www.mongodb.com/download-center/community>.
 
 After intalling the software, start the Mongo daemon:
 
     mongod -dbpath /path/to/data
 
-=head2 The L<MongoDB> Perl driver
+=head2 The L<MongoDB> Perl driver which is required by this module
 
-    cpan MongoDB
     cpan Mongoose
 
 Set the C<MONGOOSEDB> environment variable to your MongoDB connection
@@ -91,6 +89,13 @@ new attributes for your object and delete old ones at your leasure.
 No data-object binding means that you may reuse collections,
 and peruse inheritance to great extent.
 
+=item *
+
+Each class represent a collection on a database, when setting up your schema
+you can assign different connections to your classes to allow data partition
+and there is even a namespace feature where you can assing different connections
+based on the current namespace to implement multitenant schemas.
+
 =back
 
 =head1 CAVEATS
@@ -112,7 +117,7 @@ There are exceptions to this rule though.
 
 After saving or loading objects from the database, your object will have
 an extra attribute, C<_id>. This is a unique identifier. The _id value
-can be overwritten if you wish.
+can be overwritten if you wish. But it's not recommended.
 
 =back
 
@@ -142,7 +147,7 @@ There are two roles to make your Moose class a Mongoose document:
 The difference between these roles lies in the way objects
 of different classes will be joined and stored (collapsed) into the DB.
 
-Read the L<MongoDB docs|http://http://www.mongodb.org/display/DOCS/Schema+Design#SchemaDesign-EmbeddingandLinking>
+Read the L<MongoDB docs|https://docs.mongodb.com/manual/data-modeling/#SchemaDesign-EmbeddingandLinking>
 if you don't understand the difference.
 
 =head3 Document
@@ -187,6 +192,10 @@ Wraps MongoDB's find method to return a cursor that expands data into objects.
 Finds exactly one document.
 
     my $jack = Person->find_one({ first_name => 'Jack' });
+
+Or using the MongoOID as an object or string:
+
+    my $jack = Person->find_one('mongo_id_of_jack');
 
 =head3 collection
 
