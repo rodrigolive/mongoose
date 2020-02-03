@@ -57,7 +57,7 @@ sub db {
     my %p    = @_ == 1 ? ( db_name => shift ) : @_;
     my $now  = delete($p{'-now'}) || defined wantarray;
     my ($ns, $name) = $self->_add_args( \%p );
-    (map { $self->connect($name, $_) } @$ns)[0] unless $now;
+    $now && (map { $self->connect($name, $_) } @$ns)[0];
 }
 
 sub class_config {
