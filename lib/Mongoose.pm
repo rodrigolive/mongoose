@@ -1,5 +1,5 @@
 package Mongoose;
-
+$Mongoose::VERSION = '2.02';
 use MooseX::Singleton;
 use Class::MOP;
 use MongoDB;
@@ -54,11 +54,10 @@ sub namespace {
 
 sub db {
     my $self = shift;
-    my %p    = @_ == 1 ? (db_name=>shift) : @_;
+    my %p    = @_ == 1 ? ( db_name => shift ) : @_;
     my $now  = delete($p{'-now'}) || defined wantarray;
-    my $name = $self->_add_args( \%p );
-
-    return $self->connect($name) if $now;
+    my ($ns, $name) = $self->_add_args( \%p );
+    (map { $self->connect($name, $_) } @$ns)[0] unless $now;
 }
 
 sub class_config {
@@ -90,7 +89,7 @@ sub _add_args {
     # Keep track of config for every namespace
     $self->_args->{db}{$_}{$name} = $args for @$ns;
 
-    $name;
+    ( $ns, $name );
 }
 
 # Connection/db name for a given class
@@ -102,23 +101,23 @@ sub _name_for_class {
 
 # Go thru class-db mapping and ensure to get a connected db.
 sub connection {
-    my ( $self, $class ) = @_;
+    my ( $self, $class, $ns ) = @_;
     my $name = $self->_name_for_class($class);
-    $self->_db->{$self->_ns}{$name} || $self->connect($name);
+    $self->_db->{$ns || $self->_ns}{$name} || $self->connect($name, $ns);
 }
 
 sub connect {
-    my ( $self, $name ) = @_;
+    my ( $self, $name, $ns ) = @_;
     $name ||= 'default';
-    my $ns  = $self->_ns;
+    $ns   ||= $self->_ns;
 
     confess "Namespace `$ns` is not defined" unless $self->_args->{db}{$ns};
 
     # Ensure we have a config for $ns and $name or fallback to defaults
-    unless ( exists $self->_args->{db}{$ns}{$name} ) {
-        if    ( exists $self->_args->{db}{$ns}{default} ) { $name = 'default' }
-        elsif ( exists $self->_args->{db}{default}{$name} ) { $ns = 'default' }
-        else { ($ns, $name) = ('default', 'default')  }
+    unless ( exists $self->_args->{db}{$ns}{$name} ) {                          # 1. Is defined in this ns?
+        if    ( exists $self->_args->{db}{default}{$name} ) { $ns = 'default' } # 2. it's defined on the default ns?
+        elsif ( exists $self->_args->{db}{$ns}{default} ) { $name = 'default' } # 3. Do this ns has default defined?
+        else { ($ns, $name) = ('default', 'default')  }                         # 4. meh!
     }
 
     my %conf    = %{ $self->_args->{db}{$ns}{$name} };

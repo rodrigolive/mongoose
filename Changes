@@ -1,5 +1,10 @@
 {{$NEXT}}
 
+    * Initialize namespaced dbs correctly on eager mode
+    * Changed priority when selecting a connection, prefer named by class from default ns before default from current ns as it feels more DWIM
+
+2.01      2019-10-29 14:23:42+01:00 Europe/Madrid
+
     * Initial support for multitenancy (namespaces)
     * Removed capability of forcing a collection on a Document class (was never documented)
     * Cleanup and improvements of intro docs
